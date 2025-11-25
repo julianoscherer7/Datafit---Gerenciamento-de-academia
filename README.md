@@ -1,9 +1,9 @@
 # Datafit---Gerenciamento-de-academia
 
-FITDATA – Escopo Resumido do Projeto
+DATAFIT – Escopo Resumido do Projeto
 Descrição Geral
 
-O FITDATA é um sistema integrado de treinos, saúde e gestão de alunos. O projeto combina funcionalidades voltadas para usuários comuns (hipertrofia e bem-estar), praticantes de atividade física e também professores/academias que desejam organizar treinos e acompanhar alunos.
+O DATAFIT é um sistema integrado de treinos, saúde e gestão de alunos. O projeto combina funcionalidades voltadas para usuários comuns (hipertrofia e bem-estar), praticantes de atividade física e também professores/academias que desejam organizar treinos e acompanhar alunos.
 
 O sistema terá versões web e mobile, permitindo registro diário de treinos, controle de evolução, acompanhamento de medidas corporais e administração de treinos por profissionais.
 
