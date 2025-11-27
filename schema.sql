@@ -1,6 +1,11 @@
 -- FITDATA: esquema SQL (MySQL) - Versão Simplificada
--- Execute em um banco MySQL (recomendo utf8mb4)
--- Uso: cole em um cliente MySQL ou rode via migration.
+-- Observação: este script cria o banco de dados `fitdata_dev` e todas as tabelas.
+-- No phpMyAdmin você pode colar todo o conteúdo na aba SQL e executar (não precisa selecionar um BD antes).
+
+CREATE DATABASE IF NOT EXISTS `fitdata_dev`
+  DEFAULT CHARACTER SET = utf8mb4
+  DEFAULT COLLATE = utf8mb4_unicode_ci;
+USE `fitdata_dev`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -66,7 +71,7 @@ CREATE TABLE treinos_atribuidos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   treino_id INT NOT NULL,
   aluno_id INT NOT NULL, -- referencia a usuarios.id (perfil = aluno)
-  data_atribuicao DATE NOT NULL DEFAULT (CURRENT_DATE),
+  data_atribuicao DATE NOT NULL DEFAULT CURRENT_DATE,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   observacao VARCHAR(255),
   CONSTRAINT fk_ta_treino FOREIGN KEY (treino_id) REFERENCES treinos(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -98,7 +103,7 @@ CREATE TABLE series_executadas (
 CREATE TABLE medidas_corporais (
   id INT AUTO_INCREMENT PRIMARY KEY,
   aluno_id INT NOT NULL,
-  data_medida DATE NOT NULL DEFAULT (CURRENT_DATE),
+  data_medida DATE NOT NULL DEFAULT CURRENT_DATE,
   peso_kg DECIMAL(6,2),
   braco_cm DECIMAL(6,2),
   cintura_cm DECIMAL(6,2),
