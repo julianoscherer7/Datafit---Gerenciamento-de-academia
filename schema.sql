@@ -116,3 +116,96 @@ CREATE TABLE medidas_corporais (
   INDEX (aluno_id),
   INDEX (data_medida)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Gamification: tabelas adicionais para FITDATA
+
+CREATE TABLE desafios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
+  descricao TEXT,
+  tipo ENUM('series','tempo','volume','custom') NOT NULL DEFAULT 'custom',
+  alvo_valor DECIMAL(10,2) NULL, -- ex: 20 (min) ou 1000 (kg)
+  ativo TINYINT(1) DEFAULT 1,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE usuario_desafios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  desafio_id INT NOT NULL,
+  data_inicio DATE NOT NULL DEFAULT (CURRENT_DATE),
+  data_conclusao DATETIME NULL,
+  progresso DECIMAL(10,2) DEFAULT 0, -- valor atual do progresso
+  concluido TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (desafio_id) REFERENCES desafios(id) ON DELETE CASCADE,
+  INDEX (usuario_id),
+  INDEX (desafio_id),
+  INDEX (concluido)
+);
+
+CREATE TABLE streaks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  inicio DATE NOT NULL,
+  atual INT NOT NULL DEFAULT 0, -- dias consecutivos
+  ultimo_dia DATE,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE(usuario_id)
+);
+
+CREATE TABLE badges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  codigo VARCHAR(80) NOT NULL UNIQUE,
+  nome VARCHAR(120) NOT NULL,
+  descricao TEXT,
+  icone_url VARCHAR(255),
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE usuario_badges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  badge_id INT NOT NULL,
+  adquirido_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
+  UNIQUE(usuario_id, badge_id)
+);
+
+CREATE TABLE amizades (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  solicitante_id INT NOT NULL,
+  solicitado_id INT NOT NULL,
+  status ENUM('pendente','aceito','rejeitado') DEFAULT 'pendente',
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (solicitante_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  FOREIGN KEY (solicitado_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE(solicitante_id, solicitado_id)
+);
+
+CREATE TABLE notificacoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario_id INT NOT NULL,
+  tipo VARCHAR(80),
+  titulo VARCHAR(150),
+  mensagem TEXT,
+  lida TINYINT(1) DEFAULT 0,
+  meta JSON NULL, -- dados extras (ex: { "desafio_id": 1 })
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  INDEX (usuario_id),
+  INDEX (lida)
+);
+
+CREATE TABLE leaderboard_semanal (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  semana_ano VARCHAR(20) NOT NULL, -- ex: "2024-W48"
+  usuario_id INT NOT NULL,
+  pontos INT DEFAULT 0,
+  criterio VARCHAR(50), -- ex: 'volume','treinos'
+  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+  UNIQUE(semana_ano, usuario_id, criterio)
+);
+
