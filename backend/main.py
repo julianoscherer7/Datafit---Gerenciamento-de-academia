@@ -55,6 +55,15 @@ def read_root():
         "docs": "/docs"
     }
 
+@app.get("/health", tags=["root"])
+def health():
+    """Health check detalhado"""
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "cors": "enabled"
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

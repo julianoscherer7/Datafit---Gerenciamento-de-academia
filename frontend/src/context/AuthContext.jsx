@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -25,47 +26,68 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch('http://localhost:8000/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        logout();
-      }
-    } catch (err) {
-      console.error('Erro ao buscar usuário:', err);
-      logout();
-    } finally {
+      const res = await authService.me();
+      setUser(res.data);
       setLoading(false);
+    } catch (err) {
+      console.error('Erro ao buscar usuário:', err.response?.status, err.response?.data);
+      // Se receber 401, limpa o token
+      if (err.response?.status === 401) {
+        logout();
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   const login = async (email, senha) => {
-    const res = await fetch('http://localhost:8000/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    if (!res.ok) throw new Error('Login falhou');
-    const data = await res.json();
-    setToken(data.access_token);
-    localStorage.setItem('token', data.access_token);
-    await fetchUser();
+    try {
+      console.log('Tentando fazer login com:', email);
+      const res = await authService.login(email, senha);
+      console.log('Login bem-sucedido:', res.data);
+      const { access_token } = res.data;
+      setToken(access_token);
+      localStorage.setItem('token', access_token);
+      
+      // Atualiza usuário após login
+      try {
+        const userRes = await authService.me();
+        setUser(userRes.data);
+      } catch (err) {
+        console.error('Erro ao obter dados do usuário:', err);
+      }
+      
+      return res.data;
+    } catch (err) {
+      console.error('Erro no login:', err.response?.data || err.message);
+      const errorMsg = err.response?.data?.detail || err.message || 'Erro ao fazer login';
+      throw new Error(errorMsg);
+    }
   };
 
   const register = async (nome, email, senha) => {
-    const res = await fetch('http://localhost:8000/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, senha })
-    });
-    if (!res.ok) throw new Error('Registro falhou');
-    const data = await res.json();
-    setToken(data.access_token);
-    localStorage.setItem('token', data.access_token);
-    await fetchUser();
+    try {
+      console.log('Tentando registrar:', { nome, email });
+      const res = await authService.register(nome, email, senha);
+      console.log('Registro bem-sucedido:', res.data);
+      const { access_token } = res.data;
+      setToken(access_token);
+      localStorage.setItem('token', access_token);
+      
+      // Atualiza usuário após registro
+      try {
+        const userRes = await authService.me();
+        setUser(userRes.data);
+      } catch (err) {
+        console.error('Erro ao obter dados do usuário:', err);
+      }
+      
+      return res.data;
+    } catch (err) {
+      console.error('Erro no registro:', err.response?.data || err.message);
+      const errorMsg = err.response?.data?.detail || err.message || 'Erro ao criar conta';
+      throw new Error(errorMsg);
+    }
   };
 
   const logout = () => {

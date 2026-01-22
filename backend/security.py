@@ -3,11 +3,9 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from starlette.authentication import AuthCredentials
-from starlette.requests import Request
+from fastapi.security import HTTPBearer
 import os
 from dotenv import load_dotenv
-import re
 
 load_dotenv()
 
@@ -16,6 +14,7 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+security = HTTPBearer()
 
 def hash_password(password: str) -> str:
     """Hash de senha usando bcrypt"""
@@ -41,31 +40,34 @@ def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido",
+            detail="Token inválido ou expirado",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-def get_current_user(request: Request) -> dict:
+def get_current_user(credentials = Depends(security)) -> dict:
     """Dependency para obter usuário atual do token"""
-    auth_header = request.headers.get("Authorization")
+    token = credentials.credentials
     
-    if not auth_header or not auth_header.startswith("Bearer "):
+    try:
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+        
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token inválido"
+            )
+        
+        return {"user_id": int(user_id), "perfil": payload.get("perfil")}
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token não fornecido"
+            detail="Token inválido ou expirado"
         )
-    
-    token = auth_header.replace("Bearer ", "")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido"
-        )
-    
-    return {"user_id": int(user_id), "perfil": payload.get("perfil")}
+
+
