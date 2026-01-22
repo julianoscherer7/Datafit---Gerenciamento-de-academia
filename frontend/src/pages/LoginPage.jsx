@@ -65,7 +65,7 @@ const useAuth = () => {
   return context;
 };
 
-export default function LoginPage({ onNavigate }) {
+export const LoginPage = ({ onNavigate }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');

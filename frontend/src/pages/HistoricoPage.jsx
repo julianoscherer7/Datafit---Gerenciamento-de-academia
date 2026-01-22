@@ -1,96 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Clock, Dumbbell } from 'lucide-react';
+import { Card, Button } from '../components/common';
 
-// Card Component
-const Card = ({ children, className = '', hover = true }) => (
-  <motion.div
-    whileHover={hover ? { y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' } : {}}
-    className={`bg-white rounded-xl p-6 shadow-md transition-all ${className}`}
-  >
-    {children}
-  </motion.div>
-);
+const mockHistorico = [
+  {
+    id: 1,
+    data: '2024-01-15',
+    treino: 'Peito e Tríceps',
+    duracao: 60,
+    exercicios: 6,
+    calorias: 450,
+  },
+  {
+    id: 2,
+    data: '2024-01-14',
+    treino: 'Costas e Bíceps',
+    duracao: 50,
+    exercicios: 5,
+    calorias: 380,
+  },
+];
 
-const useAuth = () => {
-  const context = React.useContext(React.createContext());
-  if (!context) {
-    return { user: null, token: null, loading: false, login: () => {}, register: () => {}, logout: () => {} };
-  }
-  return context;
-};
-
-export default function HistoricoPage() {
-  const { user } = useAuth();
-  const [historico, setHistorico] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchHistorico();
-  }, []);
-
-  const fetchHistorico = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:8000/historico/${user?.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setHistorico(data);
-      }
-    } catch (err) {
-      console.error('Erro:', err);
-    } finally {
-      setLoading(false);
-    }
+export const HistoricoPage = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl font-bold mb-8">
-        Histórico de Treinos
-      </motion.h2>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="space-y-6"
+    >
+      <h1 className="text-3xl font-bold text-white">Histórico de Treinos</h1>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left font-semibold">Exercício</th>
-                <th className="px-4 py-2 text-left font-semibold">Série</th>
-                <th className="px-4 py-2 text-left font-semibold">Reps</th>
-                <th className="px-4 py-2 text-left font-semibold">Carga</th>
-                <th className="px-4 py-2 text-left font-semibold">Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historico.map((item, i) => (
-                <motion.tr
-                  key={i}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3">{item.exercicio_nome}</td>
-                  <td className="px-4 py-3">{item.serie}</td>
-                  <td className="px-4 py-3">{item.repeticoes}</td>
-                  <td className="px-4 py-3">{item.carga_kg}kg</td>
-                  <td className="px-4 py-3">{item.data}</td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+      <div className="space-y-4">
+        {mockHistorico.map((item) => (
+          <motion.div key={item.id} variants={itemVariants}>
+            <Card hover>
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-white">{item.treino}</h3>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-400 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {new Date(item.data).toLocaleDateString('pt-BR')}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {item.duracao} min
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Dumbbell className="w-4 h-4" />
+                      {item.exercicios} exercícios
+                    </div>
+                    <span className="text-orange-400">🔥 {item.calorias} kcal</span>
+                  </div>
+                </div>
+                <Button size="sm" variant="secondary">Visualizar</Button>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
   );
-}
+};

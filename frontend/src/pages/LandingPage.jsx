@@ -46,7 +46,7 @@ const Button = ({ children, onClick, variant = 'primary', loading, className = '
   </motion.button>
 );
 
-export default function LandingPage({ onNavigate }) {
+export const LandingPage = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500">
       <motion.div
@@ -134,4 +134,4 @@ export default function LandingPage({ onNavigate }) {
       </motion.div>
     </div>
   );
-}
+};

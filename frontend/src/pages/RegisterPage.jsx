@@ -65,7 +65,7 @@ const useAuth = () => {
   return context;
 };
 
-export default function RegisterPage({ onNavigate }) {
+export const RegisterPage = ({ onNavigate }) => {
   const { register } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');

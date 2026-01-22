@@ -1,134 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Card, Button } from '../components/common';
+import { TrendingUp } from 'lucide-react';
 
-// Card Component
-const Card = ({ children, className = '', hover = true }) => (
-  <motion.div
-    whileHover={hover ? { y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' } : {}}
-    className={`bg-white rounded-xl p-6 shadow-md transition-all ${className}`}
-  >
-    {children}
-  </motion.div>
-);
+const mockAnalyticsData = [
+  { mes: 'Jan', treinos: 12, calorias: 3600, xp: 1200 },
+  { mes: 'Fev', treinos: 15, calorias: 4200, xp: 1500 },
+  { mes: 'Mar', treinos: 18, calorias: 5100, xp: 1800 },
+  { mes: 'Abr', treinos: 20, calorias: 6000, xp: 2200 },
+  { mes: 'Mai', treinos: 22, calorias: 6800, xp: 2500 },
+];
 
-// Counter Animation
-const Counter = ({ end, duration = 2 }) => {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    let start = 0;
-    const increment = end / (duration * 60);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 1000 / 60);
-    return () => clearInterval(timer);
-  }, [end, duration]);
-
-  return <span>{count}</span>;
-};
-
-const useAuth = () => {
-  const context = React.useContext(React.createContext());
-  if (!context) {
-    return { user: null, token: null, loading: false, login: () => {}, register: () => {}, logout: () => {} };
-  }
-  return context;
-};
-
-export default function AnalyticsPage() {
-  const { user } = useAuth();
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:8000/analytics/${user?.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAnalytics(data);
-      }
-    } catch (err) {
-      console.error('Erro:', err);
-    } finally {
-      setLoading(false);
-    }
+export const AnalyticsPage = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl font-bold mb-8">
-        Analytics
-      </motion.h2>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="space-y-6"
+    >
+      <h1 className="text-3xl font-bold text-white">Analytics</h1>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Treinos */}
         <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-blue-500">
-              <Counter end={Math.floor(analytics?.volume_total || 0)} />
-            </div>
-            <div className="text-gray-600">Volume Total (kg)</div>
-          </div>
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" /> Treinos por Mês
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={mockAnalyticsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="mes" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Bar dataKey="treinos" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
-        <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-green-500">
-              <Counter end={analytics?.frequencia_semanal || 0} />
-            </div>
-            <div className="text-gray-600">Dias/Semana</div>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-purple-500">
-              <Counter end={analytics?.exercicios_favoritos?.length || 0} />
-            </div>
-            <div className="text-gray-600">Exercícios</div>
-          </div>
-        </Card>
-      </div>
 
-      <Card>
-        <h3 className="text-2xl font-bold mb-4">Distribuição Muscular</h3>
-        <div className="space-y-4">
-          {Object.entries(analytics?.distribuicao_muscular || {}).map(([grupo, volume], i) => (
-            <div key={i}>
-              <div className="flex justify-between mb-1">
-                <span className="font-semibold">{grupo}</span>
-                <span className="text-gray-600">{Math.floor(volume)}kg</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '60%' }}
-                  transition={{ duration: 1 }}
-                  className="bg-blue-500 h-2 rounded-full"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    </div>
+        {/* Calorias */}
+        <Card>
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" /> Calorias Queimadas
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={mockAnalyticsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="mes" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line type="monotone" dataKey="calorias" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b' }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* XP */}
+        <Card>
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" /> XP Ganho
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={mockAnalyticsData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis dataKey="mes" stroke="#94a3b8" />
+              <YAxis stroke="#94a3b8" />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
+                labelStyle={{ color: '#fff' }}
+              />
+              <Line type="monotone" dataKey="xp" stroke="#a855f7" strokeWidth={2} dot={{ fill: '#a855f7' }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
-}
+};

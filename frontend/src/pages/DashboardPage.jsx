@@ -41,7 +41,7 @@ const useAuth = () => {
   return context;
 };
 
-export default function DashboardPage({ onNavigate }) {
+export const DashboardPage = () => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -71,7 +71,7 @@ CREATE TABLE treinos_atribuidos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   treino_id INT NOT NULL,
   aluno_id INT NOT NULL, -- referencia a usuarios.id (perfil = aluno)
-  data_atribuicao DATE NOT NULL DEFAULT CURRENT_DATE,
+  data_atribuicao DATE NOT NULL DEFAULT (CURDATE()),
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   observacao VARCHAR(255),
   CONSTRAINT fk_ta_treino FOREIGN KEY (treino_id) REFERENCES treinos(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -103,7 +103,7 @@ CREATE TABLE series_executadas (
 CREATE TABLE medidas_corporais (
   id INT AUTO_INCREMENT PRIMARY KEY,
   aluno_id INT NOT NULL,
-  data_medida DATE NOT NULL DEFAULT CURRENT_DATE,
+  data_medida DATE NOT NULL DEFAULT (CURDATE()),
   peso_kg DECIMAL(6,2),
   braco_cm DECIMAL(6,2),
   cintura_cm DECIMAL(6,2),
@@ -133,7 +133,7 @@ CREATE TABLE usuario_desafios (
   id INT AUTO_INCREMENT PRIMARY KEY,
   usuario_id INT NOT NULL,
   desafio_id INT NOT NULL,
-  data_inicio DATE NOT NULL DEFAULT (CURRENT_DATE),
+  data_inicio DATE NOT NULL DEFAULT (CURDATE()),
   data_conclusao DATETIME NULL,
   progresso DECIMAL(10,2) DEFAULT 0, -- valor atual do progresso
   concluido TINYINT(1) DEFAULT 0,

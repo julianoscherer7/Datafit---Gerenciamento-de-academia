@@ -1,92 +1,76 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Trophy, Flame, Target, Award } from 'lucide-react';
+import { Card, Button, StatCard, Badge } from '../components/common';
+import { useAuth } from '../context/AuthContext';
 
-// Card Component
-const Card = ({ children, className = '', hover = true }) => (
-  <motion.div
-    whileHover={hover ? { y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' } : {}}
-    className={`bg-white rounded-xl p-6 shadow-md transition-all ${className}`}
-  >
-    {children}
-  </motion.div>
-);
-
-// Counter Animation
-const Counter = ({ end, duration = 2 }) => {
-  const [count, setCount] = React.useState(0);
-
-  React.useEffect(() => {
-    let start = 0;
-    const increment = end / (duration * 60);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 1000 / 60);
-    return () => clearInterval(timer);
-  }, [end, duration]);
-
-  return <span>{count}</span>;
-};
-
-const useAuth = () => {
-  const context = React.useContext(React.createContext());
-  if (!context) {
-    return { user: null, token: null, loading: false, login: () => {}, register: () => {}, logout: () => {} };
-  }
-  return context;
-};
-
-export default function PerfilPage() {
+export const PerfilPage = () => {
   const { user } = useAuth();
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl font-bold mb-8">
-        Meu Perfil
-      </motion.h2>
-
-      <Card>
-        <div className="text-center">
-          <div className="text-8xl mb-4">👤</div>
-          <h3 className="text-3xl font-bold mb-2">{user?.nome}</h3>
-          <p className="text-gray-600 mb-6">{user?.email}</p>
-          <div className="text-sm text-gray-600">
-            Perfil: <span className="font-semibold">{user?.perfil}</span>
-          </div>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white text-center"
+      >
+        <div className="text-6xl mb-4">👤</div>
+        <h1 className="text-4xl font-bold mb-2">{user?.nome}</h1>
+        <p className="text-purple-100 mb-4">{user?.email}</p>
+        <div className="flex justify-center gap-4 flex-wrap">
+          <Badge label="Nível 12" color="purple" />
+          <Badge label="🔥 7 dias de streak" color="orange" />
         </div>
-      </Card>
+      </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-6 mt-8">
+      {/* Stats */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={Trophy} label="Badges" value="12" color="purple" />
+        <StatCard icon={Flame} label="Streaks" value="7d" color="orange" />
+        <StatCard icon={Target} label="Desafios" value="5" color="blue" />
+        <StatCard icon={Award} label="Total XP" value="45k" color="green" />
+      </motion.div>
+
+      {/* Achievements */}
+      <motion.div variants={itemVariants}>
         <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-orange-500">
-              <Counter end={7} />
+          <h3 className="text-lg font-bold text-white mb-4">Últimas Conquistas</h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">🥉 Iniciante</span>
+              <span className="text-xs text-gray-500">Há 1 mês</span>
             </div>
-            <div className="text-gray-600">Dias de Streak</div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">🔥 Guerreiro</span>
+              <span className="text-xs text-gray-500">Há 2 semanas</span>
+            </div>
           </div>
         </Card>
-        <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-blue-500">
-              <Counter end={24} />
-            </div>
-            <div className="text-gray-600">Treinos Completos</div>
-          </div>
-        </Card>
-        <Card>
-          <div className="text-center">
-            <div className="text-4xl font-bold text-yellow-500">
-              <Counter end={12} />
-            </div>
-            <div className="text-gray-600">Badges</div>
-          </div>
-        </Card>
-      </div>
-    </div>
+      </motion.div>
+
+      {/* Actions */}
+      <motion.div variants={itemVariants} className="flex gap-3 flex-wrap">
+        <Button>Editar Perfil</Button>
+        <Button variant="secondary">Download Dados</Button>
+      </motion.div>
+    </motion.div>
   );
-}
+};

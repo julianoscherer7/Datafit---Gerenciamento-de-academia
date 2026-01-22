@@ -1,72 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Trophy, Star } from 'lucide-react';
+import { Card, Button, Badge } from '../components/common';
 
-// Card Component
-const Card = ({ children, className = '', hover = true }) => (
-  <motion.div
-    whileHover={hover ? { y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' } : {}}
-    className={`bg-white rounded-xl p-6 shadow-md transition-all ${className}`}
-  >
-    {children}
-  </motion.div>
-);
+const mockBadges = [
+  { id: 1, nome: 'Iniciante', descricao: 'Primeiro treino', icon: '🥉', obtido: true },
+  { id: 2, nome: 'Guerreiro', descricao: '7 dias de streak', icon: '🔥', obtido: true },
+  { id: 3, nome: 'Campeão', descricao: '30 dias de streak', icon: '👑', obtido: false },
+  { id: 4, nome: 'Super Saiajin', descricao: 'Nível 50', icon: '⚡', obtido: false },
+];
 
-export default function BadgesPage() {
-  const [badges, setBadges] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchBadges();
-  }, []);
-
-  const fetchBadges = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/badges/meus', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBadges(data);
-      }
-    } catch (err) {
-      console.error('Erro:', err);
-    } finally {
-      setLoading(false);
-    }
+export const BadgesPage = () => {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-4xl font-bold mb-8">
-        Minhas Badges
-      </motion.h2>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="space-y-6"
+    >
+      <h1 className="text-3xl font-bold text-white">Minhas Badges</h1>
 
-      <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {badges.map((badge, i) => (
-          <motion.div
-            key={i}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: i * 0.1, type: 'spring' }}
-            whileHover={{ scale: 1.1 }}
-          >
-            <Card className="text-center cursor-pointer">
-              <div className="text-6xl mb-2">🏆</div>
-              <h3 className="font-bold mb-1">{badge.nome}</h3>
-              <p className="text-xs text-gray-600">{badge.descricao}</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {mockBadges.map((badge) => (
+          <motion.div key={badge.id} variants={itemVariants}>
+            <Card hover={badge.obtido}>
+              <div className="text-center">
+                <div className={`text-5xl mb-3 ${!badge.obtido && 'opacity-30'}`}>
+                  {badge.icon}
+                </div>
+                <h4 className="text-sm font-bold text-white">{badge.nome}</h4>
+                <p className="text-xs text-gray-400 mt-1">{badge.descricao}</p>
+                {!badge.obtido && (
+                  <Badge label="🔒 Bloqueado" color="blue" size="sm" className="mt-3" />
+                )}
+              </div>
             </Card>
           </motion.div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
-}
+};
