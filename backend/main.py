@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 from database import engine, Base
 
 # Importa todos os models para criar as tabelas
@@ -25,10 +26,20 @@ def startup():
     Base.metadata.create_all(bind=engine)
 
 # Configura CORS
+# Lê FRONTEND_URL da env (pode ser múltiplos origins separados por vírgula)
+frontend_urls = os.getenv("FRONTEND_URL", "").strip()
+if frontend_urls:
+    origins = [u.strip() for u in frontend_urls.split(",") if u.strip()]
+    allow_credentials = True
+else:
+    # Se não configurado, permite todos os origins, mas desabilita credenciais
+    origins = ["*"]
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
