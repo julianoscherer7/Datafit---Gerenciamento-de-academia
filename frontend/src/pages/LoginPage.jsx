@@ -172,9 +172,13 @@ export const LoginPage = ({ onNavigate }) => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"
+              className={`mb-4 p-3 rounded-lg text-sm ${
+                darkMode 
+                  ? 'bg-red-500/20 border border-red-500/30 text-red-300' 
+                  : 'bg-red-100 border border-red-400 text-red-700'
+              }`}
             >
-              {error}
+              ⚠️ {error}
             </motion.div>
           )}
           
