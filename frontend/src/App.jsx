@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext';
 import { Sidebar, Header, MainLayout } from './components/sections';
@@ -24,8 +24,17 @@ import { RegisterPage } from './pages/RegisterPage';
 const AppContent = () => {
   const { user, token, loading } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
-  const [currentPage, setCurrentPage] = useState(token ? 'dashboard' : 'landing');
+  const [currentPage, setCurrentPage] = useState('landing');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Atualiza página inicial baseado no token
+  useEffect(() => {
+    if (token && currentPage === 'landing') {
+      setCurrentPage('dashboard');
+    } else if (!token && !['landing', 'login', 'register'].includes(currentPage)) {
+      setCurrentPage('landing');
+    }
+  }, [token]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -46,6 +55,7 @@ const AppContent = () => {
   const pages = {
     dashboard: <DashboardPage />,
     treinos: <TreinosPage />,
+    execucao: <ExecucaoPage />,
     desafios: <DesafiosPage />,
     amigos: <AmigosPage />,
     badges: <BadgesPage />,
@@ -64,12 +74,15 @@ const AppContent = () => {
         setCurrentPage={setCurrentPage}
       />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onProfileClick={() => setCurrentPage('perfil')} />
+      <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
+        <Header 
+          onProfileClick={() => setCurrentPage('perfil')} 
+          onSettingsClick={() => setCurrentPage('configs')}
+        />
         
         <MainLayout sidebarOpen={sidebarOpen}>
           <AnimatePresence mode="wait">
-            {pages[currentPage]}
+            {pages[currentPage] || <DashboardPage />}
           </AnimatePresence>
         </MainLayout>
       </div>

@@ -8,21 +8,28 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 segundos timeout
 });
 
 // Adiciona token ao header se existir
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
-// Trata erros de resposta
+// Trata erros de resposta com mensagens amigáveis
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log detalhado para debug
     console.error('API Error:', {
       status: error.response?.status,
       data: error.response?.data,
@@ -30,15 +37,44 @@ api.interceptors.response.use(
       url: error.config?.url
     });
 
-    // Apenas redireciona para login se não for uma requisição de auth
-    if (error.response?.status === 401 && !error.config.url.includes('/auth')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Evita múltiplos redirecionamentos
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+    // Tratamento específico por código de erro
+    if (error.response) {
+      const { status, data } = error.response;
+      
+      switch (status) {
+        case 401:
+          // Apenas redireciona se não for rota de auth
+          if (!error.config.url.includes('/auth')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (window.location.pathname !== '/login' && window.location.hash !== '#login') {
+              window.location.reload();
+            }
+          }
+          error.friendlyMessage = data?.detail || 'Sessão expirada. Faça login novamente.';
+          break;
+        case 403:
+          error.friendlyMessage = 'Você não tem permissão para esta ação.';
+          break;
+        case 404:
+          error.friendlyMessage = 'Recurso não encontrado.';
+          break;
+        case 422:
+          error.friendlyMessage = data?.detail?.[0]?.msg || 'Dados inválidos.';
+          break;
+        case 500:
+          error.friendlyMessage = 'Erro interno do servidor. Tente novamente.';
+          break;
+        default:
+          error.friendlyMessage = data?.detail || 'Ocorreu um erro. Tente novamente.';
       }
+    } else if (error.request) {
+      // Sem resposta do servidor
+      error.friendlyMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão.';
+    } else {
+      error.friendlyMessage = 'Erro ao processar requisição.';
     }
+
     return Promise.reject(error);
   }
 );
