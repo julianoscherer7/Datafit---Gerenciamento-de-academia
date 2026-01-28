@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 import os
 
 load_dotenv()
@@ -18,7 +19,9 @@ def _build_mysql_url_from_parts():
     host = os.getenv("MYSQL_HOST", "localhost")
     port = os.getenv("MYSQL_PORT", "3306")
     db = os.getenv("MYSQL_DB", "fitdata_dev")
-    return f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8mb4"
+    # URL encode password to handle special characters
+    encoded_password = quote_plus(password) if password else ""
+    return f"mysql+pymysql://{user}:{encoded_password}@{host}:{port}/{db}?charset=utf8mb4"
 
 if DB_ENGINE == "sqlite":
     # Prefer explicit SQLITE_URL, else use a default file in repository root
@@ -36,7 +39,7 @@ else:  # auto
 
 # Configure engine options for SQLite (thread check) vs other backends
 engine_kwargs = {}
-if DATABASE_URL.startswith("sqlite"):
+if DATABASE_URL and DATABASE_URL.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 
 engine = create_engine(DATABASE_URL, echo=False, **engine_kwargs)
