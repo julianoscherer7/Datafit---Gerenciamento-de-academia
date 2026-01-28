@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar, Header, MainLayout } from './components/sections';
 import { ToastContainer } from './components/common';
 import { useToast } from './hooks';
+import API_BASE from './config';
 
 // Import Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -416,7 +417,7 @@ const DashboardPage = ({ onNavigate }) => {
   const fetchDashboard = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/dashboard', {
+      const res = await fetch(`${API_BASE}/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -511,7 +512,7 @@ const TreinosPage = () => {
   const fetchTreinos = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/treinos', {
+      const res = await fetch(`${API_BASE}/treinos`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -578,7 +579,7 @@ const DesafiosPage = () => {
   const fetchDesafios = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/desafios', {
+      const res = await fetch(`${API_BASE}/desafios`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -633,7 +634,7 @@ const AmigosPage = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = activeTab === 'amigos' ? '/amigos' : '/amigos/pendentes';
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -695,7 +696,7 @@ const BadgesPage = () => {
   const fetchBadges = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/badges/meus', {
+      const res = await fetch(`${API_BASE}/badges/meus`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -743,7 +744,7 @@ const HistoricoPage = () => {
   const fetchHistorico = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:8000/historico/${user?.id}`, {
+      const res = await fetch(`${API_BASE}/historico/${user?.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -806,7 +807,7 @@ const AnalyticsPage = () => {
   const fetchAnalytics = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:8000/analytics/${user?.id}`, {
+      const res = await fetch(`${API_BASE}/analytics/${user?.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -879,7 +880,7 @@ const ConfigsPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:8000/configs', {
+      await fetch(`${API_BASE}/configs`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, senha_atual: senhaAtual, senha_nova: senhaNova })

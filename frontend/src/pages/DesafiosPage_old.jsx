@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config';
 
 // Card Component
 const Card = ({ children, className = '', hover = true }) => (
@@ -45,7 +46,7 @@ export default function DesafiosPage() {
   const fetchDesafios = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/desafios', {
+      const res = await fetch(`${API_BASE}/desafios`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

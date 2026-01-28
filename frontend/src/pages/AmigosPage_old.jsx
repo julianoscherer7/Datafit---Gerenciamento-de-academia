@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config';
 
 // Card Component
 const Card = ({ children, className = '', hover = true }) => (
@@ -47,7 +48,7 @@ export default function AmigosPage() {
     try {
       const token = localStorage.getItem('token');
       const endpoint = activeTab === 'amigos' ? '/amigos' : '/amigos/pendentes';
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config';
 
 // Card Component
 const Card = ({ children, className = '', hover = true }) => (
@@ -31,7 +32,7 @@ export default function HistoricoPage() {
   const fetchHistorico = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:8000/historico/${user?.id}`, {
+      const res = await fetch(`${API_BASE}/historico/${user?.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
