@@ -5,7 +5,7 @@ import {
   ChevronRight, Activity, Award, Clock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { dashboardService } from '../services/api';
+import { dashboardService } from '../services/dashboard.service';
 
 // Skeleton Loader Component
 const Skeleton = ({ className = '' }) => (

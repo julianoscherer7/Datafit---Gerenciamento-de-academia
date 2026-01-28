@@ -8,7 +8,7 @@ import {
   TrendingUp, TrendingDown, Activity, Flame, Target, Calendar,
   ChevronDown, Download, RefreshCw
 } from 'lucide-react';
-import { analyitcsService } from '../services/api';
+import { analyticsService } from '../services/analytics.service';
 
 // Skeleton Loader
 const Skeleton = ({ className = '' }) => (
@@ -101,7 +101,7 @@ export const AnalyticsPage = () => {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const res = await analyitcsService.getAnalytics();
+      const res = await analyticsService.getAnalytics();
       setAnalyticsData(res.data);
     } catch (err) {
       console.error('Erro ao buscar analytics:', err);
