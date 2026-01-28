@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config';
 
 // Card Component
 const Card = ({ children, className = '', hover = true }) => (
@@ -86,7 +87,7 @@ export default function ConfigsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:8000/configs', {
+      await fetch(`${API_BASE}/configs`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

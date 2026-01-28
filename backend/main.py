@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from database import engine, Base
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente definidas em backend/.env durante desenvolvimento
+load_dotenv()
 
 # Importa todos os models para criar as tabelas
 from models import (
