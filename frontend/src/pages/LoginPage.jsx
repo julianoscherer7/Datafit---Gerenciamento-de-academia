@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_BASE from '../config';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -87,7 +88,7 @@ export const LoginPage = ({ onNavigate }) => {
 
   const testConnection = async () => {
     try {
-      const response = await fetch('http://localhost:8000/health');
+      const response = await fetch(`${API_BASE}/health`);
       if (response.ok) {
         alert('✅ Conexão com API funcionando!');
       } else {

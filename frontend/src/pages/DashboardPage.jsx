@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_BASE from '../config';
 import { motion } from 'framer-motion';
 
 // Card Component
@@ -53,7 +54,7 @@ export const DashboardPage = () => {
   const fetchDashboard = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/dashboard', {
+      const res = await fetch(`${API_BASE}/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

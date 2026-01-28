@@ -5,6 +5,18 @@
 echo "🚀 INICIANDO FITDATA..."
 echo ""
 
+# Carrega variáveis de ambiente a partir de .env (se presentes)
+# Procura em: ./ .env, backend/.env, frontend/.env
+if [ -f .env ]; then
+	set -o allexport; source .env; set +o allexport
+fi
+if [ -f backend/.env ]; then
+	set -o allexport; source backend/.env; set +o allexport
+fi
+if [ -f frontend/.env ]; then
+	set -o allexport; source frontend/.env; set +o allexport
+fi
+
 # Cores
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -16,13 +28,22 @@ echo "=================================="
 echo ""
 
 echo -e "${GREEN}✅ Backend (FastAPI)${NC}"
-echo "   URL: http://localhost:8000"
-echo "   Docs: http://localhost:8000/docs"
+if [ -n "${VITE_API_URL}" ]; then
+	echo "   URL: ${VITE_API_URL}"
+	echo "   Docs: ${VITE_API_URL}/docs"
+else
+	echo "   URL: <VITE_API_URL not set; configure frontend/.env with VITE_API_URL>"
+	echo "   Docs: <VITE_API_URL not set>"
+fi
 echo "   Status: Rodando"
 echo ""
 
 echo -e "${GREEN}✅ Frontend (React + Vite)${NC}"
-echo "   URL: http://localhost:5173"
+if [ -n "${FRONTEND_URL}" ]; then
+	echo "   URL: ${FRONTEND_URL}"
+else
+	echo "   URL: <FRONTEND_URL not set; configure backend/.env with FRONTEND_URL>"
+fi
 echo "   Status: Rodando"
 echo ""
 
@@ -57,8 +78,16 @@ echo ""
 echo -e "${BLUE}🔗 Links Úteis${NC}"
 echo "=================================="
 echo ""
-echo "   App: http://localhost:5173"
-echo "   API Docs: http://localhost:8000/docs"
+if [ -n "${FRONTEND_URL}" ]; then
+	echo "   App: ${FRONTEND_URL}"
+else
+	echo "   App: <FRONTEND_URL not set>"
+fi
+if [ -n "${VITE_API_URL}" ]; then
+	echo "   API Docs: ${VITE_API_URL}/docs"
+else
+	echo "   API Docs: <VITE_API_URL not set>"
+fi
 echo "   GitHub: https://github.com/julianoscherer7/Datafit---Gerenciamento-de-academia"
 echo ""
 
