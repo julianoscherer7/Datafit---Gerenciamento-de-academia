@@ -39,6 +39,7 @@ export const storiesService = {
 
 export const chatService = {
   // Enviar mensagem
+  enviar: (data) => api.post('/chat/enviar', data),
   enviarMensagem: (data) => api.post('/chat/enviar', data),
   
   // Listar conversas

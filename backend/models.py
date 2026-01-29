@@ -13,6 +13,22 @@ class Usuario(Base):
     email = Column(String(150), unique=True, nullable=False, index=True)
     senha_hash = Column(String(256), nullable=False)
     perfil = Column(Enum("aluno", "instrutor", "admin"), default="aluno", nullable=False)
+    
+    # Campos de perfil estendido
+    foto_url = Column(String(500))
+    foto_base64 = Column(Text)
+    bio = Column(Text)
+    data_nascimento = Column(Date)
+    peso_kg = Column(Numeric(5, 2))
+    altura_cm = Column(Numeric(5, 1))
+    genero = Column(String(20))
+    
+    # Redes sociais
+    instagram = Column(String(100))
+    tiktok = Column(String(100))
+    twitter = Column(String(100))
+    linkedin = Column(String(100))
+    
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
 

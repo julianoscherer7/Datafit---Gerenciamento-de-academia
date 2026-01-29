@@ -1,0 +1,77 @@
+nohup: ignoring input
+
+> fitdata-frontend@1.0.0 dev
+> vite
+
+
+  VITE v5.4.21  ready in 238 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.10.100:5173/
+2:56:31 AM [vite] hmr update /src/pages/DashboardPage.jsx, /src/styles/index.css
+2:58:05 AM [vite] hmr update /src/pages/DashboardPage.jsx
+2:58:05 AM [vite] hmr update /src/pages/DashboardPage.jsx
+2:58:15 AM [vite] hmr update /src/pages/DashboardPage.jsx
+3:02:56 AM [vite] hmr update /src/pages/AmigosPage.jsx, /src/styles/index.css
+3:03:05 AM [vite] hmr update /src/pages/AmigosPage.jsx, /src/styles/index.css
+3:03:54 AM [vite] hmr update /src/App.jsx, /src/styles/index.css
+3:04:00 AM [vite] hmr update /src/App.jsx, /src/styles/index.css
+3:04:08 AM [vite] hmr update /src/App.jsx, /src/styles/index.css
+3:04:15 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css
+3:04:34 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css
+3:05:20 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css
+3:05:32 AM [vite] hmr update /src/pages/LandingPage.jsx, /src/styles/index.css
+3:06:01 AM [vite] hmr update /src/pages/LandingPage.jsx, /src/styles/index.css
+4:38:20 AM [vite] page reload src/pages/AmigosPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/AnalyticsPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/BadgesPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/ConfigsPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/DesafiosPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/HistoricoPage_old.jsx
+4:38:20 AM [vite] page reload src/pages/PerfilPage_old.jsx
+4:38:41 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css
+4:39:14 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css
+4:39:26 AM [vite] hmr update /src/App.jsx, /src/styles/index.css
+4:39:27 AM [vite] Internal server error: Failed to resolve import "./pages/ProgressoPage" from "src/App.jsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /workspaces/Datafit---Gerenciamento-de-academia/frontend/src/App.jsx:19:40
+  30 |  import { LoginPage } from "./pages/LoginPage";
+  31 |  import { RegisterPage } from "./pages/RegisterPage";
+  32 |  const ProgressoPage = lazy(_c = () => import("./pages/ProgressoPage"));
+     |                                               ^
+  33 |  _c2 = ProgressoPage;
+  34 |  const AppContent = () => {
+      at TransformPluginContext._formatError (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 17)
+      at async TransformPluginContext.transform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+4:39:33 AM [vite] page reload src/App.jsx
+4:39:33 AM [vite] Pre-transform error: Failed to resolve import "./pages/ProgressoPage" from "src/App.jsx". Does the file exist?
+4:39:34 AM [vite] Internal server error: Failed to resolve import "./pages/ProgressoPage" from "src/App.jsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /workspaces/Datafit---Gerenciamento-de-academia/frontend/src/App.jsx:19:40
+  30 |  import { LoginPage } from "./pages/LoginPage";
+  31 |  import { RegisterPage } from "./pages/RegisterPage";
+  32 |  const ProgressoPage = lazy(_c = () => import("./pages/ProgressoPage"));
+     |                                               ^
+  33 |  _c2 = ProgressoPage;
+  34 |  const AppContent = () => {
+      at TransformPluginContext._formatError (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 17)
+      at async TransformPluginContext.transform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///workspaces/Datafit---Gerenciamento-de-academia/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)
+4:40:16 AM [vite] page reload src/pages/ProgressoPage.jsx
+5:01:09 AM [vite] hmr update /src/App.jsx, /src/styles/index.css
+5:01:09 AM [vite] hmr update /src/components/sections/Sidebar.jsx, /src/styles/index.css

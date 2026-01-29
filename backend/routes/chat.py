@@ -47,17 +47,18 @@ async def enviar_mensagem(
     db: Session = Depends(get_db)
 ):
     """Envia uma mensagem para um amigo"""
+    user_id = current_user["user_id"]
     
     # Verificar se são amigos
     amizade = db.query(Amizade).filter(
         or_(
             and_(
-                Amizade.solicitante_id == current_user["id"],
+                Amizade.solicitante_id == user_id,
                 Amizade.solicitado_id == msg_data.destinatario_id
             ),
             and_(
                 Amizade.solicitante_id == msg_data.destinatario_id,
-                Amizade.solicitado_id == current_user["id"]
+                Amizade.solicitado_id == user_id
             )
         ),
         Amizade.status == "aceito"
@@ -70,7 +71,7 @@ async def enviar_mensagem(
         )
     
     nova_mensagem = Mensagem(
-        remetente_id=current_user["id"],
+        remetente_id=user_id,
         destinatario_id=msg_data.destinatario_id,
         conteudo=msg_data.conteudo,
         tipo=msg_data.tipo,
@@ -90,17 +91,18 @@ async def listar_conversas(
     db: Session = Depends(get_db)
 ):
     """Lista todas as conversas do usuário"""
+    user_id = current_user["user_id"]
     
     # Buscar amigos aceitos
     amigos = db.query(Usuario).join(
         Amizade,
         or_(
             and_(
-                Amizade.solicitante_id == current_user["id"],
+                Amizade.solicitante_id == user_id,
                 Amizade.solicitado_id == Usuario.id
             ),
             and_(
-                Amizade.solicitado_id == current_user["id"],
+                Amizade.solicitado_id == user_id,
                 Amizade.solicitante_id == Usuario.id
             )
         )
@@ -112,12 +114,12 @@ async def listar_conversas(
         ultima_msg = db.query(Mensagem).filter(
             or_(
                 and_(
-                    Mensagem.remetente_id == current_user["id"],
+                    Mensagem.remetente_id == user_id,
                     Mensagem.destinatario_id == amigo.id
                 ),
                 and_(
                     Mensagem.remetente_id == amigo.id,
-                    Mensagem.destinatario_id == current_user["id"]
+                    Mensagem.destinatario_id == user_id
                 )
             )
         ).order_by(Mensagem.criado_em.desc()).first()
@@ -125,7 +127,7 @@ async def listar_conversas(
         # Contar não lidas
         nao_lidas = db.query(Mensagem).filter(
             Mensagem.remetente_id == amigo.id,
-            Mensagem.destinatario_id == current_user["id"],
+            Mensagem.destinatario_id == user_id,
             Mensagem.lida == False
         ).count()
         
@@ -151,16 +153,17 @@ async def get_historico_chat(
     db: Session = Depends(get_db)
 ):
     """Retorna histórico de mensagens com um amigo"""
+    user_id = current_user["user_id"]
     
     mensagens = db.query(Mensagem).filter(
         or_(
             and_(
-                Mensagem.remetente_id == current_user["id"],
+                Mensagem.remetente_id == user_id,
                 Mensagem.destinatario_id == amigo_id
             ),
             and_(
                 Mensagem.remetente_id == amigo_id,
-                Mensagem.destinatario_id == current_user["id"]
+                Mensagem.destinatario_id == user_id
             )
         )
     ).order_by(Mensagem.criado_em.asc()).limit(limite).all()
@@ -168,7 +171,7 @@ async def get_historico_chat(
     # Marcar como lidas as mensagens recebidas
     db.query(Mensagem).filter(
         Mensagem.remetente_id == amigo_id,
-        Mensagem.destinatario_id == current_user["id"],
+        Mensagem.destinatario_id == user_id,
         Mensagem.lida == False
     ).update({"lida": True})
     db.commit()
@@ -182,10 +185,11 @@ async def marcar_como_lida(
     db: Session = Depends(get_db)
 ):
     """Marca uma mensagem como lida"""
+    user_id = current_user["user_id"]
     
     mensagem = db.query(Mensagem).filter(
         Mensagem.id == mensagem_id,
-        Mensagem.destinatario_id == current_user["id"]
+        Mensagem.destinatario_id == user_id
     ).first()
     
     if mensagem:
@@ -199,11 +203,12 @@ async def contar_nao_lidas(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Retorna contagem de mensagens não lidas"""
-    
-    total = db.query(Mensagem).filter(
-        Mensagem.destinatario_id == current_user["id"],
+    """Conta mensagens não lidas"""
+    user_id = current_user["user_id"]
+    count = db.query(Mensagem).filter(
+        Mensagem.destinatario_id == user_id,
         Mensagem.lida == False
     ).count()
+    return {"count": count}
     
     return {"nao_lidas": total}

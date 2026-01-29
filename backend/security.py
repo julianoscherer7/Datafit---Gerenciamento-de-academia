@@ -5,24 +5,40 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+# Configurar logging
+logger = logging.getLogger(__name__)
+
+# Usar chave padrão se não configurada (apenas para dev)
+SECRET_KEY = os.getenv("SECRET_KEY", "fitdata-dev-secret-key-change-in-production")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 horas
+
+if SECRET_KEY == "fitdata-dev-secret-key-change-in-production":
+    logger.warning("[SECURITY] Usando SECRET_KEY padrão! Configure em .env para produção.")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 def hash_password(password: str) -> str:
     """Hash de senha usando bcrypt"""
-    return pwd_context.hash(password)
+    hashed = pwd_context.hash(password)
+    logger.debug(f"[SECURITY] Password hashed successfully")
+    return hashed
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verifica senha"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        result = pwd_context.verify(plain_password, hashed_password)
+        logger.debug(f"[SECURITY] Password verification: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"[SECURITY] Erro na verificação de senha: {e}")
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Cria JWT token"""
@@ -33,6 +49,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    logger.debug(f"[SECURITY] Token criado para sub={data.get('sub')}")
     return encoded_jwt
 
 def decode_token(token: str) -> dict:
@@ -41,6 +58,7 @@ def decode_token(token: str) -> dict:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except JWTError as e:
+        logger.warning(f"[SECURITY] Token inválido: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado",
@@ -56,6 +74,7 @@ def get_current_user(credentials = Depends(security)) -> dict:
         user_id = payload.get("sub")
         
         if user_id is None:
+            logger.warning("[SECURITY] Token sem 'sub' claim")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token inválido"
@@ -65,6 +84,7 @@ def get_current_user(credentials = Depends(security)) -> dict:
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"[SECURITY] Erro ao processar token: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado"

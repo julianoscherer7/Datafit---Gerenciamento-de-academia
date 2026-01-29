@@ -1,0 +1,285 @@
+nohup: ignoring input
+INFO:     Will watch for changes in these directories: ['/workspaces/Datafit---Gerenciamento-de-academia/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [43050] using StatReload
+INFO:     Started server process [43052]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     127.0.0.1:52344 - "GET /health HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /health HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /auth/register HTTP/1.1" 200 OK
+(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:     177.10.6.59:0 - "POST /auth/register HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /analytics HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /analytics HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /analytics HTTP/1.1" 404 Not Found
+INFO:     177.10.6.59:0 - "GET /analytics HTTP/1.1" 404 Not Found
+INFO:     177.10.6.59:0 - "GET /analytics HTTP/1.1" 404 Not Found
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /auth/login HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "POST /auth/login HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /analytics HTTP/1.1" 404 Not Found
+INFO:     177.10.6.59:0 - "GET /analytics HTTP/1.1" 404 Not Found
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /dashboard HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [43052]
+INFO:     Started server process [50644]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/checkin.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [50644]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [50939]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/stories.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [50939]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51132]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'models.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51132]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51208]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/chat.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51208]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51363]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/chat.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51363]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51460]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'routes/loja.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51460]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51631]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51631]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51730]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51730]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51829]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51829]
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     Started server process [51874]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[CORS] Origins configured: ['https://special-disco-wrvg7654xxwv2gr96-5173.app.github.dev']
+INFO:     177.10.6.59:0 - "OPTIONS /amigos HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /chat/conversas HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /chat/conversas HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "OPTIONS /amigos HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /amigos HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /chat/conversas HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 184, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 79, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 20, in __call__
+    raise e
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/routes/chat.py", line 99, in listar_conversas
+    Amizade.solicitante_id == current_user["id"],
+                              ~~~~~~~~~~~~^^^^^^
+KeyError: 'id'
+INFO:     177.10.6.59:0 - "GET /chat/conversas HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 184, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 79, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 20, in __call__
+    raise e
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/routes/chat.py", line 99, in listar_conversas
+    Amizade.solicitante_id == current_user["id"],
+                              ~~~~~~~~~~~~^^^^^^
+KeyError: 'id'
+INFO:     177.10.6.59:0 - "GET /amigos HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /amigos HTTP/1.1" 200 OK
+INFO:     177.10.6.59:0 - "GET /chat/conversas HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 408, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 84, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1106, in __call__
+    await super().__call__(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/applications.py", line 122, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 184, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 162, in __call__
+    await self.app(scope, receive, _send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 91, in __call__
+    await self.simple_response(scope, receive, send, request_headers=headers)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 146, in simple_response
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 79, in __call__
+    raise exc
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 68, in __call__
+    await self.app(scope, receive, sender)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 20, in __call__
+    raise e
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 17, in __call__
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 718, in __call__
+    await route.handle(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 66, in app
+    response = await func(request)
+               ^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 274, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 191, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Datafit---Gerenciamento-de-academia/backend/routes/chat.py", line 99, in listar_conversas
+    Amizade.solicitante_id == current_user["id"],
+                              ~~~~~~~~~~~~^^^^^^
+KeyError: 'id'
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [51874]
+INFO:     Stopping reloader process [43050]

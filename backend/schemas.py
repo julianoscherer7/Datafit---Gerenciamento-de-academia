@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, date
+from decimal import Decimal
 
 # Auth Schemas
 class UsuarioRegister(BaseModel):
@@ -24,10 +25,35 @@ class UsuarioResponse(BaseModel):
     nome: str
     email: str
     perfil: str
+    foto_url: Optional[str] = None
+    foto_base64: Optional[str] = None
+    bio: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    peso_kg: Optional[float] = None
+    altura_cm: Optional[float] = None
+    genero: Optional[str] = None
+    instagram: Optional[str] = None
+    tiktok: Optional[str] = None
+    twitter: Optional[str] = None
+    linkedin: Optional[str] = None
     criado_em: datetime
     
     class Config:
         from_attributes = True
+
+class UsuarioUpdate(BaseModel):
+    nome: Optional[str] = None
+    foto_url: Optional[str] = None
+    foto_base64: Optional[str] = None
+    bio: Optional[str] = None
+    data_nascimento: Optional[date] = None
+    peso_kg: Optional[float] = None
+    altura_cm: Optional[float] = None
+    genero: Optional[str] = None
+    instagram: Optional[str] = None
+    tiktok: Optional[str] = None
+    twitter: Optional[str] = None
+    linkedin: Optional[str] = None
 
 # Exercicio Schemas
 class ExercicioCreate(BaseModel):

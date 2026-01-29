@@ -11,6 +11,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { TreinosPage } from './pages/TreinosPage';
 import { AmigosPage } from './pages/AmigosPage';
 import { PerfilPage } from './pages/PerfilPage';
+import { EditPerfilPage } from './pages/EditPerfilPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -21,17 +22,21 @@ const ProgressoPage = lazy(() => import('./pages/ProgressoPage'));
 const AppContent = () => {
   const { user, token, loading } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
+  // SEMPRE iniciar na landing page - o useEffect redireciona se tiver token
   const [currentPage, setCurrentPage] = useState('landing');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Atualiza página inicial baseado no token
   useEffect(() => {
-    if (token && currentPage === 'landing') {
+    // Se tem token E está em página pública, vai para dashboard
+    if (token && ['landing', 'login', 'register'].includes(currentPage)) {
       setCurrentPage('dashboard');
-    } else if (!token && !['landing', 'login', 'register'].includes(currentPage)) {
+    } 
+    // Se NÃO tem token E está em página protegida, volta para landing
+    else if (!token && !['landing', 'login', 'register'].includes(currentPage)) {
       setCurrentPage('landing');
     }
-  }, [token]);
+  }, [token, currentPage]);
 
   if (loading) {
     return <LoadingScreen />;
@@ -48,13 +53,14 @@ const AppContent = () => {
     );
   }
 
-  // Renderizar layout protegido - Menu simplificado com 5 páginas
+  // Renderizar layout protegido - Menu simplificado com páginas
   const pages = {
     dashboard: <DashboardPage />,
     treinos: <TreinosPage />,
     progresso: <Suspense fallback={<LoadingScreen />}><ProgressoPage /></Suspense>,
-    amigos: <AmigosPage />,
-    perfil: <PerfilPage />,
+    amigos: <AmigosPage onNavigate={setCurrentPage} />,
+    perfil: <PerfilPage onNavigate={setCurrentPage} />,
+    'edit-perfil': <EditPerfilPage onNavigate={setCurrentPage} />,
   };
 
   return (

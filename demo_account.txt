@@ -1,0 +1,65 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                     FITDATA - CONTA DEMONSTRAÇÃO                 ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║   🌟 CONTA RECOMENDADA PARA APRESENTAÇÃO                        ║
+║                                                                  ║
+║   📧 Email: maria@fitdata.com                                   ║
+║   🔑 Senha: Maria@123                                           ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║   A conta da Maria possui dados ricos para demonstração:         ║
+║                                                                  ║
+║   ✅ Perfil completo:                                            ║
+║      • Nome: Maria Santos                                        ║
+║      • Bio com emojis e descrição                                ║
+║      • Data de nascimento: 22/08/1998                            ║
+║      • Peso: 62kg | Altura: 165cm                                ║
+║      • Gênero: Feminino                                          ║
+║      • Instagram: @mariasantos_fit                               ║
+║      • Twitter: @maria_fitness                                   ║
+║      • TikTok: @mariafitlife                                     ║
+║                                                                  ║
+║   ✅ Gamificação:                                                ║
+║      • Nível 8 com 4.200 XP                                      ║
+║      • 850 moedas                                                ║
+║      • Título: "Guerreira Fitness"                               ║
+║      • 5 badges conquistados                                     ║
+║      • Streak de 15 dias consecutivos                            ║
+║                                                                  ║
+║   ✅ Treinos:                                                    ║
+║      • 4 treinos personalizados (A, B, C, D)                     ║
+║      • 20+ exercícios cadastrados                                ║
+║      • Histórico de 30 dias de treinos                           ║
+║                                                                  ║
+║   ✅ Desafios:                                                   ║
+║      • 2 desafios completos                                      ║
+║      • 2 desafios em andamento                                   ║
+║                                                                  ║
+║   ✅ Social:                                                     ║
+║      • 2 amigos (João e Pedro)                                   ║
+║      • Chat disponível com amigos                                ║
+║                                                                  ║
+║   ✅ Evolução:                                                   ║
+║      • Histórico de 8 semanas de medidas corporais               ║
+║      • Gráficos de progresso disponíveis                         ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║   📌 OUTRAS CONTAS DISPONÍVEIS:                                  ║
+║                                                                  ║
+║   usuario@fitdata.com / Usuario@123  (João - usuário comum)      ║
+║   pedro@fitdata.com / Pedro@123      (Pedro - amigo)             ║
+║   admin@fitdata.com / Admin@123      (Administrador)             ║
+║                                                                  ║
+╠══════════════════════════════════════════════════════════════════╣
+║                                                                  ║
+║   🚀 PARA INICIAR O SISTEMA:                                     ║
+║                                                                  ║
+║   1. Execute: ./START.sh                                         ║
+║   2. Acesse a URL fornecida no terminal                          ║
+║   3. Na landing page, clique em "Entrar"                         ║
+║   4. Use as credenciais da Maria                                 ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
