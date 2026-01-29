@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Dumbbell, TrendingUp, Users, Trophy, Sparkles, Zap, Target, Camera, MessageCircle, ShoppingBag } from 'lucide-react';
 
 // Counter Animation
 const Counter = ({ end, duration = 2 }) => {
@@ -20,147 +21,187 @@ const Counter = ({ end, duration = 2 }) => {
     return () => clearInterval(timer);
   }, [end, duration]);
 
-  return <span>{count}</span>;
+  return <span>{count.toLocaleString()}</span>;
 };
 
-// Button Component
-const Button = ({ children, onClick, variant = 'primary', loading, className = '', ...props }) => (
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={onClick}
-    disabled={loading}
-    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-      variant === 'primary' 
-        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg' 
-        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-    } ${loading ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
-    {...props}
-  >
-    {loading ? (
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        Carregando...
-      </div>
-    ) : children}
-  </motion.button>
-);
-
 export const LandingPage = ({ onNavigate }) => {
+  const features = [
+    { icon: Camera, title: 'Check-in de Treino', desc: 'Comprove seu treino com fotos', color: 'from-purple-500 to-pink-500' },
+    { icon: Sparkles, title: 'Stories', desc: 'Compartilhe seu progresso', color: 'from-pink-500 to-orange-500' },
+    { icon: MessageCircle, title: 'Chat', desc: 'Converse com amigos', color: 'from-blue-500 to-cyan-500' },
+    { icon: ShoppingBag, title: 'Loja', desc: 'Personalize seu perfil', color: 'from-yellow-500 to-orange-500' },
+    { icon: Trophy, title: 'Gamificação', desc: 'Conquiste badges', color: 'from-green-500 to-emerald-500' },
+    { icon: TrendingUp, title: 'Analytics', desc: 'Acompanhe o progresso', color: 'from-indigo-500 to-purple-500' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex flex-col items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="w-full max-w-4xl"
-      >
+    <div className="min-h-screen bg-slate-900 overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[128px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-[128px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-center text-white mb-12"
-        >
-          <h1 className="text-7xl font-bold mb-4">💪 FITDATA</h1>
-          <p className="text-2xl opacity-90">Transforme seus treinos em conquistas</p>
-        </motion.div>
-
-        {/* Auth Boxes - Instagram Style */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid md:grid-cols-2 gap-6 mb-16 justify-center"
-        >
-          {/* Login Box */}
-          <motion.div
-            whileHover={{ scale: 1.02, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)' }}
-            className="bg-white bg-opacity-95 backdrop-blur-lg rounded-2xl p-8 w-full cursor-pointer hover:shadow-2xl transition-all"
-            onClick={() => onNavigate('login')}
-          >
-            <div className="text-center">
-              <div className="text-5xl mb-4">🔐</div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-3">Entrar</h2>
-              <p className="text-gray-600 mb-6">Acesse sua conta e continue seus treinos</p>
-              <Button onClick={(e) => { e.stopPropagation(); onNavigate('login'); }} className="w-full">
-                Entrar agora
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Register Box */}
-          <motion.div
-            whileHover={{ scale: 1.02, boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)' }}
-            className="bg-white bg-opacity-95 backdrop-blur-lg rounded-2xl p-8 w-full cursor-pointer hover:shadow-2xl transition-all"
-            onClick={() => onNavigate('register')}
-          >
-            <div className="text-center">
-              <div className="text-5xl mb-4">✨</div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-3">Criar Conta</h2>
-              <p className="text-gray-600 mb-6">Comece sua jornada fitness agora mesmo</p>
-              <Button onClick={(e) => { e.stopPropagation(); onNavigate('register'); }} className="w-full">
-                Registre-se
-              </Button>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Features - Smaller and Below */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="grid md:grid-cols-3 gap-4 mb-12"
-        >
-          {[
-            { icon: '📊', title: 'Analytics', desc: 'Acompanhe seu progresso' },
-            { icon: '🏆', title: 'Desafios', desc: 'Ganhe badges e prêmios' },
-            { icon: '👥', title: 'Social', desc: 'Conecte-se com amigos' }
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.7 + i * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              className="bg-white bg-opacity-10 backdrop-blur-lg rounded-lg p-4 text-center text-white"
+        <header className="py-6 px-4 md:px-8">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-3"
             >
-              <div className="text-3xl mb-2">{item.icon}</div>
-              <h3 className="text-lg font-bold mb-1">{item.title}</h3>
-              <p className="text-sm opacity-90">{item.desc}</p>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <Dumbbell className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                FITDATA
+              </span>
             </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center text-white"
-        >
-          <div className="flex justify-center gap-8 flex-wrap">
-            <div>
-              <div className="text-3xl font-bold">
-                <Counter end={1000} />+
-              </div>
-              <div className="text-sm opacity-90">Usuários Ativos</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">
-                <Counter end={50000} />+
-              </div>
-              <div className="text-sm opacity-90">Treinos Realizados</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold">
-                <Counter end={500} />+
-              </div>
-              <div className="text-sm opacity-90">Desafios Completados</div>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex gap-3"
+            >
+              <button 
+                onClick={() => onNavigate('login')}
+                className="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium"
+              >
+                Entrar
+              </button>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('register')}
+                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium shadow-lg shadow-purple-500/25"
+              >
+                Começar
+              </motion.button>
+            </motion.div>
           </div>
-        </motion.div>
-      </motion.div>
+        </header>
+
+        {/* Hero */}
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6"
+            >
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-medium">
+                <Sparkles className="w-4 h-4" />
+                O Snapchat da Academia
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+            >
+              Transforme seus
+              <br />
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+                treinos em conquistas
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto"
+            >
+              Check-in de treinos, stories, chat com amigos, badges e muito mais.
+              A rede social fitness mais completa do Brasil.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+            >
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('register')}
+                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow"
+              >
+                Criar Conta Grátis
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onNavigate('login')}
+                className="px-8 py-4 bg-slate-800 text-white rounded-xl font-semibold text-lg border border-slate-700 hover:bg-slate-700 transition-colors"
+              >
+                Já tenho conta
+              </motion.button>
+            </motion.div>
+
+            {/* Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-wrap justify-center gap-8 md:gap-16 mb-16"
+            >
+              {[
+                { value: 1000, label: 'Usuários Ativos', suffix: '+' },
+                { value: 50000, label: 'Treinos Realizados', suffix: '+' },
+                { value: 500, label: 'Badges Conquistados', suffix: '+' },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                    <Counter end={stat.value} />{stat.suffix}
+                  </div>
+                  <div className="text-sm text-slate-500">{stat.label}</div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Features Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="max-w-6xl mx-auto w-full px-4"
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {features.map((feature, i) => {
+                const Icon = feature.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50 text-center group hover:border-slate-600 transition-all"
+                  >
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-white text-sm mb-1">{feature.title}</h3>
+                    <p className="text-xs text-slate-500">{feature.desc}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </main>
+
+        {/* Footer */}
+        <footer className="py-6 px-4 text-center text-slate-500 text-sm">
+          <p>© 2024 FITDATA. Transformando vidas através do fitness.</p>
+        </footer>
+      </div>
     </div>
   );
 };

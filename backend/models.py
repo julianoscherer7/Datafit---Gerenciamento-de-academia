@@ -180,3 +180,110 @@ class LeaderboardSemanal(Base):
     criterio = Column(String(50))
     atualizado_em = Column(DateTime, server_default=func.now(), onupdate=func.now())
     __table_args__ = (UniqueConstraint("semana_ano", "usuario_id", "criterio"),)
+
+# Check-in de Treino (comprovação com foto)
+class Checkin(Base):
+    __tablename__ = "checkins"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    treino_id = Column(Integer, ForeignKey("treinos.id", ondelete="SET NULL"), index=True)
+    foto_url = Column(String(500))
+    foto_base64 = Column(Text)  # Para armazenar foto em base64
+    localizacao = Column(String(255))
+    validado = Column(Boolean, default=False)
+    pontos_ganhos = Column(Integer, default=10)
+    criado_em = Column(DateTime, server_default=func.now())
+
+# Stories (fotos com 24h de duração)
+class Story(Base):
+    __tablename__ = "stories"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    tipo = Column(Enum("foto", "treino", "conquista"), default="foto")
+    conteudo_url = Column(String(500))
+    conteudo_base64 = Column(Text)
+    texto = Column(String(280))  # Texto curto como Twitter
+    emoji_reacoes = Column(JSON, default=dict)  # {"🔥": 5, "💪": 3}
+    visualizacoes = Column(Integer, default=0)
+    ativo = Column(Boolean, default=True)
+    expira_em = Column(DateTime)  # 24h após criação
+    criado_em = Column(DateTime, server_default=func.now())
+
+# Visualizações de Stories
+class StoryView(Base):
+    __tablename__ = "story_views"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    story_id = Column(Integer, ForeignKey("stories.id", ondelete="CASCADE"), nullable=False, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False)
+    visualizado_em = Column(DateTime, server_default=func.now())
+    __table_args__ = (UniqueConstraint("story_id", "usuario_id"),)
+
+# Mensagens de Chat
+class Mensagem(Base):
+    __tablename__ = "mensagens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    remetente_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    destinatario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    conteudo = Column(Text, nullable=False)
+    tipo = Column(Enum("texto", "imagem", "treino", "badge"), default="texto")
+    imagem_url = Column(String(500))
+    imagem_base64 = Column(Text)
+    lida = Column(Boolean, default=False)
+    criado_em = Column(DateTime, server_default=func.now())
+
+# Itens da Loja (Skins, Bordas, Temas)
+class ItemLoja(Base):
+    __tablename__ = "itens_loja"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    codigo = Column(String(80), unique=True, nullable=False)
+    nome = Column(String(150), nullable=False)
+    descricao = Column(Text)
+    tipo = Column(Enum("skin", "borda", "tema", "titulo", "emoji"), default="skin")
+    preco_moedas = Column(Integer, default=100)
+    icone = Column(String(50))  # Emoji ou URL
+    preview_url = Column(String(500))
+    raridade = Column(Enum("comum", "raro", "epico", "lendario"), default="comum")
+    disponivel = Column(Boolean, default=True)
+    criado_em = Column(DateTime, server_default=func.now())
+
+# Itens Comprados pelo Usuário
+class ItemUsuario(Base):
+    __tablename__ = "itens_usuario"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    item_id = Column(Integer, ForeignKey("itens_loja.id", ondelete="CASCADE"), nullable=False)
+    equipado = Column(Boolean, default=False)
+    adquirido_em = Column(DateTime, server_default=func.now())
+    __table_args__ = (UniqueConstraint("usuario_id", "item_id"),)
+
+# Moedas e XP do Usuário
+class UsuarioProgresso(Base):
+    __tablename__ = "usuario_progresso"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, unique=True)
+    moedas = Column(Integer, default=0)
+    xp_total = Column(Integer, default=0)
+    nivel = Column(Integer, default=1)
+    titulo_atual = Column(String(100), default="Iniciante")
+    borda_atual = Column(String(80))
+    tema_atual = Column(String(80), default="dark")
+    treinos_validados = Column(Integer, default=0)
+    atualizado_em = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+# Recompensas por Ação
+class Recompensa(Base):
+    __tablename__ = "recompensas"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    acao = Column(String(100), unique=True, nullable=False)  # "checkin", "treino_validado", "streak_7", etc.
+    moedas = Column(Integer, default=0)
+    xp = Column(Integer, default=0)
+    descricao = Column(String(255))
+    ativo = Column(Boolean, default=True)

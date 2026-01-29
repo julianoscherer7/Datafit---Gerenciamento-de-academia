@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext';
 import { Sidebar, Header, MainLayout } from './components/sections';
@@ -6,20 +6,17 @@ import { ToastContainer } from './components/common';
 import { useToast } from './hooks';
 import { LoadingScreen } from './components/common/LoadingSpinner';
 
-// Import Pages
+// Import Pages - Core (carregamento imediato)
 import { DashboardPage } from './pages/DashboardPage';
 import { TreinosPage } from './pages/TreinosPage';
-import { DesafiosPage } from './pages/DesafiosPage';
 import { AmigosPage } from './pages/AmigosPage';
-import { BadgesPage } from './pages/BadgesPage';
-import { HistoricoPage } from './pages/HistoricoPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { ConfigsPage } from './pages/ConfigsPage';
 import { PerfilPage } from './pages/PerfilPage';
-import { ExecucaoPage } from './pages/ExecucaoPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+
+// Import Pages - Lazy Loading (carregamento sob demanda)
+const ProgressoPage = lazy(() => import('./pages/ProgressoPage'));
 
 const AppContent = () => {
   const { user, token, loading } = useAuth();
@@ -51,17 +48,12 @@ const AppContent = () => {
     );
   }
 
-  // Renderizar layout protegido
+  // Renderizar layout protegido - Menu simplificado com 5 páginas
   const pages = {
     dashboard: <DashboardPage />,
     treinos: <TreinosPage />,
-    execucao: <ExecucaoPage />,
-    desafios: <DesafiosPage />,
+    progresso: <Suspense fallback={<LoadingScreen />}><ProgressoPage /></Suspense>,
     amigos: <AmigosPage />,
-    badges: <BadgesPage />,
-    historico: <HistoricoPage />,
-    analytics: <AnalyticsPage />,
-    configs: <ConfigsPage />,
     perfil: <PerfilPage />,
   };
 

@@ -11,11 +11,14 @@ load_dotenv()
 from models import (
     Usuario, Exercicio, Treino, TreinoExercicio, TreinoAtribuido,
     SerieExecutada, MedidaCorporal, Desafio, UsuarioDesafio, Streak,
-    Badge, UsuarioBadge, Amizade, Notificacao, LeaderboardSemanal
+    Badge, UsuarioBadge, Amizade, Notificacao, LeaderboardSemanal,
+    Checkin, Story, StoryView, Mensagem, ItemLoja, ItemUsuario,
+    UsuarioProgresso, Recompensa
 )
 
 # Importa os routers
 from routes import auth, dashboard, treinos, execucao, desafios, amigos, badges, historico, analytics, configs, exercicios
+from routes import checkin, stories, chat, loja
 
 # Cria a aplicação
 app = FastAPI(
@@ -29,16 +32,27 @@ app = FastAPI(
 def startup():
     Base.metadata.create_all(bind=engine)
 
-# Configura CORS
-# Lê FRONTEND_URL da env (pode ser múltiplos origins separados por vírgula)
+# Configura CORS - Permite todas as origens em desenvolvimento
+# Em produção, defina FRONTEND_URL com as origens específicas
 frontend_urls = os.getenv("FRONTEND_URL", "").strip()
-if frontend_urls:
+
+# Detecta se está em ambiente Codespaces ou desenvolvimento
+is_codespaces = "CODESPACES" in os.environ or "CODESPACE_NAME" in os.environ
+is_dev = os.getenv("ENV", "development") != "production"
+
+if is_codespaces or is_dev:
+    # Em Codespaces/dev: permite todas as origens
+    origins = ["*"]
+    allow_credentials = False  # Não pode usar credentials com "*"
+    print(f"[CORS] Development mode - allowing all origins")
+elif frontend_urls:
     origins = [u.strip() for u in frontend_urls.split(",") if u.strip()]
     allow_credentials = True
+    print(f"[CORS] Production mode - Origins configured: {origins}")
 else:
-    # Se não configurado, permite todos os origins, mas desabilita credenciais
     origins = ["*"]
     allow_credentials = False
+    print(f"[CORS] Fallback - allowing all origins")
 
 app.add_middleware(
     CORSMiddleware,
@@ -60,6 +74,10 @@ app.include_router(historico.router)
 app.include_router(analytics.router)
 app.include_router(configs.router)
 app.include_router(exercicios.router)
+app.include_router(checkin.router)
+app.include_router(stories.router)
+app.include_router(chat.router)
+app.include_router(loja.router)
 
 @app.get("/", tags=["root"])
 def read_root():
