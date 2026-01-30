@@ -12,9 +12,13 @@ import { TreinosPage } from './pages/TreinosPage';
 import { AmigosPage } from './pages/AmigosPage';
 import { PerfilPage } from './pages/PerfilPage';
 import { EditPerfilPage } from './pages/EditPerfilPage';
+import { ConfigsPage } from './pages/ConfigsPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ExecucaoPage } from './pages/ExecucaoPage';
+import { HistoricoPage } from './pages/HistoricoPage';
+import { AIChatPage } from './pages/AIChatPage';
 
 // Import Pages - Lazy Loading (carregamento sob demanda)
 const ProgressoPage = lazy(() => import('./pages/ProgressoPage'));
@@ -25,6 +29,7 @@ const AppContent = () => {
   // SEMPRE iniciar na landing page - o useEffect redireciona se tiver token
   const [currentPage, setCurrentPage] = useState('landing');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pageParams, setPageParams] = useState({});
 
   // Atualiza página inicial baseado no token
   useEffect(() => {
@@ -37,6 +42,11 @@ const AppContent = () => {
       setCurrentPage('landing');
     }
   }, [token, currentPage]);
+
+  const handleNavigate = (page, params = {}) => {
+    setPageParams(params);
+    setCurrentPage(page);
+  };
 
   if (loading) {
     return <LoadingScreen />;
@@ -53,14 +63,18 @@ const AppContent = () => {
     );
   }
 
-  // Renderizar layout protegido - Menu simplificado com páginas
+  // Renderizar layout protegido
   const pages = {
-    dashboard: <DashboardPage />,
-    treinos: <TreinosPage />,
+    dashboard: <DashboardPage onNavigate={handleNavigate} />,
+    treinos: <TreinosPage onNavigate={handleNavigate} />,
+    execucao: <ExecucaoPage treinoId={pageParams.treinoId} validationData={pageParams.validationData} onNavigate={handleNavigate} />,
+    historico: <HistoricoPage onNavigate={handleNavigate} />,
     progresso: <Suspense fallback={<LoadingScreen />}><ProgressoPage /></Suspense>,
-    amigos: <AmigosPage onNavigate={setCurrentPage} />,
-    perfil: <PerfilPage onNavigate={setCurrentPage} />,
-    'edit-perfil': <EditPerfilPage onNavigate={setCurrentPage} />,
+    amigos: <AmigosPage onNavigate={handleNavigate} />,
+    perfil: <PerfilPage onNavigate={handleNavigate} />,
+    editPerfil: <EditPerfilPage onNavigate={handleNavigate} />,
+    configs: <ConfigsPage onNavigate={handleNavigate} />,
+    chat: <AIChatPage onNavigate={handleNavigate} />,
   };
 
   return (

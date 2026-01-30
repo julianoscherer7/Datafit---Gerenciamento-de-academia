@@ -7,9 +7,10 @@ export const authService = {
    * @param {string} nome - Nome do usuário
    * @param {string} email - Email do usuário
    * @param {string} senha - Senha do usuário
+   * @param {string} nickname - Nickname do usuário (opcional)
    */
-  register: (nome, email, senha) =>
-    api.post('/auth/register', { nome, email, senha }),
+  register: (nome, email, senha, nickname = null) =>
+    api.post('/auth/register', { nome, email, senha, ...(nickname && { nickname }) }),
 
   /**
    * Faz login do usuário

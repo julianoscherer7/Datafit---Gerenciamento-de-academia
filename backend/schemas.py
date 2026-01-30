@@ -6,6 +6,7 @@ from decimal import Decimal
 # Auth Schemas
 class UsuarioRegister(BaseModel):
     nome: str
+    nickname: Optional[str] = None
     email: EmailStr
     senha: str
     perfil: Optional[str] = "aluno"
@@ -23,10 +24,12 @@ class TokenResponse(BaseModel):
 class UsuarioResponse(BaseModel):
     id: int
     nome: str
+    nickname: Optional[str] = None
     email: str
     perfil: str
     foto_url: Optional[str] = None
     foto_base64: Optional[str] = None
+    banner_base64: Optional[str] = None
     bio: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_kg: Optional[float] = None
@@ -43,8 +46,10 @@ class UsuarioResponse(BaseModel):
 
 class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
+    nickname: Optional[str] = None
     foto_url: Optional[str] = None
     foto_base64: Optional[str] = None
+    banner_base64: Optional[str] = None
     bio: Optional[str] = None
     data_nascimento: Optional[date] = None
     peso_kg: Optional[float] = None
@@ -80,12 +85,14 @@ class TreinoExercicioCreate(BaseModel):
 class TreinoCreate(BaseModel):
     nome: str
     descricao: Optional[str] = None
+    duracao: Optional[int] = 45
     exercicios: List[TreinoExercicioCreate] = []
 
 class TreinoResponse(BaseModel):
     id: int
     nome: str
     descricao: Optional[str]
+    duracao: Optional[int] = 45
     criado_por: Optional[int]
     criado_em: datetime
     

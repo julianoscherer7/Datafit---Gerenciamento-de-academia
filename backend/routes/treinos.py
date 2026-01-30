@@ -8,18 +8,59 @@ from security import get_current_user
 
 router = APIRouter(prefix="/treinos", tags=["treinos"])
 
-@router.get("", response_model=List[TreinoAtribuidoResponse])
+@router.get("")
 def listar_treinos(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Lista treinos atribuídos ao usuário"""
-    treinos = db.query(TreinoAtribuido).filter(
-        TreinoAtribuido.aluno_id == current_user["user_id"],
-        TreinoAtribuido.ativo == True
+    """Lista treinos do usuário com detalhes de exercícios"""
+    # Busca treinos criados pelo usuário OU atribuídos a ele
+    treinos_criados = db.query(Treino).filter(
+        Treino.criado_por == current_user["user_id"]
     ).all()
     
-    return treinos
+    treinos_atribuidos = db.query(Treino).join(
+        TreinoAtribuido, TreinoAtribuido.treino_id == Treino.id
+    ).filter(
+        TreinoAtribuido.aluno_id == current_user["user_id"],
+        TreinoAtribuido.ativo == True,
+        Treino.criado_por != current_user["user_id"]  # Evita duplicados
+    ).all()
+    
+    todos_treinos = list(set(treinos_criados + treinos_atribuidos))
+    
+    resultado = []
+    for treino in todos_treinos:
+        # Busca exercícios do treino
+        te = db.query(TreinoExercicio, Exercicio).join(
+            Exercicio, Exercicio.id == TreinoExercicio.exercicio_id
+        ).filter(TreinoExercicio.treino_id == treino.id).order_by(
+            TreinoExercicio.ordem
+        ).all()
+        
+        exercicios = [
+            {
+                "id": ex.Exercicio.id,
+                "nome": ex.Exercicio.nome,
+                "grupo_muscular": ex.Exercicio.grupo_muscular,
+                "series_sugeridas": ex.TreinoExercicio.series_sugeridas,
+                "reps_sugeridas": ex.TreinoExercicio.reps_sugeridas,
+                "ordem": ex.TreinoExercicio.ordem
+            }
+            for ex in te
+        ]
+        
+        resultado.append({
+            "id": treino.id,
+            "nome": treino.nome,
+            "descricao": treino.descricao,
+            "duracao": treino.duracao or 45,
+            "criado_por": treino.criado_por,
+            "criado_em": treino.criado_em,
+            "exercicios": exercicios
+        })
+    
+    return resultado
 
 @router.get("/{treino_id}", response_model=TreinoDetalheResponse)
 def obter_treino(
@@ -70,16 +111,11 @@ def criar_treino(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Cria novo treino (apenas instrutor/admin)"""
-    if current_user["perfil"] not in ["instrutor", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas instrutores podem criar treinos"
-        )
-    
+    """Cria novo treino - qualquer usuário pode criar seus próprios treinos"""
     db_treino = Treino(
         nome=treino.nome,
         descricao=treino.descricao,
+        duracao=treino.duracao or 45,
         criado_por=current_user["user_id"]
     )
     db.add(db_treino)
@@ -96,6 +132,93 @@ def criar_treino(
         )
         db.add(te)
     
+    # Auto-atribui o treino ao próprio usuário
+    treino_atribuido = TreinoAtribuido(
+        treino_id=db_treino.id,
+        aluno_id=current_user["user_id"],
+        ativo=True
+    )
+    db.add(treino_atribuido)
+    
     db.commit()
     db.refresh(db_treino)
     return db_treino
+
+@router.put("/{treino_id}", response_model=TreinoResponse)
+def atualizar_treino(
+    treino_id: int,
+    treino: TreinoCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Atualiza um treino existente"""
+    db_treino = db.query(Treino).filter(Treino.id == treino_id).first()
+    
+    if not db_treino:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Treino não encontrado"
+        )
+    
+    # Verifica se o usuário é o dono do treino ou admin
+    if db_treino.criado_por != current_user["user_id"] and current_user["perfil"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para editar este treino"
+        )
+    
+    # Atualiza dados básicos
+    db_treino.nome = treino.nome
+    db_treino.descricao = treino.descricao
+    db_treino.duracao = treino.duracao or 45
+    
+    # Remove exercícios antigos e adiciona novos
+    db.query(TreinoExercicio).filter(TreinoExercicio.treino_id == treino_id).delete()
+    
+    for ex in treino.exercicios:
+        te = TreinoExercicio(
+            treino_id=treino_id,
+            exercicio_id=ex.exercicio_id,
+            ordem=ex.ordem,
+            series_sugeridas=ex.series_sugeridas,
+            reps_sugeridas=ex.reps_sugeridas
+        )
+        db.add(te)
+    
+    db.commit()
+    db.refresh(db_treino)
+    return db_treino
+
+@router.delete("/{treino_id}")
+def deletar_treino(
+    treino_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Deleta um treino"""
+    db_treino = db.query(Treino).filter(Treino.id == treino_id).first()
+    
+    if not db_treino:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Treino não encontrado"
+        )
+    
+    # Verifica se o usuário é o dono do treino ou admin
+    if db_treino.criado_por != current_user["user_id"] and current_user["perfil"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para deletar este treino"
+        )
+    
+    # Remove atribuições
+    db.query(TreinoAtribuido).filter(TreinoAtribuido.treino_id == treino_id).delete()
+    
+    # Remove exercícios do treino
+    db.query(TreinoExercicio).filter(TreinoExercicio.treino_id == treino_id).delete()
+    
+    # Remove o treino
+    db.delete(db_treino)
+    db.commit()
+    
+    return {"message": "Treino deletado com sucesso"}

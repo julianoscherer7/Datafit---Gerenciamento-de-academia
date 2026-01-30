@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Camera, Save, User, Calendar, Scale, Ruler, 
-  Instagram, Twitter, Linkedin, AtSign, ArrowLeft, Check
+  Instagram, Twitter, Linkedin, AtSign, ArrowLeft, Check, Image
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -46,7 +46,7 @@ const InputField = ({
 };
 
 export const EditPerfilPage = ({ onNavigate }) => {
-  const { user, login } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { darkMode } = useTheme();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -55,6 +55,7 @@ export const EditPerfilPage = ({ onNavigate }) => {
   // Form state
   const [formData, setFormData] = useState({
     nome: '',
+    nickname: '',
     bio: '',
     data_nascimento: '',
     peso_kg: '',
@@ -64,7 +65,8 @@ export const EditPerfilPage = ({ onNavigate }) => {
     tiktok: '',
     twitter: '',
     linkedin: '',
-    foto_base64: ''
+    foto_base64: '',
+    banner_base64: ''
   });
 
   // Carregar dados do usuário
@@ -72,6 +74,7 @@ export const EditPerfilPage = ({ onNavigate }) => {
     if (user) {
       setFormData({
         nome: user.nome || '',
+        nickname: user.nickname || '',
         bio: user.bio || '',
         data_nascimento: user.data_nascimento || '',
         peso_kg: user.peso_kg || '',
@@ -81,7 +84,8 @@ export const EditPerfilPage = ({ onNavigate }) => {
         tiktok: user.tiktok || '',
         twitter: user.twitter || '',
         linkedin: user.linkedin || '',
-        foto_base64: user.foto_base64 || ''
+        foto_base64: user.foto_base64 || '',
+        banner_base64: user.banner_base64 || ''
       });
     }
   }, [user]);
@@ -104,6 +108,21 @@ export const EditPerfilPage = ({ onNavigate }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(prev => ({ ...prev, foto_base64: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Imagem muito grande. Máximo 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, banner_base64: reader.result }));
       };
       reader.readAsDataURL(file);
     }
@@ -134,10 +153,22 @@ export const EditPerfilPage = ({ onNavigate }) => {
       
       setSuccess(true);
       
-      // Recarregar dados do usuário
+      // Update local user data and refresh AuthContext
+      if (response.data) {
+        // Update the form data with the response
+        setFormData(prev => ({
+          ...prev,
+          ...response.data
+        }));
+        
+        // Refresh user in AuthContext so nickname appears everywhere
+        await refreshUser();
+      }
+      
+      // Show success for 3 seconds then hide
       setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+        setSuccess(false);
+      }, 3000);
       
     } catch (err) {
       console.error('Erro ao salvar:', err);
@@ -178,36 +209,59 @@ export const EditPerfilPage = ({ onNavigate }) => {
           </div>
         </motion.div>
 
-        {/* Foto de Perfil */}
+        {/* Banner e Foto de Perfil */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`${cardBg} rounded-2xl p-8 mb-6 shadow-lg`}
+          className={`${cardBg} rounded-2xl overflow-hidden mb-6 shadow-lg`}
         >
-          <div className="flex flex-col items-center">
-            <div className="relative mb-4">
-              <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                {formData.foto_base64 ? (
-                  <img 
-                    src={formData.foto_base64} 
-                    alt="Foto de perfil" 
-                    className="w-full h-full object-cover"
+          {/* Banner */}
+          <div className="relative h-32 bg-gradient-to-r from-purple-600 to-pink-600">
+            {formData.banner_base64 && (
+              <img 
+                src={formData.banner_base64} 
+                alt="Banner" 
+                className="w-full h-full object-cover"
+              />
+            )}
+            <label className="absolute bottom-2 right-2 p-2 bg-black/50 rounded-full cursor-pointer hover:bg-black/70 transition-colors">
+              <Image className="w-4 h-4 text-white" />
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleBannerUpload}
+                className="hidden" 
+              />
+            </label>
+          </div>
+          
+          {/* Foto de Perfil sobreposta */}
+          <div className="px-8 pb-6">
+            <div className="flex flex-col items-center -mt-12">
+              <div className="relative mb-4">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center border-4 border-slate-800">
+                  {formData.foto_base64 ? (
+                    <img 
+                      src={formData.foto_base64} 
+                      alt="Foto de perfil" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-4xl">👤</span>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 p-1.5 bg-purple-500 rounded-full cursor-pointer hover:bg-purple-600 transition-colors">
+                  <Camera className="w-4 h-4 text-white" />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoUpload}
+                    className="hidden" 
                   />
-                ) : (
-                  <span className="text-5xl">👤</span>
-                )}
+                </label>
               </div>
-              <label className="absolute bottom-0 right-0 p-2 bg-purple-500 rounded-full cursor-pointer hover:bg-purple-600 transition-colors">
-                <Camera className="w-5 h-5 text-white" />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handlePhotoUpload}
-                  className="hidden" 
-                />
-              </label>
+              <p className={`text-sm ${textSecondary}`}>Clique nos ícones para trocar imagens</p>
             </div>
-            <p className={`text-sm ${textSecondary}`}>Clique no ícone para trocar a foto</p>
           </div>
         </motion.div>
 
@@ -228,6 +282,29 @@ export const EditPerfilPage = ({ onNavigate }) => {
               placeholder="Seu nome completo"
               darkMode={darkMode}
             />
+            
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${textSecondary}`}>Nickname</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <AtSign className={`w-5 h-5 ${textSecondary}`} />
+                </div>
+                <input
+                  type="text"
+                  value={formData.nickname}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    setFormData(prev => ({ ...prev, nickname: value }));
+                    setError('');
+                    setSuccess(false);
+                  }}
+                  placeholder="seu_nickname"
+                  maxLength={20}
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl border ${inputBg} ${inputText} focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
+                />
+              </div>
+              <p className={`text-xs ${textSecondary}`}>Apenas letras, números e _ (3-20 caracteres)</p>
+            </div>
             
             <div className="space-y-2">
               <label className={`block text-sm font-medium ${textSecondary}`}>Bio</label>

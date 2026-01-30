@@ -6,3 +6,5 @@ export * from './ProgressBar';
 export * from './Modal';
 export * from './LoadingSpinner';
 export * from './Toast';
+export * from './LogoutModal';
+export * from './PhotoValidationModal';

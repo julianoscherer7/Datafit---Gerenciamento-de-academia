@@ -79,10 +79,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (nome, email, senha) => {
+  const register = async (nome, email, senha, nickname = null) => {
     try {
-      console.log('Tentando registrar:', { nome, email });
-      const res = await authService.register(nome, email, senha);
+      console.log('Tentando registrar:', { nome, email, nickname });
+      const res = await authService.register(nome, email, senha, nickname);
       console.log('Registro bem-sucedido:', res.data);
       
       const { access_token, user_id, perfil } = res.data;
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userRes.data);
       } catch (userErr) {
         console.warn('Usando dados básicos do registro:', userErr);
-        setUser({ id: user_id, perfil, email, nome });
+        setUser({ id: user_id, perfil, email, nome, nickname });
       }
       
       return res.data;
@@ -115,6 +115,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   }, []);
 
+  // Refresh user data from server
+  const refreshUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await authService.me();
+      setUser(res.data);
+      return res.data;
+    } catch (err) {
+      console.error('Erro ao atualizar usuário:', err);
+      if (err.response?.status === 401) {
+        logout();
+      }
+    }
+  }, [token, logout]);
+
   const value = {
     user,
     token,
@@ -122,6 +137,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser,
     isAuthenticated: !!token && !!user
   };
 

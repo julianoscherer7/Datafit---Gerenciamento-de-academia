@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, TrendingUp, Users, Trophy, Sparkles, Zap, Target, Camera, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Dumbbell, TrendingUp, Users, Trophy, Sparkles, Zap, Target, Camera, MessageCircle } from 'lucide-react';
 
 // Counter Animation
 const Counter = ({ end, duration = 2 }) => {
@@ -29,7 +29,6 @@ export const LandingPage = ({ onNavigate }) => {
     { icon: Camera, title: 'Check-in de Treino', desc: 'Comprove seu treino com fotos', color: 'from-purple-500 to-pink-500' },
     { icon: Sparkles, title: 'Stories', desc: 'Compartilhe seu progresso', color: 'from-pink-500 to-orange-500' },
     { icon: MessageCircle, title: 'Chat', desc: 'Converse com amigos', color: 'from-blue-500 to-cyan-500' },
-    { icon: ShoppingBag, title: 'Loja', desc: 'Personalize seu perfil', color: 'from-yellow-500 to-orange-500' },
     { icon: Trophy, title: 'Gamificação', desc: 'Conquiste badges', color: 'from-green-500 to-emerald-500' },
     { icon: TrendingUp, title: 'Analytics', desc: 'Acompanhe o progresso', color: 'from-indigo-500 to-purple-500' },
   ];
@@ -93,7 +92,7 @@ export const LandingPage = ({ onNavigate }) => {
             >
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-medium">
                 <Sparkles className="w-4 h-4" />
-                O Snapchat da Academia
+                A rede social fitness
               </span>
             </motion.div>
 
@@ -166,40 +165,55 @@ export const LandingPage = ({ onNavigate }) => {
             </motion.div>
           </div>
 
-          {/* Features Grid */}
+          {/* Features Carousel - Continuous Movement */}
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="max-w-6xl mx-auto w-full px-4"
+            className="w-full overflow-hidden py-8"
           >
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {features.map((feature, i) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + i * 0.1 }}
-                    whileHover={{ y: -5, scale: 1.02 }}
-                    className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50 text-center group hover:border-slate-600 transition-all"
-                  >
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-white text-sm mb-1">{feature.title}</h3>
-                    <p className="text-xs text-slate-500">{feature.desc}</p>
-                  </motion.div>
-                );
-              })}
+            <div className="relative">
+              {/* Gradient overlays for smooth fade */}
+              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none" />
+              
+              {/* Scrolling container */}
+              <motion.div
+                animate={{ x: [0, -1200] }}
+                transition={{
+                  x: {
+                    duration: 25,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                }}
+                className="flex gap-4"
+              >
+                {/* Duplicate features for seamless loop */}
+                {[...features, ...features, ...features, ...features].map((feature, i) => {
+                  const Icon = feature.icon;
+                  return (
+                    <motion.div
+                      key={i}
+                      whileHover={{ y: -8, scale: 1.05 }}
+                      className="flex-shrink-0 w-48 bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50 text-center group hover:border-purple-500/50 hover:bg-slate-800/80 transition-all cursor-pointer"
+                    >
+                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
+                        <Icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="font-bold text-white text-sm mb-1">{feature.title}</h3>
+                      <p className="text-xs text-slate-400">{feature.desc}</p>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
             </div>
           </motion.div>
         </main>
 
         {/* Footer */}
         <footer className="py-6 px-4 text-center text-slate-500 text-sm">
-          <p>© 2024 FITDATA. Transformando vidas através do fitness.</p>
+          <p>© 2026 FITDATA. Transformando vidas através do fitness.</p>
         </footer>
       </div>
     </div>

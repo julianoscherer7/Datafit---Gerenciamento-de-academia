@@ -8,6 +8,13 @@ export const exerciciosService = {
   getExercicios: () => api.get('/exercicios'),
 
   /**
+   * Cria um novo exercício
+   * @param {object} data - Dados do exercício { nome, grupo_muscular, descricao }
+   */
+  createExercicio: (data) => api.post('/exercicios', data),
+  criarExercicio: (data) => api.post('/exercicios', data),
+
+  /**
    * Busca exercícios por nome ou grupo muscular
    * @param {string} query - Termo de busca
    */

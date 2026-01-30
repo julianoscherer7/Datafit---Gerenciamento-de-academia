@@ -50,7 +50,7 @@ async def criar_story(
     expira_em = datetime.now() + timedelta(hours=24)
     
     novo_story = Story(
-        usuario_id=current_user["id"],
+        usuario_id=current_user["user_id"],
         tipo=story_data.tipo,
         conteudo_base64=story_data.conteudo_base64,
         texto=story_data.texto,
@@ -90,17 +90,17 @@ async def get_feed_stories(
     
     # Buscar IDs dos amigos
     amigos_ids = db.query(Amizade.solicitado_id).filter(
-        Amizade.solicitante_id == current_user["id"],
+        Amizade.solicitante_id == current_user["user_id"],
         Amizade.status == "aceito"
     ).union(
         db.query(Amizade.solicitante_id).filter(
-            Amizade.solicitado_id == current_user["id"],
+            Amizade.solicitado_id == current_user["user_id"],
             Amizade.status == "aceito"
         )
     ).all()
     
     amigos_ids = [a[0] for a in amigos_ids]
-    amigos_ids.append(current_user["id"])  # Incluir próprios stories
+    amigos_ids.append(current_user["user_id"])  # Incluir próprios stories
     
     # Buscar stories ativos
     stories = db.query(Story, Usuario).join(
@@ -113,7 +113,7 @@ async def get_feed_stories(
     
     # Verificar quais foram visualizados
     visualizados = db.query(StoryView.story_id).filter(
-        StoryView.usuario_id == current_user["id"]
+        StoryView.usuario_id == current_user["user_id"]
     ).all()
     visualizados_ids = set([v[0] for v in visualizados])
     
@@ -157,7 +157,7 @@ async def get_meus_stories(
     limite_24h = datetime.now() - timedelta(hours=24)
     
     stories = db.query(Story).filter(
-        Story.usuario_id == current_user["id"],
+        Story.usuario_id == current_user["user_id"],
         Story.ativo == True,
         Story.criado_em >= limite_24h
     ).order_by(Story.criado_em.desc()).all()
@@ -192,13 +192,13 @@ async def visualizar_story(
     # Verificar se já visualizou
     view_existente = db.query(StoryView).filter(
         StoryView.story_id == story_id,
-        StoryView.usuario_id == current_user["id"]
+        StoryView.usuario_id == current_user["user_id"]
     ).first()
     
     if not view_existente:
         nova_view = StoryView(
             story_id=story_id,
-            usuario_id=current_user["id"]
+            usuario_id=current_user["user_id"]
         )
         db.add(nova_view)
         
@@ -245,7 +245,7 @@ async def deletar_story(
     
     story = db.query(Story).filter(
         Story.id == story_id,
-        Story.usuario_id == current_user["id"]
+        Story.usuario_id == current_user["user_id"]
     ).first()
     
     if not story:

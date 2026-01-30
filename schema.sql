@@ -23,11 +23,25 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE usuarios (
   id INT AUTO_INCREMENT PRIMARY KEY,
   nome VARCHAR(120) NOT NULL,
+  nickname VARCHAR(30) NULL UNIQUE,
   email VARCHAR(150) NOT NULL UNIQUE,
   senha_hash VARCHAR(256) NOT NULL,
   perfil ENUM('aluno','instrutor','admin') NOT NULL DEFAULT 'aluno',
+  foto_url VARCHAR(500) NULL,
+  foto_base64 LONGTEXT NULL,
+  banner_base64 LONGTEXT NULL,
+  bio TEXT NULL,
+  data_nascimento DATE NULL,
+  peso_kg DECIMAL(5,2) NULL,
+  altura_cm DECIMAL(5,1) NULL,
+  genero VARCHAR(20) NULL,
+  instagram VARCHAR(100) NULL,
+  tiktok VARCHAR(100) NULL,
+  twitter VARCHAR(100) NULL,
+  linkedin VARCHAR(100) NULL,
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  atualizado_em TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+  atualizado_em TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_nickname (nickname)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

@@ -2,26 +2,33 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Dumbbell, Users, TrendingUp, User,
-  LogOut, Menu, X
+  LogOut, Menu, X, History, Bot
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { LogoutModal } from '../common/LogoutModal';
 
 export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
   const { logout, user } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Menu simplificado - apenas 5 itens principais
+  // Menu simplificado - principais itens
   const menuItems = [
     { id: 'dashboard', label: 'Início', icon: Home, description: 'Seu resumo diário' },
     { id: 'treinos', label: 'Treino', icon: Dumbbell, description: 'Treinar agora' },
+    { id: 'historico', label: 'Histórico', icon: History, description: 'Seus treinos passados' },
     { id: 'progresso', label: 'Progresso', icon: TrendingUp, description: 'Suas conquistas' },
     { id: 'amigos', label: 'Social', icon: Users, description: 'Amigos e chat' },
+    { id: 'chat', label: 'FitBot AI', icon: Bot, description: 'Assistente de treinos', badge: 'NOVO' },
     { id: 'perfil', label: 'Perfil', icon: User, description: 'Configurações' },
   ];
 
-  const handleLogout = () => {
-    if (window.confirm('Deseja realmente sair?')) {
-      logout();
-    }
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutModal(false);
+    logout();
   };
 
   return (
@@ -102,6 +109,11 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
                 <div className="flex-1 text-left">
                   <span className="font-medium">{item.label}</span>
                 </div>
+                {item.badge && (
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </motion.button>
             );
           })}
@@ -112,7 +124,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all"
           >
             <LogOut className="w-5 h-5" />
@@ -133,6 +145,13 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogoutConfirm}
+      />
     </>
   );
 };

@@ -10,6 +10,7 @@ class Usuario(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(120), nullable=False)
+    nickname = Column(String(30), unique=True, index=True)
     email = Column(String(150), unique=True, nullable=False, index=True)
     senha_hash = Column(String(256), nullable=False)
     perfil = Column(Enum("aluno", "instrutor", "admin"), default="aluno", nullable=False)
@@ -17,6 +18,7 @@ class Usuario(Base):
     # Campos de perfil estendido
     foto_url = Column(String(500))
     foto_base64 = Column(Text)
+    banner_base64 = Column(Text)  # Profile banner
     bio = Column(Text)
     data_nascimento = Column(Date)
     peso_kg = Column(Numeric(5, 2))
@@ -50,6 +52,7 @@ class Treino(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String(150), nullable=False)
     descricao = Column(Text)
+    duracao = Column(Integer, default=45)  # Duração em minutos
     criado_por = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"))
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())

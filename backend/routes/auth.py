@@ -32,6 +32,17 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
             detail="Email já cadastrado. Tente fazer login ou use outro email."
         )
     
+    # Verifica se nickname já existe (se fornecido)
+    if user.nickname:
+        nickname_clean = user.nickname.strip().lower()
+        existing_nickname = db.query(Usuario).filter(Usuario.nickname == nickname_clean).first()
+        if existing_nickname:
+            logger.warning(f"[REGISTER] Nickname já em uso: {user.nickname}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nickname já em uso. Escolha outro."
+            )
+    
     # Cria novo usuário
     try:
         hashed = hash_password(user.senha)
@@ -39,6 +50,7 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
         
         db_user = Usuario(
             nome=user.nome.strip(),
+            nickname=user.nickname.strip().lower() if user.nickname else None,
             email=user.email.strip().lower(),
             senha_hash=hashed,
             perfil=user.perfil or "aluno"
@@ -133,10 +145,12 @@ def get_current_user_info(
     response = {
         "id": user.id,
         "nome": user.nome,
+        "nickname": user.nickname,
         "email": user.email,
         "perfil": user.perfil,
         "foto_url": user.foto_url,
         "foto_base64": user.foto_base64,
+        "banner_base64": user.banner_base64,
         "bio": user.bio,
         "data_nascimento": str(user.data_nascimento) if user.data_nascimento else None,
         "peso_kg": float(user.peso_kg) if user.peso_kg else None,
@@ -173,10 +187,27 @@ def update_current_user(
             detail="Usuário não encontrado"
         )
     
+    # Verifica se nickname já existe (se fornecido e diferente do atual)
+    if user_data.nickname:
+        nickname_clean = user_data.nickname.strip().lower()
+        existing_nickname = db.query(Usuario).filter(
+            Usuario.nickname == nickname_clean,
+            Usuario.id != user.id
+        ).first()
+        if existing_nickname:
+            logger.warning(f"[UPDATE] Nickname já em uso: {user_data.nickname}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nickname já em uso. Escolha outro."
+            )
+    
     # Atualiza campos fornecidos
     update_data = user_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if hasattr(user, field):
+            # Normaliza nickname para lowercase
+            if field == 'nickname' and value:
+                value = value.strip().lower()
             setattr(user, field, value)
     
     try:

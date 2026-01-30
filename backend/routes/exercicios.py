@@ -44,12 +44,11 @@ def criar_exercicio(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Cria novo exercício (apenas admin/instrutor)"""
-    if current_user["perfil"] not in ["instrutor", "admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas instrutores podem criar exercícios"
-        )
+    """Cria novo exercício - qualquer usuário autenticado pode criar"""
+    # Verifica se já existe um exercício com o mesmo nome
+    existente = db.query(Exercicio).filter(Exercicio.nome.ilike(exercicio.nome)).first()
+    if existente:
+        return existente  # Retorna o existente ao invés de criar duplicado
     
     db_exercicio = Exercicio(
         nome=exercicio.nome,

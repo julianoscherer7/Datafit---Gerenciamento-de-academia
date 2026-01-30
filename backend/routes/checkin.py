@@ -48,7 +48,7 @@ async def iniciar_checkin(
     # Verificar se já tem check-in hoje sem treino concluído
     hoje = datetime.now().date()
     checkin_existente = db.query(Checkin).filter(
-        Checkin.usuario_id == current_user["id"],
+        Checkin.usuario_id == current_user["user_id"],
         func.date(Checkin.criado_em) == hoje,
         Checkin.validado == False
     ).first()
@@ -67,7 +67,7 @@ async def iniciar_checkin(
     
     # Criar novo check-in
     novo_checkin = Checkin(
-        usuario_id=current_user["id"],
+        usuario_id=current_user["user_id"],
         treino_id=checkin_data.treino_id,
         foto_base64=checkin_data.foto_base64,
         localizacao=checkin_data.localizacao,
@@ -80,7 +80,7 @@ async def iniciar_checkin(
     db.refresh(novo_checkin)
     
     # Adicionar pontos por check-in
-    _adicionar_recompensa(db, current_user["id"], "checkin")
+    _adicionar_recompensa(db, current_user["user_id"], "checkin")
     
     return novo_checkin
 
@@ -94,7 +94,7 @@ async def validar_treino(
     
     checkin = db.query(Checkin).filter(
         Checkin.id == checkin_id,
-        Checkin.usuario_id == current_user["id"]
+        Checkin.usuario_id == current_user["user_id"]
     ).first()
     
     if not checkin:
@@ -112,7 +112,7 @@ async def validar_treino(
     # Verificar se tem exercícios registrados hoje
     hoje = datetime.now().date()
     exercicios_hoje = db.query(SerieExecutada).filter(
-        SerieExecutada.aluno_id == current_user["id"],
+        SerieExecutada.aluno_id == current_user["user_id"],
         func.date(SerieExecutada.data_execucao) == hoje
     ).count()
     
@@ -125,10 +125,10 @@ async def validar_treino(
         db.commit()
         
         # Adicionar recompensa por treino validado
-        badge = _adicionar_recompensa(db, current_user["id"], "treino_validado")
+        badge = _adicionar_recompensa(db, current_user["user_id"], "treino_validado")
         
         # Atualizar contador de treinos validados
-        progresso = _get_or_create_progresso(db, current_user["id"])
+        progresso = _get_or_create_progresso(db, current_user["user_id"])
         progresso.treinos_validados += 1
         db.commit()
         
@@ -156,7 +156,7 @@ async def get_checkin_hoje(
     """Retorna o check-in de hoje do usuário"""
     hoje = datetime.now().date()
     checkin = db.query(Checkin).filter(
-        Checkin.usuario_id == current_user["id"],
+        Checkin.usuario_id == current_user["user_id"],
         func.date(Checkin.criado_em) == hoje
     ).first()
     
@@ -170,7 +170,7 @@ async def get_historico_checkins(
 ):
     """Retorna histórico de check-ins do usuário"""
     checkins = db.query(Checkin).filter(
-        Checkin.usuario_id == current_user["id"]
+        Checkin.usuario_id == current_user["user_id"]
     ).order_by(Checkin.criado_em.desc()).limit(limite).all()
     
     return checkins
@@ -185,18 +185,18 @@ async def get_status_treino(
     
     # Check-in de hoje
     checkin = db.query(Checkin).filter(
-        Checkin.usuario_id == current_user["id"],
+        Checkin.usuario_id == current_user["user_id"],
         func.date(Checkin.criado_em) == hoje
     ).first()
     
     # Exercícios de hoje
     exercicios_hoje = db.query(SerieExecutada).filter(
-        SerieExecutada.aluno_id == current_user["id"],
+        SerieExecutada.aluno_id == current_user["user_id"],
         func.date(SerieExecutada.data_execucao) == hoje
     ).count()
     
     # Progresso do usuário
-    progresso = _get_or_create_progresso(db, current_user["id"])
+    progresso = _get_or_create_progresso(db, current_user["user_id"])
     
     return {
         "tem_checkin": checkin is not None,

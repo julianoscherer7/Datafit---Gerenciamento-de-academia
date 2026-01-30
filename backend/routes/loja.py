@@ -64,7 +64,7 @@ async def listar_itens(
     
     # Verificar quais o usuário já comprou
     itens_comprados = db.query(ItemUsuario).filter(
-        ItemUsuario.usuario_id == current_user["id"]
+        ItemUsuario.usuario_id == current_user["user_id"]
     ).all()
     
     comprados_dict = {item.item_id: item.equipado for item in itens_comprados}
@@ -104,7 +104,7 @@ async def comprar_item(
     
     # Verificar se já comprou
     ja_comprou = db.query(ItemUsuario).filter(
-        ItemUsuario.usuario_id == current_user["id"],
+        ItemUsuario.usuario_id == current_user["user_id"],
         ItemUsuario.item_id == item_id
     ).first()
     
@@ -112,7 +112,7 @@ async def comprar_item(
         raise HTTPException(status_code=400, detail="Você já possui este item")
     
     # Verificar moedas
-    progresso = _get_or_create_progresso(db, current_user["id"])
+    progresso = _get_or_create_progresso(db, current_user["user_id"])
     
     if progresso.moedas < item.preco_moedas:
         return CompraResponse(
@@ -126,7 +126,7 @@ async def comprar_item(
     progresso.moedas -= item.preco_moedas
     
     novo_item = ItemUsuario(
-        usuario_id=current_user["id"],
+        usuario_id=current_user["user_id"],
         item_id=item_id,
         equipado=False
     )
@@ -163,7 +163,7 @@ async def equipar_item(
     
     # Verificar se possui o item
     item_usuario = db.query(ItemUsuario).filter(
-        ItemUsuario.usuario_id == current_user["id"],
+        ItemUsuario.usuario_id == current_user["user_id"],
         ItemUsuario.item_id == item_id
     ).first()
     
@@ -175,7 +175,7 @@ async def equipar_item(
     
     # Desequipar outros itens do mesmo tipo
     db.query(ItemUsuario).filter(
-        ItemUsuario.usuario_id == current_user["id"],
+        ItemUsuario.usuario_id == current_user["user_id"],
         ItemUsuario.item_id.in_(
             db.query(ItemLoja.id).filter(ItemLoja.tipo == item.tipo)
         )
@@ -185,7 +185,7 @@ async def equipar_item(
     item_usuario.equipado = True
     
     # Atualizar progresso do usuário
-    progresso = _get_or_create_progresso(db, current_user["id"])
+    progresso = _get_or_create_progresso(db, current_user["user_id"])
     
     if item.tipo == "borda":
         progresso.borda_atual = item.codigo
@@ -208,7 +208,7 @@ async def listar_meus_itens(
     itens = db.query(ItemLoja, ItemUsuario).join(
         ItemUsuario, ItemLoja.id == ItemUsuario.item_id
     ).filter(
-        ItemUsuario.usuario_id == current_user["id"]
+        ItemUsuario.usuario_id == current_user["user_id"]
     ).all()
     
     return [
@@ -234,7 +234,7 @@ async def get_progresso(
 ):
     """Retorna progresso do usuário (moedas, XP, nível)"""
     
-    progresso = _get_or_create_progresso(db, current_user["id"])
+    progresso = _get_or_create_progresso(db, current_user["user_id"])
     
     return ProgressoResponse(
         moedas=progresso.moedas,

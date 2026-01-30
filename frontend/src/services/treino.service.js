@@ -12,6 +12,7 @@ export const treinoService = {
    * @param {object} data - Dados do treino
    */
   criarTreino: (data) => api.post('/treinos', data),
+  createTreino: (data) => api.post('/treinos', data),
 
   /**
    * Obtém detalhes de um treino específico
@@ -25,12 +26,14 @@ export const treinoService = {
    * @param {object} data - Dados atualizados
    */
   atualizarTreino: (id, data) => api.put(`/treinos/${id}`, data),
+  updateTreino: (id, data) => api.put(`/treinos/${id}`, data),
 
   /**
    * Deleta um treino
    * @param {number} id - ID do treino
    */
   deletarTreino: (id) => api.delete(`/treinos/${id}`),
+  deleteTreino: (id) => api.delete(`/treinos/${id}`),
 
   /**
    * Lista treinos atribuídos ao usuário

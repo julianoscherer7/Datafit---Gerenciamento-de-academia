@@ -89,18 +89,26 @@ export const PerfilPage = ({ onNavigate }) => {
       {/* Header com foto e info principal */}
       <motion.div
         variants={itemVariants}
-        className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white relative overflow-hidden"
+        className="rounded-2xl text-white relative overflow-hidden"
       >
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-1/2 -translate-x-1/2" />
+        {/* Banner */}
+        <div className="h-32 md:h-40 bg-gradient-to-r from-purple-600 to-pink-600 relative">
+          {user?.banner_base64 && (
+            <img 
+              src={user.banner_base64} 
+              alt="Banner" 
+              className="w-full h-full object-cover"
+            />
+          )}
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
         </div>
         
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            {/* Foto */}
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-white/20 flex items-center justify-center border-4 border-white/30">
+        {/* Content below banner */}
+        <div className="bg-slate-800/80 backdrop-blur-sm px-6 pb-6 pt-0 relative">
+          {/* Foto de perfil sobreposta */}
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-4 -mt-12 md:-mt-16">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-white/20 flex items-center justify-center border-4 border-slate-800 shadow-xl">
               {user?.foto_base64 ? (
                 <img src={user.foto_base64} alt="Foto" className="w-full h-full object-cover" />
               ) : (
@@ -109,38 +117,12 @@ export const PerfilPage = ({ onNavigate }) => {
             </div>
             
             {/* Info */}
-            <div className="text-center md:text-left flex-1">
-              <h1 className="text-3xl font-bold mb-1">{user?.nome}</h1>
-              <p className="text-purple-200 mb-3">{user?.email}</p>
-              
-              {user?.bio && (
-                <p className="text-white/80 text-sm mb-3 max-w-md">{user.bio}</p>
+            <div className="text-center md:text-left flex-1 pt-2 md:pt-4">
+              <h1 className="text-2xl md:text-3xl font-bold">{user?.nome}</h1>
+              {user?.nickname && (
+                <p className="text-purple-300 font-medium">@{user.nickname}</p>
               )}
-              
-              <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
-                <Badge label="Nível 12" color="purple" />
-                <Badge label="🔥 7 dias de streak" color="orange" />
-                {user?.perfil === 'admin' && <Badge label="Admin" color="blue" />}
-              </div>
-              
-              {/* Info adicional */}
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-purple-200">
-                {idade && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" /> {idade} anos
-                  </span>
-                )}
-                {user?.peso_kg && (
-                  <span className="flex items-center gap-1">
-                    <Scale className="w-4 h-4" /> {user.peso_kg}kg
-                  </span>
-                )}
-                {user?.altura_cm && (
-                  <span className="flex items-center gap-1">
-                    <Ruler className="w-4 h-4" /> {user.altura_cm}cm
-                  </span>
-                )}
-              </div>
+              <p className="text-slate-400 text-sm">{user?.email}</p>
             </div>
             
             {/* Botão Editar */}
@@ -148,11 +130,43 @@ export const PerfilPage = ({ onNavigate }) => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => onNavigate('edit-perfil')}
-              className="absolute top-4 right-4 md:relative md:top-auto md:right-auto px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl flex items-center gap-2 transition-colors"
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl flex items-center gap-2 transition-colors"
             >
               <Edit className="w-4 h-4" />
               <span className="hidden md:inline">Editar</span>
             </motion.button>
+          </div>
+          
+          {/* Bio e badges */}
+          <div className="mt-4">
+            {user?.bio && (
+              <p className="text-white/80 text-sm mb-4 max-w-2xl">{user.bio}</p>
+            )}
+            
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+              <Badge label={`Nível ${user?.nivel || 1}`} color="purple" />
+              {user?.titulo_atual && <Badge label={user.titulo_atual} color="blue" />}
+              {user?.perfil === 'admin' && <Badge label="Admin" color="green" />}
+            </div>
+            
+            {/* Info adicional */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-slate-400">
+              {idade && (
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" /> {idade} anos
+                </span>
+              )}
+              {user?.peso_kg && (
+                <span className="flex items-center gap-1">
+                  <Scale className="w-4 h-4" /> {user.peso_kg}kg
+                </span>
+              )}
+              {user?.altura_cm && (
+                <span className="flex items-center gap-1">
+                  <Ruler className="w-4 h-4" /> {user.altura_cm}cm
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -210,10 +224,10 @@ export const PerfilPage = ({ onNavigate }) => {
 
       {/* Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={Trophy} label="Badges" value="12" color="purple" />
-        <StatCard icon={Flame} label="Streaks" value="7d" color="orange" />
-        <StatCard icon={Target} label="Desafios" value="5" color="blue" />
-        <StatCard icon={Award} label="Total XP" value="45k" color="green" />
+        <StatCard icon={Trophy} label="Badges" value={user?.badges_count || 0} color="purple" />
+        <StatCard icon={Flame} label="Streaks" value={`${user?.streak || 0}d`} color="orange" />
+        <StatCard icon={Target} label="Desafios" value={user?.desafios_count || 0} color="blue" />
+        <StatCard icon={Award} label="Total XP" value={user?.xp_total || 0} color="green" />
       </motion.div>
 
       {/* Achievements */}

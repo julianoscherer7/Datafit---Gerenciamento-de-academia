@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Dumbbell, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Dumbbell, CheckCircle, AtSign } from 'lucide-react';
 
 // Password validation helper
 const validatePassword = (password) => {
@@ -15,8 +14,8 @@ const validatePassword = (password) => {
 
 export const RegisterPage = ({ onNavigate }) => {
   const { register } = useAuth();
-  const { darkMode, toggleDarkMode } = useTheme();
   const [nome, setNome] = useState('');
+  const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmaSenha, setConfirmaSenha] = useState('');
@@ -31,6 +30,9 @@ export const RegisterPage = ({ onNavigate }) => {
     const newErrors = {};
     
     if (!nome.trim()) newErrors.nome = 'Nome é obrigatório';
+    if (!nickname.trim()) newErrors.nickname = 'Nickname é obrigatório';
+    else if (nickname.length < 3) newErrors.nickname = 'Mínimo 3 caracteres';
+    else if (!/^[a-zA-Z0-9_]+$/.test(nickname)) newErrors.nickname = 'Apenas letras, números e _';
     if (!email.trim()) newErrors.email = 'Email é obrigatório';
     
     if (!passwordChecks.length) newErrors.senha = 'Mínimo 6 caracteres';
@@ -53,7 +55,7 @@ export const RegisterPage = ({ onNavigate }) => {
     
     setLoading(true);
     try {
-      await register(nome, email, senha);
+      await register(nome, email, senha, nickname);
       onNavigate('dashboard');
     } catch (err) {
       setError(err.message || 'Erro ao criar conta. Tente novamente.');
@@ -87,17 +89,6 @@ export const RegisterPage = ({ onNavigate }) => {
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Voltar</span>
-          </motion.button>
-          
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleDarkMode}
-            className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 text-white text-xl transition-all"
-          >
-            {darkMode ? '☀️' : '🌙'}
           </motion.button>
         </div>
       </header>
@@ -146,6 +137,24 @@ export const RegisterPage = ({ onNavigate }) => {
                   />
                 </div>
                 {errors.nome && <p className="text-red-400 text-sm mt-1">{errors.nome}</p>}
+              </div>
+              
+              {/* Nickname Input */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-300 mb-2">Nickname</label>
+                <div className="relative">
+                  <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => { setNickname(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setErrors(prev => ({...prev, nickname: null})); }}
+                    placeholder="seu_nickname"
+                    maxLength={20}
+                    className={`w-full pl-10 pr-4 py-3 bg-slate-700/50 border rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all ${errors.nickname ? 'border-red-500' : 'border-slate-600'}`}
+                  />
+                </div>
+                <p className="text-slate-500 text-xs mt-1">Apenas letras, números e _ (3-20 caracteres)</p>
+                {errors.nickname && <p className="text-red-400 text-sm mt-1">{errors.nickname}</p>}
               </div>
               
               {/* Email Input */}

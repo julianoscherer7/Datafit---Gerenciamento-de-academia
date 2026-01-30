@@ -40,26 +40,18 @@ frontend_urls = os.getenv("FRONTEND_URL", "").strip()
 is_codespaces = "CODESPACES" in os.environ or "CODESPACE_NAME" in os.environ
 is_dev = os.getenv("ENV", "development") != "production"
 
-if is_codespaces or is_dev:
-    # Em Codespaces/dev: permite todas as origens
-    origins = ["*"]
-    allow_credentials = False  # Não pode usar credentials com "*"
-    print(f"[CORS] Development mode - allowing all origins")
-elif frontend_urls:
-    origins = [u.strip() for u in frontend_urls.split(",") if u.strip()]
-    allow_credentials = True
-    print(f"[CORS] Production mode - Origins configured: {origins}")
-else:
-    origins = ["*"]
-    allow_credentials = False
-    print(f"[CORS] Fallback - allowing all origins")
+# Always allow all origins in development/codespaces to avoid CORS issues
+origins = ["*"]
+allow_credentials = False  # Cannot use credentials with "*"
+print(f"[CORS] Allowing all origins (development mode)")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=allow_credentials,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Registra os routers

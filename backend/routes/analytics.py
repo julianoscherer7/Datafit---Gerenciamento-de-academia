@@ -12,6 +12,52 @@ from datetime import date, timedelta
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
+@router.get("")
+def obter_analytics_usuario_atual(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Retorna dados de analytics do usuário atual"""
+    usuario_id = current_user["user_id"]
+    
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado"
+        )
+    
+    # Calcula métricas
+    volume_total = calcular_volume_total(db, usuario_id, 30)
+    frequencia_semanal = calcular_frequencia_semanal(db, usuario_id)
+    
+    # Progressão dos últimos 30 dias
+    data_inicio = date.today() - timedelta(days=30)
+    from models import SerieExecutada
+    series = db.query(SerieExecutada).filter(
+        SerieExecutada.aluno_id == usuario_id,
+        SerieExecutada.data_execucao >= data_inicio
+    ).all()
+    
+    progressao = {}
+    for serie in series:
+        data_str = serie.data_execucao.date().isoformat()
+        if data_str not in progressao:
+            progressao[data_str] = {"volume": 0, "series": 0}
+        progressao[data_str]["volume"] += float(serie.carga_kg or 0) * serie.repeticoes
+        progressao[data_str]["series"] += 1
+    
+    distribuicao = calcular_distribuicao_muscular(db, usuario_id, 30)
+    favoritos = obter_exercicios_favoritos(db, usuario_id, 10)
+    
+    return AnalyticsResponse(
+        volume_total=volume_total,
+        frequencia_semanal=frequencia_semanal,
+        progressao_ultimos_30_dias=progressao,
+        distribuicao_muscular=distribuicao,
+        exercicios_favoritos=favoritos
+    )
+
 @router.get("/{usuario_id}", response_model=AnalyticsResponse)
 def obter_analytics(
     usuario_id: int,

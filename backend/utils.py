@@ -171,7 +171,7 @@ def obter_ultimos_treinos(db: Session, usuario_id: int, limite: int = 5) -> list
         {
             "id": t.id,
             "treino_id": t.treino_id,
-            "data": t.data_atribuicao.isoformat(),
+            "data": t.data_atribuicao.isoformat() if t.data_atribuicao else None,
             "ativo": t.ativo
         }
         for t in treinos

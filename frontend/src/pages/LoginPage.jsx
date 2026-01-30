@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import API_BASE from '../config';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff, Dumbbell } from 'lucide-react';
 
 export const LoginPage = ({ onNavigate }) => {
   const { login } = useAuth();
-  const { darkMode, toggleDarkMode } = useTheme();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -78,17 +76,6 @@ export const LoginPage = ({ onNavigate }) => {
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Voltar</span>
-          </motion.button>
-          
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleDarkMode}
-            className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 text-white text-xl transition-all"
-          >
-            {darkMode ? '☀️' : '🌙'}
           </motion.button>
         </div>
       </header>
