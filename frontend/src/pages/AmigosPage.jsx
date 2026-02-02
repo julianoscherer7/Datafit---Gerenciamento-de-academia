@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, MessageCircle, Share2, User, Search, UserPlus, 
+import {
+  Heart, MessageCircle, Share2, User, Search, UserPlus,
   X, Send, Check, CheckCheck, Clock, Flame, Activity,
   MoreVertical, Phone, Video, Smile, Image as ImageIcon,
   ChevronLeft, Users, Bell, Settings
@@ -51,7 +51,7 @@ const ChatModal = ({ isOpen, onClose, amigo }) => {
 
   const handleSend = async () => {
     if (!novaMensagem.trim() || sending) return;
-    
+
     try {
       setSending(true);
       await chatService.enviar({
@@ -148,11 +148,10 @@ const ChatModal = ({ isOpen, onClose, amigo }) => {
                     transition={{ delay: i * 0.05 }}
                     className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`max-w-[75%] px-4 py-2 rounded-2xl ${
-                      isOwn
+                    <div className={`max-w-[75%] px-4 py-2 rounded-2xl ${isOwn
                         ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-br-sm'
                         : 'bg-slate-700 text-white rounded-bl-sm'
-                    }`}>
+                      }`}>
                       <p className="break-words">{msg.conteudo}</p>
                       <div className={`flex items-center gap-1 mt-1 text-xs ${isOwn ? 'text-white/60 justify-end' : 'text-slate-400'}`}>
                         <span>{msg.hora || new Date(msg.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -177,9 +176,6 @@ const ChatModal = ({ isOpen, onClose, amigo }) => {
           {/* Input */}
           <div className="p-4 border-t border-slate-700 bg-slate-800/90">
             <div className="flex items-center gap-3">
-              <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
-                <Smile className="w-5 h-5" />
-              </button>
               <input
                 type="text"
                 value={novaMensagem}
@@ -266,11 +262,10 @@ const AmigoCard = ({ amigo, onChat, onLike, index }) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleLike}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all ${
-            liked
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all ${liked
               ? 'bg-red-500/20 text-red-400 border border-red-500/30'
               : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
-          }`}
+            }`}
         >
           <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
           <span className="text-sm">{liked ? 'Curtido' : 'Curtir'}</span>
@@ -369,7 +364,7 @@ export const AmigosPage = () => {
         amigosService.getAmigos(),
         chatService.getConversas()
       ]);
-      
+
       if (amigosRes.status === 'fulfilled') {
         setAmigos(amigosRes.value.data || [
           { id: 1, nome: 'João Silva', status: 'Em treino agora', streak: 12, ultimoExercicio: 'Supino 100kg', foto: '👨‍🦱', online: true },
@@ -443,22 +438,20 @@ export const AmigosPage = () => {
       <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('amigos')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
-            activeTab === 'amigos'
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'amigos'
               ? 'bg-purple-500 text-white'
               : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
-          }`}
+            }`}
         >
           <Users className="w-4 h-4" />
           Amigos ({amigos.length})
         </button>
         <button
           onClick={() => setActiveTab('conversas')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all relative ${
-            activeTab === 'conversas'
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all relative ${activeTab === 'conversas'
               ? 'bg-purple-500 text-white'
               : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
-          }`}
+            }`}
         >
           <MessageCircle className="w-4 h-4" />
           Conversas

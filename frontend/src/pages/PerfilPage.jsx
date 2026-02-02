@@ -19,7 +19,7 @@ const StatCard = ({ icon: Icon, label, value, color = 'purple' }) => {
     blue: 'from-blue-500 to-cyan-500',
     green: 'from-green-500 to-emerald-500',
   };
-  
+
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50">
       <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[color]} flex items-center justify-center mb-3`}>
@@ -39,7 +39,7 @@ const Badge = ({ label, color = 'purple' }) => {
     blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     green: 'bg-green-500/20 text-green-400 border-green-500/30',
   };
-  
+
   return (
     <span className={`px-3 py-1 rounded-full text-sm font-medium border ${colors[color]}`}>
       {label}
@@ -94,16 +94,16 @@ export const PerfilPage = ({ onNavigate }) => {
         {/* Banner */}
         <div className="h-32 md:h-40 bg-gradient-to-r from-purple-600 to-pink-600 relative">
           {user?.banner_base64 && (
-            <img 
-              src={user.banner_base64} 
-              alt="Banner" 
+            <img
+              src={user.banner_base64}
+              alt="Banner"
               className="w-full h-full object-cover"
             />
           )}
           {/* Overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
         </div>
-        
+
         {/* Content below banner */}
         <div className="bg-slate-800/80 backdrop-blur-sm px-6 pb-6 pt-0 relative">
           {/* Foto de perfil sobreposta */}
@@ -115,7 +115,7 @@ export const PerfilPage = ({ onNavigate }) => {
                 <span className="text-5xl">👤</span>
               )}
             </div>
-            
+
             {/* Info */}
             <div className="text-center md:text-left flex-1 pt-2 md:pt-4">
               <h1 className="text-2xl md:text-3xl font-bold">{user?.nome}</h1>
@@ -124,31 +124,31 @@ export const PerfilPage = ({ onNavigate }) => {
               )}
               <p className="text-slate-400 text-sm">{user?.email}</p>
             </div>
-            
+
             {/* Botão Editar */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onNavigate('edit-perfil')}
+              onClick={() => onNavigate('editPerfil')}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl flex items-center gap-2 transition-colors"
             >
               <Edit className="w-4 h-4" />
               <span className="hidden md:inline">Editar</span>
             </motion.button>
           </div>
-          
+
           {/* Bio e badges */}
           <div className="mt-4">
             {user?.bio && (
               <p className="text-white/80 text-sm mb-4 max-w-2xl">{user.bio}</p>
             )}
-            
+
             <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
               <Badge label={`Nível ${user?.nivel || 1}`} color="purple" />
               {user?.titulo_atual && <Badge label={user.titulo_atual} color="blue" />}
               {user?.perfil === 'admin' && <Badge label="Admin" color="green" />}
             </div>
-            
+
             {/* Info adicional */}
             <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-slate-400">
               {idade && (
@@ -178,9 +178,9 @@ export const PerfilPage = ({ onNavigate }) => {
             <h3 className="text-lg font-bold text-white mb-4">Redes Sociais</h3>
             <div className="flex flex-wrap gap-3">
               {user?.instagram && (
-                <a 
-                  href={`https://instagram.com/${user.instagram.replace('@', '')}`} 
-                  target="_blank" 
+                <a
+                  href={`https://instagram.com/${user.instagram.replace('@', '')}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg text-white hover:opacity-90 transition-opacity"
                 >
@@ -188,9 +188,9 @@ export const PerfilPage = ({ onNavigate }) => {
                 </a>
               )}
               {user?.tiktok && (
-                <a 
-                  href={`https://tiktok.com/${user.tiktok.replace('@', '')}`} 
-                  target="_blank" 
+                <a
+                  href={`https://tiktok.com/${user.tiktok.replace('@', '')}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg text-white hover:bg-slate-600 transition-colors"
                 >
@@ -198,9 +198,9 @@ export const PerfilPage = ({ onNavigate }) => {
                 </a>
               )}
               {user?.twitter && (
-                <a 
-                  href={`https://x.com/${user.twitter.replace('@', '')}`} 
-                  target="_blank" 
+                <a
+                  href={`https://x.com/${user.twitter.replace('@', '')}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-slate-700 rounded-lg text-white hover:bg-slate-600 transition-colors"
                 >
@@ -208,9 +208,9 @@ export const PerfilPage = ({ onNavigate }) => {
                 </a>
               )}
               {user?.linkedin && (
-                <a 
-                  href={`https://linkedin.com/in/${user.linkedin}`} 
-                  target="_blank" 
+                <a
+                  href={`https://linkedin.com/in/${user.linkedin}`}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-500 transition-colors"
                 >
@@ -258,21 +258,14 @@ export const PerfilPage = ({ onNavigate }) => {
       </motion.div>
 
       {/* Actions */}
-      <motion.div variants={itemVariants} className="flex gap-3 flex-wrap">
+      <motion.div variants={itemVariants}>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('edit-perfil')}
+          onClick={() => onNavigate('editPerfil')}
           className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/25"
         >
           Editar Perfil
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="px-6 py-3 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-600 transition-colors"
-        >
-          Download Dados
         </motion.button>
       </motion.div>
     </motion.div>

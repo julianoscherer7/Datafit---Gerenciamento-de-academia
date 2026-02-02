@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, Mail, Lock, Bell, Moon, Settings as SettingsIcon, 
+import {
+  User, Mail, Lock, Bell, Moon, Settings as SettingsIcon,
   ChevronRight, Shield, Globe, LogOut, Save, Check, X, Eye, EyeOff
 } from 'lucide-react';
 import { Card, Button, Input, Badge, LogoutModal } from '../components/common';
@@ -21,9 +21,8 @@ const SettingToggle = ({ label, description, value, onChange, disabled = false }
       whileTap={{ scale: 0.95 }}
       onClick={() => !disabled && onChange(!value)}
       disabled={disabled}
-      className={`relative w-12 h-6 rounded-full transition-colors ${
-        value ? 'bg-purple-500' : 'bg-slate-600'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`relative w-12 h-6 rounded-full transition-colors ${value ? 'bg-purple-500' : 'bg-slate-600'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       <motion.div
         animate={{ x: value ? 24 : 2 }}
@@ -287,7 +286,7 @@ export const ConfigsPage = ({ onNavigate }) => {
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <User className="w-5 h-5 text-purple-400" /> Conta
           </h3>
-          
+
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
               {user?.foto_base64 ? (
@@ -302,7 +301,7 @@ export const ConfigsPage = ({ onNavigate }) => {
               <p className="text-sm text-slate-400">{user?.email}</p>
             </div>
           </div>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -408,15 +407,15 @@ export const ConfigsPage = ({ onNavigate }) => {
       {/* App Info */}
       <motion.div variants={itemVariants} className="text-center text-slate-500 text-sm">
         <p>FITDATA v1.0.0</p>
-        <p>© 2024 FITDATA. Todos os direitos reservados.</p>
+        <p>© 2026 FITDATA. Todos os direitos reservados.</p>
       </motion.div>
 
       {/* Modals */}
-      <ChangePasswordModal 
-        isOpen={showPasswordModal} 
-        onClose={() => setShowPasswordModal(false)} 
+      <ChangePasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
       />
-      
+
       <LogoutModal
         isOpen={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}

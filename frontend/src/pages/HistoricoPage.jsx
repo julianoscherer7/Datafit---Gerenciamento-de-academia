@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Clock, Dumbbell, Flame, TrendingUp, Calendar, ChevronRight, 
+import {
+  Clock, Dumbbell, Flame, TrendingUp, Calendar, ChevronRight,
   X, BarChart2, Eye, Filter, ChevronDown, Trophy, Target
 } from 'lucide-react';
 import { Card, Button } from '../components/common';
@@ -15,7 +15,7 @@ const Skeleton = ({ className = '' }) => (
 // Simple bar chart component
 const MiniBarChart = ({ data, color = 'purple' }) => {
   const maxValue = Math.max(...data.map(d => d.value), 1);
-  
+
   return (
     <div className="flex items-end justify-between gap-1 h-20">
       {data.map((item, index) => (
@@ -24,11 +24,10 @@ const MiniBarChart = ({ data, color = 'purple' }) => {
             initial={{ height: 0 }}
             animate={{ height: `${(item.value / maxValue) * 100}%` }}
             transition={{ delay: index * 0.1, duration: 0.5 }}
-            className={`w-full rounded-t-sm bg-gradient-to-t ${
-              color === 'purple' ? 'from-purple-600 to-purple-400' :
-              color === 'orange' ? 'from-orange-600 to-orange-400' :
-              'from-blue-600 to-blue-400'
-            } min-h-[4px]`}
+            className={`w-full rounded-t-sm bg-gradient-to-t ${color === 'purple' ? 'from-purple-600 to-purple-400' :
+                color === 'orange' ? 'from-orange-600 to-orange-400' :
+                  'from-blue-600 to-blue-400'
+              } min-h-[4px]`}
           />
           <span className="text-[10px] text-slate-500">{item.label}</span>
         </div>
@@ -45,27 +44,24 @@ const StatsCard = ({ icon: Icon, label, value, trend, color = 'purple' }) => (
     className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50"
   >
     <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${
-        color === 'purple' ? 'bg-purple-500/20' :
-        color === 'orange' ? 'bg-orange-500/20' :
-        color === 'blue' ? 'bg-blue-500/20' :
-        'bg-green-500/20'
-      }`}>
-        <Icon className={`w-5 h-5 ${
-          color === 'purple' ? 'text-purple-400' :
-          color === 'orange' ? 'text-orange-400' :
-          color === 'blue' ? 'text-blue-400' :
-          'text-green-400'
-        }`} />
+      <div className={`p-2 rounded-lg ${color === 'purple' ? 'bg-purple-500/20' :
+          color === 'orange' ? 'bg-orange-500/20' :
+            color === 'blue' ? 'bg-blue-500/20' :
+              'bg-green-500/20'
+        }`}>
+        <Icon className={`w-5 h-5 ${color === 'purple' ? 'text-purple-400' :
+            color === 'orange' ? 'text-orange-400' :
+              color === 'blue' ? 'text-blue-400' :
+                'text-green-400'
+          }`} />
       </div>
       <div className="flex-1">
         <p className="text-sm text-slate-400">{label}</p>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold text-white">{value}</span>
           {trend && (
-            <span className={`text-xs font-medium ${
-              trend > 0 ? 'text-green-400' : trend < 0 ? 'text-red-400' : 'text-slate-400'
-            }`}>
+            <span className={`text-xs font-medium ${trend > 0 ? 'text-green-400' : trend < 0 ? 'text-red-400' : 'text-slate-400'
+              }`}>
               {trend > 0 ? '+' : ''}{trend}%
             </span>
           )}
@@ -138,10 +134,10 @@ const WorkoutDetailModal = ({ isOpen, onClose, workout }) => {
                         <div className="text-sm font-medium text-white">{serie.reps}x {serie.carga_kg}kg</div>
                       </div>
                     )) || (
-                      <div className="col-span-3 text-sm text-slate-400">
-                        {ex.series_realizadas || 3}x{ex.reps_realizadas || 12} • {ex.carga_utilizada || 0}kg
-                      </div>
-                    )}
+                        <div className="col-span-3 text-sm text-slate-400">
+                          {ex.series_realizadas || 3}x{ex.reps_realizadas || 12} • {ex.carga_utilizada || 0}kg
+                        </div>
+                      )}
                   </div>
                 </div>
               ))
@@ -174,9 +170,9 @@ const WorkoutDetailModal = ({ isOpen, onClose, workout }) => {
 // Comparison Section Component
 const ComparisonSection = ({ historico }) => {
   const [selectedExercise, setSelectedExercise] = useState(null);
-  
+
   // Get unique exercises from history
-  const exercises = [...new Set(historico.flatMap(h => 
+  const exercises = [...new Set(historico.flatMap(h =>
     h.exercicios?.map(e => e.nome) || []
   ))].filter(Boolean);
 
@@ -235,14 +231,14 @@ const ComparisonSection = ({ historico }) => {
             <>
               <div>
                 <h4 className="text-sm text-slate-400 mb-2">Carga Máxima (kg)</h4>
-                <MiniBarChart 
+                <MiniBarChart
                   data={getExerciseProgress(selectedExercise).map(d => ({ value: d.maxLoad, label: d.date }))}
                   color="purple"
                 />
               </div>
               <div>
                 <h4 className="text-sm text-slate-400 mb-2">Volume Total (kg)</h4>
-                <MiniBarChart 
+                <MiniBarChart
                   data={getExerciseProgress(selectedExercise).map(d => ({ value: d.totalVolume, label: d.date }))}
                   color="blue"
                 />
@@ -281,7 +277,7 @@ export const HistoricoPage = () => {
       setHistorico([
         {
           id: 1,
-          data: '2024-01-15T10:30:00',
+          data: '2026-01-15T10:30:00',
           treino_nome: 'Peito e Tríceps',
           duracao: 60,
           calorias: 450,
@@ -293,7 +289,7 @@ export const HistoricoPage = () => {
         },
         {
           id: 2,
-          data: '2024-01-14T09:15:00',
+          data: '2026-01-14T09:15:00',
           treino_nome: 'Costas e Bíceps',
           duracao: 55,
           calorias: 380,
@@ -304,7 +300,7 @@ export const HistoricoPage = () => {
         },
         {
           id: 3,
-          data: '2024-01-12T16:00:00',
+          data: '2026-01-12T16:00:00',
           treino_nome: 'Pernas',
           duracao: 70,
           calorias: 520,
@@ -321,7 +317,7 @@ export const HistoricoPage = () => {
   const filteredHistorico = historico.filter(item => {
     const itemDate = new Date(item.data || item.created_at);
     const now = new Date();
-    
+
     if (filter === 'week') {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       return itemDate >= weekAgo;
@@ -399,7 +395,7 @@ export const HistoricoPage = () => {
           <h1 className="text-3xl font-bold text-white">Histórico de Treinos</h1>
           <p className="text-slate-400">Acompanhe sua evolução</p>
         </div>
-        
+
         {/* Filter */}
         <div className="relative">
           <motion.button
@@ -412,7 +408,7 @@ export const HistoricoPage = () => {
             {filter === 'all' ? 'Todos' : filter === 'week' ? 'Última Semana' : 'Último Mês'}
             <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </motion.button>
-          
+
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -425,9 +421,8 @@ export const HistoricoPage = () => {
                   <button
                     key={f}
                     onClick={() => { setFilter(f); setShowFilters(false); }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${
-                      filter === f ? 'text-purple-400 bg-slate-700/50' : 'text-white'
-                    }`}
+                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${filter === f ? 'text-purple-400 bg-slate-700/50' : 'text-white'
+                      }`}
                   >
                     {f === 'all' ? 'Todos' : f === 'week' ? 'Última Semana' : 'Último Mês'}
                   </button>
@@ -470,7 +465,7 @@ export const HistoricoPage = () => {
           <Calendar className="w-5 h-5 text-purple-400" />
           Treinos Realizados
         </h2>
-        
+
         {filteredHistorico.length === 0 ? (
           <motion.div variants={itemVariants} className="text-center py-12">
             <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">

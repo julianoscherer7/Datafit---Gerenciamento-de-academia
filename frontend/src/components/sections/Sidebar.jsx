@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Home, Dumbbell, Users, TrendingUp, User,
   LogOut, Menu, X, History, Bot
 } from 'lucide-react';
@@ -18,7 +18,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
     { id: 'historico', label: 'Histórico', icon: History, description: 'Seus treinos passados' },
     { id: 'progresso', label: 'Progresso', icon: TrendingUp, description: 'Suas conquistas' },
     { id: 'amigos', label: 'Social', icon: Users, description: 'Amigos e chat' },
-    { id: 'chat', label: 'FitBot AI', icon: Bot, description: 'Assistente de treinos', badge: 'NOVO' },
+    { id: 'chat', label: 'FitBot AI', icon: Bot, description: 'Assistente de treinos' },
     { id: 'perfil', label: 'Perfil', icon: User, description: 'Configurações' },
   ];
 
@@ -44,7 +44,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
       {/* Sidebar - Fixa em desktop, slide em mobile */}
       <motion.aside
         initial={false}
-        animate={{ 
+        animate={{
           x: isOpen || (typeof window !== 'undefined' && window.innerWidth >= 768) ? 0 : -280
         }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
@@ -53,7 +53,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
         {/* Logo */}
         <div className="px-5 py-6 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <motion.div 
+            <motion.div
               className="w-11 h-11 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center"
               whileHover={{ scale: 1.05, rotate: 5 }}
             >
@@ -99,11 +99,10 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
                   setCurrentPage(item.id);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${isActive
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
                     : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
                 <div className="flex-1 text-left">
