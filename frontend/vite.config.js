@@ -10,6 +10,9 @@ export default ({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 5173,
+      middlewareMode: false,
+      cors: true,
+      hmr: false,
       proxy: {
         '/api': {
           target: 'http://localhost:8000',
@@ -17,6 +20,9 @@ export default ({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, '')
         }
       }
+    },
+    optimizeDeps: {
+      include: ['react', 'react-dom']
     }
   })
 }

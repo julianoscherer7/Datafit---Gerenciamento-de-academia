@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API_BASE from '../config';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,31 @@ export const LoginPage = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Teste de conexão silencioso ao montar o componente - DESABILITADO
+  // useEffect(() => {
+  //   const testApiConnection = async () => {
+  //     try {
+  //       const controller = new AbortController();
+  //       const timeout = setTimeout(() => controller.abort(), 5000);
+  //       
+  //       const response = await fetch(`${API_BASE}/health`, {
+  //         signal: controller.signal
+  //       });
+  //       
+  //       clearTimeout(timeout);
+  //       
+  //       if (!response.ok) {
+  //         console.warn(`API health check falhou com status ${response.status}`);
+  //       }
+  //     } catch (err) {
+  //       // Silenciar erro - não quebra o app
+  //       console.debug('API connection test:', err.message);
+  //     }
+  //   };
+
+  //   testApiConnection();
+  // }, []);
 
   const handleSubmit = async () => {
     if (!email || !senha) {
@@ -37,14 +62,30 @@ export const LoginPage = ({ onNavigate }) => {
 
   const testConnection = async () => {
     try {
-      const response = await fetch(`${API_BASE}/health`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${API_BASE}/health`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      
       if (response.ok) {
-        alert('✅ Conexão com API funcionando!');
+        const data = await response.json();
+        alert(`✅ Conexão com API funcionando!\n${JSON.stringify(data, null, 2)}`);
       } else {
-        alert('❌ API respondeu com erro: ' + response.status);
+        alert(`❌ API respondeu com erro: ${response.status}`);
       }
     } catch (err) {
-      alert('❌ Erro ao conectar com API: ' + err.message);
+      if (err.name === 'AbortError') {
+        alert('❌ Timeout: API não respondeu em 5 segundos');
+      } else if (err instanceof TypeError) {
+        // Network error (CORS, connection refused, etc)
+        alert(`❌ Erro de conexão: Não foi possível conectar à API em ${API_BASE}\n\nVerifique se o backend está rodando.`);
+      } else {
+        alert(`❌ Erro: ${err.message}`);
+      }
     }
   };
 
