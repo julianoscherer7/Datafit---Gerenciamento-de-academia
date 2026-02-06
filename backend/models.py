@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Enum, ForeignKey, Numeric, Boolean, JSON, Index, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, Enum, ForeignKey, Numeric, Boolean, JSON, Index, UniqueConstraint, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func, text
 from database import Base
@@ -14,6 +14,14 @@ class Usuario(Base):
     email = Column(String(150), unique=True, nullable=False, index=True)
     senha_hash = Column(String(256), nullable=False)
     perfil = Column(Enum("aluno", "instrutor", "admin"), default="aluno", nullable=False)
+    
+    # === COACH FIELDS ===
+    coach_status = Column(Enum("pending", "approved", "rejected"), nullable=True)  # Only for perfil=instrutor
+    cref = Column(String(20), nullable=True)  # CREF number for coaches
+    especialidade = Column(String(150), nullable=True)  # Coach specialty
+    documento_url = Column(String(500), nullable=True)  # Verification document URL
+    documento_base64 = Column(Text, nullable=True)  # Verification document base64
+    coach_bio = Column(Text, nullable=True)  # Professional bio for coaches
     
     # Campos de perfil estendido
     foto_url = Column(String(500))
@@ -33,6 +41,10 @@ class Usuario(Base):
     
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
+    
+    # Relationships
+    coach_connections = relationship("CoachStudent", foreign_keys="CoachStudent.coach_id", back_populates="coach")
+    student_connections = relationship("CoachStudent", foreign_keys="CoachStudent.student_id", back_populates="student")
 
 # Exercicios
 class Exercicio(Base):
@@ -42,8 +54,57 @@ class Exercicio(Base):
     nome = Column(String(150), nullable=False)
     grupo_muscular = Column(String(80), index=True)
     descricao = Column(Text)
+    # Tutorial fields
+    instrucoes = Column(Text, nullable=True)  # Step-by-step instructions
+    dicas = Column(Text, nullable=True)  # Tips for proper form
+    musculos_trabalhados = Column(String(300), nullable=True)  # Comma-separated muscles
+    nivel = Column(Enum("iniciante", "intermediario", "avancado"), default="iniciante")
+    equipamento = Column(String(150), nullable=True)  # Equipment needed
+    video_url = Column(String(500), nullable=True)  # Tutorial video URL
+    imagem_url = Column(String(500), nullable=True)  # Exercise illustration
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
+
+# === COACH-STUDENT CONNECTION ===
+class CoachStudent(Base):
+    __tablename__ = "coach_students"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    coach_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(Enum("pending", "active", "rejected", "removed"), default="pending", nullable=False)
+    connected_at = Column(DateTime, nullable=True)
+    criado_em = Column(DateTime, server_default=func.now())
+    
+    coach = relationship("Usuario", foreign_keys=[coach_id], back_populates="coach_connections")
+    student = relationship("Usuario", foreign_keys=[student_id], back_populates="student_connections")
+    
+    __table_args__ = (UniqueConstraint("coach_id", "student_id"),)
+
+# === COACH INVITE TOKENS ===
+class CoachInviteToken(Base):
+    __tablename__ = "coach_invite_tokens"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    coach_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    max_uses = Column(Integer, default=1)
+    uses = Column(Integer, default=0)
+    expires_at = Column(DateTime, nullable=True)
+    active = Column(Boolean, default=True)
+    criado_em = Column(DateTime, server_default=func.now())
+
+# === PRESENCE VALIDATION LOG ===
+class PresenceValidation(Base):
+    __tablename__ = "presence_validations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    treino_id = Column(Integer, ForeignKey("treinos.id", ondelete="SET NULL"), nullable=True, index=True)
+    foto_base64 = Column(Text, nullable=True)
+    validated = Column(Boolean, default=True)
+    method = Column(String(30), default="selfie")  # selfie, manual
+    criado_em = Column(DateTime, server_default=func.now())
 
 # Treinos
 class Treino(Base):
@@ -54,6 +115,8 @@ class Treino(Base):
     descricao = Column(Text)
     duracao = Column(Integer, default=45)  # Duração em minutos
     criado_por = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"))
+    origem = Column(Enum("user", "coach", "ai"), default="user")  # Who created: user, coach, or AI
+    locked = Column(Boolean, default=False)  # Coach-locked training (student can't edit)
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
 

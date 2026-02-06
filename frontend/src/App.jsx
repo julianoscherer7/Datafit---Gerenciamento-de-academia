@@ -19,6 +19,9 @@ import { RegisterPage } from './pages/RegisterPage';
 import { ExecucaoPage } from './pages/ExecucaoPage';
 import { HistoricoPage } from './pages/HistoricoPage';
 import { AIChatPage } from './pages/AIChatPage';
+import { CoachDashboardPage } from './pages/CoachDashboardPage';
+import { CoachTreinosPage } from './pages/CoachTreinosPage';
+import { ConnectionPage } from './pages/ConnectionPage';
 
 // Import Pages - Lazy Loading (carregamento sob demanda)
 const ProgressoPage = lazy(() => import('./pages/ProgressoPage'));
@@ -75,6 +78,9 @@ const AppContent = () => {
     editPerfil: <EditPerfilPage onNavigate={handleNavigate} />,
     configs: <ConfigsPage onNavigate={handleNavigate} />,
     chat: <AIChatPage onNavigate={handleNavigate} />,
+    coachDashboard: <CoachDashboardPage onNavigate={handleNavigate} />,
+    coachTreinos: <CoachTreinosPage onNavigate={handleNavigate} studentId={pageParams.studentId} studentName={pageParams.studentName} />,
+    connection: <ConnectionPage onNavigate={handleNavigate} />,
   };
 
   return (

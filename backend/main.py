@@ -13,12 +13,13 @@ from models import (
     SerieExecutada, MedidaCorporal, Desafio, UsuarioDesafio, Streak,
     Badge, UsuarioBadge, Amizade, Notificacao, LeaderboardSemanal,
     Checkin, Story, StoryView, Mensagem, ItemLoja, ItemUsuario,
-    UsuarioProgresso, Recompensa
+    UsuarioProgresso, Recompensa, CoachStudent, CoachInviteToken, PresenceValidation
 )
 
 # Importa os routers
 from routes import auth, dashboard, treinos, execucao, desafios, amigos, badges, historico, analytics, configs, exercicios
 from routes import checkin, stories, chat, loja
+from routes import coach, ai_assistant
 
 # Cria a aplicação
 app = FastAPI(
@@ -70,6 +71,8 @@ app.include_router(checkin.router)
 app.include_router(stories.router)
 app.include_router(chat.router)
 app.include_router(loja.router)
+app.include_router(coach.router)
+app.include_router(ai_assistant.router)
 
 @app.get("/", tags=["root"])
 def read_root():

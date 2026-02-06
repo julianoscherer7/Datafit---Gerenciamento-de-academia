@@ -10,21 +10,34 @@ function resolveApiBase() {
     envUrl = parts[parts.length - 1];
   }
 
-  if (envUrl) return envUrl;
+  if (envUrl) {
+    console.log('[API Config] Usando VITE_API_URL do .env:', envUrl);
+    return envUrl;
+  }
 
-  // 2) Detectar Codespaces/Port Forward: trocar -5173 por -8000
+  // 2) Detectar modo desenvolvimento - usar proxy do Vite
+  if (import.meta.env?.DEV) {
+    // Em dev, usar /api que é proxied pelo Vite para localhost:8000
+    console.log('[API Config] Modo DEV detectado, usando proxy /api');
+    return '/api';
+  }
+
+  // 3) Detectar Codespaces/Port Forward: trocar -5173 por -8000
   if (typeof window !== 'undefined') {
     try {
       const { origin, hostname } = window.location;
       if (hostname.endsWith('.app.github.dev') && origin.includes('-5173')) {
-        return origin.replace('-5173', '-8000');
+        const codespaceUrl = origin.replace('-5173', '-8000');
+        console.log('[API Config] Codespaces detectado:', codespaceUrl);
+        return codespaceUrl;
       }
     } catch (e) {
       // segue para fallback
     }
   }
 
-  // 3) Fallback local
+  // 4) Fallback local (produção)
+  console.warn('[API Config] Fallback para http://localhost:8000');
   return 'http://localhost:8000';
 }
 
@@ -33,5 +46,7 @@ const API_BASE = resolveApiBase();
 if (!API_BASE) {
   console.error('VITE_API_URL não configurada e fallback falhou. Configure em frontend/.env.');
 }
+
+console.log('[API Config] API_BASE final:', API_BASE);
 
 export default API_BASE;

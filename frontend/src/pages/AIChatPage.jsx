@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, Dumbbell, Flame, Apple, Brain, 
-  Sparkles, RefreshCw, Trash2, Copy, Check, X, Maximize2, Minimize2
+  RefreshCw, Trash2, Copy, Check, X, Maximize2, Minimize2
 } from 'lucide-react';
 import { Card } from '../components/common';
 import { useAuth } from '../context/AuthContext';
@@ -109,6 +109,113 @@ const TypingIndicator = () => (
   </motion.div>
 );
 
+// Gera resposta inteligente baseada em palavras-chave da pergunta
+function generateSmartResponse(question) {
+  const q = question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Base de conhecimento fitness com padrões de palavras-chave
+  const knowledgeBase = [
+    {
+      keywords: ['hipertrofia', 'massa muscular', 'ganhar massa', 'crescer musculo', 'ganho muscular'],
+      response: 'Para hipertrofia, o ideal é trabalhar com 3-4 séries de 8-12 repetições por exercício, com descanso de 60-90 segundos entre séries. Foque em progressão de carga gradual (aumente 2-5% quando conseguir completar todas as reps). Os exercícios compostos como supino, agachamento e remada devem ser a base do seu treino! 💪'
+    },
+    {
+      keywords: ['perder gordura', 'emagrecer', 'perder peso', 'queimar gordura', 'secar', 'cutting', 'definicao', 'definir'],
+      response: 'Para perder gordura, o principal é manter um déficit calórico moderado (300-500 kcal abaixo da manutenção). Combine treino de musculação para preservar massa magra com cardio moderado (HIIT 2-3x/semana ou cardio leve 4-5x). Priorize proteína (2g/kg) para preservar músculo e mantenha o treino pesado! A perda saudável é de 0.5-1kg por semana. 🔥'
+    },
+    {
+      keywords: ['proteina', 'suplemento', 'whey', 'creatina', 'bcaa', 'suplementacao'],
+      response: 'Sobre suplementação:\n\n• **Whey Protein**: 1-2 scoops/dia para complementar a ingestão proteica (1.6-2.2g/kg)\n• **Creatina**: 3-5g/dia (monohidratada), é o suplemento mais estudado e eficaz para força\n• **Cafeína**: 3-6mg/kg 30min antes do treino para performance\n• **BCAA**: Geralmente desnecessário se a ingestão proteica é adequada\n\nLembre-se: suplementos complementam, não substituem uma boa alimentação! 💊'
+    },
+    {
+      keywords: ['dieta', 'alimentacao', 'nutricao', 'comer', 'refeicao', 'calorias', 'macro'],
+      response: 'Dicas de nutrição para resultados:\n\n• **Proteína**: 1.6-2.2g por kg de peso corporal (frango, ovos, peixe, carne, whey)\n• **Carboidratos**: 3-5g/kg para treinos intensos (arroz, batata, aveia, frutas)\n• **Gorduras**: 0.8-1.2g/kg (azeite, castanhas, abacate)\n• Faça 4-6 refeições espaçadas ao longo do dia\n• Pré-treino: carb + proteína 1-2h antes\n• Pós-treino: proteína + carb em até 2h\n\nConsistência é mais importante que perfeição! 🍗'
+    },
+    {
+      keywords: ['descanso', 'recuperacao', 'dormir', 'sono', 'overtraining', 'descansar'],
+      response: 'A recuperação é onde o músculo realmente cresce! Dicas essenciais:\n\n• **Sono**: 7-9 horas por noite (hormônio do crescimento é liberado durante o sono profundo)\n• **Descanso muscular**: 48-72h antes de treinar o mesmo grupo novamente\n• **Sinais de overtraining**: fadiga constante, queda de performance, irritabilidade, insônia\n• **Desload**: A cada 6-8 semanas, reduza volume/intensidade por 1 semana\n• Técnicas de recuperação: alongamento, foam roller, banho de contraste\n\nMais nem sempre é melhor! 😴'
+    },
+    {
+      keywords: ['peito', 'supino', 'peitoral', 'bench press'],
+      response: 'Treino de peito completo:\n\n1. **Supino Reto** (barra/halter): 4x8-10 - Base para peitoral médio\n2. **Supino Inclinado**: 3x10-12 - Foco no peitoral superior\n3. **Crucifixo/Fly**: 3x12-15 - Isolamento e stretch\n4. **Cross-over**: 3x12-15 - Contração máxima\n\n💡 Dicas: mantenha as escápulas retraídas, controle a descida (2-3s) e expire na subida. Varie ângulos para desenvolvimento completo! 🏋️'
+    },
+    {
+      keywords: ['costas', 'remada', 'puxada', 'dorsal', 'pull', 'barra fixa'],
+      response: 'Treino de costas completo:\n\n1. **Barra Fixa/Puxada Frontal**: 4x8-10 - Largura dorsal\n2. **Remada Curvada**: 4x8-10 - Espessura das costas\n3. **Remada Unilateral**: 3x10-12 - Equilíbrio muscular\n4. **Pullover**: 3x12-15 - Expansão torácica\n\n💡 Dicas: puxe com os cotovelos (não com as mãos), contraia as escápulas no pico do movimento e controle a fase excêntrica! 💪'
+    },
+    {
+      keywords: ['perna', 'agachamento', 'leg', 'quadriceps', 'posterior', 'panturrilha', 'gluteo'],
+      response: 'Treino de pernas completo:\n\n1. **Agachamento Livre**: 4x6-8 - Rei dos exercícios!\n2. **Leg Press 45°**: 4x10-12 - Volume seguro\n3. **Cadeira Extensora**: 3x12-15 - Isolamento de quadríceps\n4. **Mesa Flexora**: 3x10-12 - Posterior de coxa\n5. **Elevação Pélvica**: 3x12-15 - Glúteos\n6. **Panturrilha**: 4x15-20 - Gêmeos\n\n💡 Dica: nunca pule o leg day! Pernas fortes = base sólida para tudo. 🦵'
+    },
+    {
+      keywords: ['braco', 'biceps', 'triceps', 'rosca', 'curl'],
+      response: 'Treino de braços completo:\n\n**Bíceps:**\n1. Rosca Direta (barra): 3x10-12\n2. Rosca Alternada (halter): 3x10-12\n3. Rosca Martelo: 3x12-15\n\n**Tríceps:**\n1. Tríceps Testa: 3x10-12\n2. Tríceps Corda (pulley): 3x12-15\n3. Mergulho: 3x8-12\n\n💡 Lembre: tríceps representa 2/3 do braço! Se quer braços grandes, priorize tríceps. Controle o movimento e evite balançar o corpo. 💪'
+    },
+    {
+      keywords: ['ombro', 'deltoid', 'desenvolvimento', 'lateral', 'shoulder'],
+      response: 'Treino de ombros completo:\n\n1. **Desenvolvimento Militar** (barra/halter): 4x8-10 - Deltóide anterior\n2. **Elevação Lateral**: 4x12-15 - Deltóide medial (o que dá largura!)\n3. **Elevação Frontal**: 3x12-15 - Deltóide anterior\n4. **Face Pull**: 3x15-20 - Deltóide posterior + saúde do ombro\n\n💡 Dica: nas elevações laterais, use peso leve e foque na contração. Ombros respondem bem a volume! 🎯'
+    },
+    {
+      keywords: ['alongamento', 'mobilidade', 'flexibilidade', 'stretching', 'aquecimento'],
+      response: 'Alongamento e mobilidade são essenciais:\n\n**Antes do treino (dinâmico, 5-10min):**\n• Rotação de ombros e quadril\n• Agachamento sem peso\n• Balanço de pernas\n\n**Depois do treino (estático, 10-15min):**\n• Mantenha cada posição 20-30 segundos\n• Foque nos músculos treinados\n• Respire profundamente\n\n**Mobilidade (3-4x/semana):**\n• Foam roller para fascia\n• Yoga ou pilates\n\nMelhora performance e previne lesões! 🧘'
+    },
+    {
+      keywords: ['motivacao', 'animo', 'desistir', 'desmotivado', 'forca', 'motivar'],
+      response: 'Motivação é o que te faz começar, disciplina é o que te faz continuar! 🔥\n\nDicas para manter o foco:\n\n• **Defina metas claras** e mensuráveis (ex: agachar 100kg em 3 meses)\n• **Registre seu progresso** - ver a evolução motiva muito\n• **Treine com parceiro** ou desafie amigos no app\n• **Varie os treinos** a cada 4-6 semanas\n• **Celebre pequenas vitórias** - cada treino completado é uma conquista\n• **Nos dias ruins**, apareça mesmo assim - um treino leve > nenhum treino\n\n"O corpo alcança o que a mente acredita!" 💪🏆'
+    },
+    {
+      keywords: ['iniciante', 'comecar', 'primeiro', 'comeco', 'nunca treinei', 'novo'],
+      response: 'Bem-vindo ao mundo fitness! Dicas para iniciantes:\n\n1. **Comece devagar**: 3x/semana, full body ou ABC\n2. **Aprenda a técnica**: peça ajuda ao professor, assista vídeos\n3. **Não exagere no peso**: foque em execução perfeita\n4. **Treino sugerido (Full Body 3x/semana):**\n   • Agachamento 3x12\n   • Supino 3x12\n   • Remada 3x12\n   • Desenvolvimento 3x12\n   • Rosca + Tríceps 2x15\n5. **Alimentação**: aumente proteína gradualmente\n6. **Consistência** > Intensidade no início\n\nOs primeiros 3 meses são adaptação. Resultados visíveis a partir do mês 3-4! 🚀'
+    },
+    {
+      keywords: ['cardio', 'correr', 'aerobico', 'hiit', 'esteira', 'bicicleta'],
+      response: 'Guia de cardio:\n\n**HIIT (High Intensity Interval Training):**\n• 20-30 min, 2-3x/semana\n• Ex: 30s sprint + 60s caminhada, repetir 10-15x\n• Ótimo para queima de gordura pós-treino\n\n**LISS (Low Intensity Steady State):**\n• 30-60 min, 3-5x/semana\n• Caminhada rápida, bike, natação\n• Menor impacto na recuperação muscular\n\n💡 Se o objetivo é hipertrofia, limite cardio a 2-3x/semana e faça após a musculação ou em dias separados. 🏃'
+    },
+    {
+      keywords: ['lesao', 'dor', 'machucado', 'doendo', 'lesionar'],
+      response: '⚠️ Sobre dores e lesões:\n\n**Dor muscular (DOMS)**: Normal após treino novo ou intenso. Dura 24-72h. Alongamento leve e movimento ajudam.\n\n**Dor articular/aguda**: PARE o exercício imediatamente!\n\n**Prevenção:**\n• Sempre aqueça 5-10 min antes\n• Técnica correta > peso alto\n• Não ignore sinais do corpo\n• Progrida gradualmente (regra dos 10%)\n\n🏥 **Importante**: Se a dor persistir por mais de 3-5 dias ou for aguda, consulte um médico ou fisioterapeuta. Eu posso ajudar com dicas gerais, mas não substituo um profissional de saúde!'
+    },
+    {
+      keywords: ['agua', 'hidratacao', 'beber', 'liquido'],
+      response: 'Hidratação é essencial para performance!\n\n• **Diário**: 35ml por kg de peso corporal (70kg = 2.45L)\n• **Antes do treino**: 500ml 2h antes\n• **Durante treino**: 150-300ml a cada 15-20 min\n• **Após treino**: reponha 150% do peso perdido\n\n💡 Sinais de desidratação: urina escura, fadiga, cãibras, queda de performance.\n\nÁgua com limão, água de coco e isotônicos são boas opções para variar! 💧'
+    }
+  ];
+
+  // Buscar a melhor resposta por correspondência de palavras-chave
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const entry of knowledgeBase) {
+    let score = 0;
+    for (const keyword of entry.keywords) {
+      if (q.includes(keyword)) {
+        score += keyword.length; // palavras maiores = match mais relevante
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = entry;
+    }
+  }
+
+  if (bestMatch && bestScore > 0) {
+    return bestMatch.response;
+  }
+
+  // Respostas para saudações
+  if (/^(oi|ola|hey|e ai|fala|bom dia|boa tarde|boa noite|salve)/.test(q)) {
+    return 'Olá! 👋 Como posso te ajudar com seus treinos hoje? Pode perguntar sobre exercícios, nutrição, suplementação, descanso ou qualquer dúvida fitness!';
+  }
+
+  // Resposta para agradecimento
+  if (/^(obrigad|valeu|thanks|brigad|vlw)/.test(q)) {
+    return 'Por nada! 😊 Estou aqui sempre que precisar. Bons treinos! 💪';
+  }
+
+  // Resposta genérica que reconhece a pergunta
+  return `Boa pergunta! Infelizmente não tenho uma resposta específica sobre "${question}" no momento. 🤔\n\nMas posso te ajudar com:\n• Treinos e exercícios específicos\n• Nutrição e dieta\n• Suplementação\n• Recuperação e descanso\n• Cardio e emagrecimento\n• Motivação\n\nTente reformular ou pergunte sobre algum desses temas! 💪`;
+}
+
 // Main component
 export const AIChatPage = () => {
   const { user } = useAuth();
@@ -192,19 +299,13 @@ export const AIChatPage = () => {
     } catch (err) {
       console.error('AI Chat error:', err);
       
-      // Fallback response when API is not available
-      const fallbackResponses = [
-        'Ótima pergunta! Para treinos de hipertrofia, recomendo 3-4 séries de 8-12 repetições por exercício, com descanso de 60-90 segundos. Foque em progressão de carga gradual! 💪',
-        'Para ganhar massa muscular, foque em consumir 1.6-2.2g de proteína por kg de peso corporal. Ótimas fontes: frango, ovos, peixe e whey protein! 🍗',
-        'O descanso é fundamental! Músculos crescem durante a recuperação. Durma 7-9 horas por noite e descanse cada grupo muscular 48-72h antes de treinar novamente. 😴',
-        'Treino de força com pesos compostos (agachamento, supino, remada) é excelente para iniciantes e avançados. Comece com cargas moderadas e aumente gradualmente! 🏋️',
-        'Hidratação é essencial! Beba pelo menos 35ml de água por kg de peso corporal por dia. Durante treinos intensos, aumente essa quantidade! 💧'
-      ];
+      // Resposta inteligente baseada em palavras-chave da pergunta do usuário
+      const reply = generateSmartResponse(content.trim());
 
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)]
+        content: reply
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -254,7 +355,6 @@ export const AIChatPage = () => {
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
               FitBot
-              <Sparkles className="w-5 h-5 text-yellow-400" />
             </h1>
             <p className="text-sm text-slate-400">Seu assistente de treinos AI</p>
           </div>

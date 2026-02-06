@@ -129,7 +129,7 @@ export const PerfilPage = ({ onNavigate }) => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => onNavigate('edit-perfil')}
+              onClick={() => onNavigate('editPerfil')}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl flex items-center gap-2 transition-colors"
             >
               <Edit className="w-4 h-4" />
@@ -262,17 +262,10 @@ export const PerfilPage = ({ onNavigate }) => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('edit-perfil')}
+          onClick={() => onNavigate('editPerfil')}
           className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg shadow-purple-500/25"
         >
           Editar Perfil
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="px-6 py-3 bg-slate-700 text-white rounded-xl font-semibold hover:bg-slate-600 transition-colors"
-        >
-          Download Dados
         </motion.button>
       </motion.div>
     </motion.div>

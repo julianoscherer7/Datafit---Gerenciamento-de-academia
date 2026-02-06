@@ -3,14 +3,20 @@ import api from './api';
 
 export const authService = {
   /**
-   * Registra um novo usuário
+   * Registra um novo usuário (aluno ou instrutor)
    * @param {string} nome - Nome do usuário
    * @param {string} email - Email do usuário
    * @param {string} senha - Senha do usuário
    * @param {string} nickname - Nickname do usuário (opcional)
+   * @param {string} perfil - Perfil: 'aluno' ou 'instrutor' (default: 'aluno')
+   * @param {object} coachData - Dados do coach: { cref, especialidade, coach_bio, invite_token }
    */
-  register: (nome, email, senha, nickname = null) =>
-    api.post('/auth/register', { nome, email, senha, ...(nickname && { nickname }) }),
+  register: (nome, email, senha, nickname = null, perfil = 'aluno', coachData = {}) =>
+    api.post('/auth/register', { 
+      nome, email, senha, perfil,
+      ...(nickname && { nickname }),
+      ...coachData
+    }),
 
   /**
    * Faz login do usuário

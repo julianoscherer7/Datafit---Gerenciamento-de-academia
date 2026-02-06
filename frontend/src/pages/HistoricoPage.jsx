@@ -281,7 +281,7 @@ export const HistoricoPage = () => {
       setHistorico([
         {
           id: 1,
-          data: '2024-01-15T10:30:00',
+          data: '2026-01-28T10:30:00',
           treino_nome: 'Peito e Tríceps',
           duracao: 60,
           calorias: 450,
@@ -293,7 +293,7 @@ export const HistoricoPage = () => {
         },
         {
           id: 2,
-          data: '2024-01-14T09:15:00',
+          data: '2026-01-27T09:15:00',
           treino_nome: 'Costas e Bíceps',
           duracao: 55,
           calorias: 380,
@@ -304,7 +304,7 @@ export const HistoricoPage = () => {
         },
         {
           id: 3,
-          data: '2024-01-12T16:00:00',
+          data: '2026-01-25T16:00:00',
           treino_nome: 'Pernas',
           duracao: 70,
           calorias: 520,

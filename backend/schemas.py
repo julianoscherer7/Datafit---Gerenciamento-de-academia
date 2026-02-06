@@ -10,6 +10,11 @@ class UsuarioRegister(BaseModel):
     email: EmailStr
     senha: str
     perfil: Optional[str] = "aluno"
+    # Coach fields
+    cref: Optional[str] = None
+    especialidade: Optional[str] = None
+    coach_bio: Optional[str] = None
+    invite_token: Optional[str] = None  # Token to connect with coach on register
 
 class UsuarioLogin(BaseModel):
     email: EmailStr
@@ -20,6 +25,7 @@ class TokenResponse(BaseModel):
     token_type: str
     user_id: int
     perfil: str
+    coach_status: Optional[str] = None
 
 class UsuarioResponse(BaseModel):
     id: int
@@ -27,6 +33,10 @@ class UsuarioResponse(BaseModel):
     nickname: Optional[str] = None
     email: str
     perfil: str
+    coach_status: Optional[str] = None
+    cref: Optional[str] = None
+    especialidade: Optional[str] = None
+    coach_bio: Optional[str] = None
     foto_url: Optional[str] = None
     foto_base64: Optional[str] = None
     banner_base64: Optional[str] = None
@@ -59,18 +69,111 @@ class UsuarioUpdate(BaseModel):
     tiktok: Optional[str] = None
     twitter: Optional[str] = None
     linkedin: Optional[str] = None
+    # Coach-specific updates
+    cref: Optional[str] = None
+    especialidade: Optional[str] = None
+    coach_bio: Optional[str] = None
+
+# === COACH SCHEMAS ===
+class CoachRegister(BaseModel):
+    nome: str
+    nickname: Optional[str] = None
+    email: EmailStr
+    senha: str
+    cref: str
+    especialidade: Optional[str] = None
+    coach_bio: Optional[str] = None
+
+class CoachStudentResponse(BaseModel):
+    id: int
+    coach_id: int
+    student_id: int
+    status: str
+    connected_at: Optional[datetime] = None
+    criado_em: datetime
+    student_name: Optional[str] = None
+    student_email: Optional[str] = None
+    student_foto: Optional[str] = None
+    coach_name: Optional[str] = None
+    coach_email: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+class InviteTokenCreate(BaseModel):
+    max_uses: Optional[int] = 1
+    expires_hours: Optional[int] = 168  # 7 days default
+
+class InviteTokenResponse(BaseModel):
+    id: int
+    token: str
+    max_uses: int
+    uses: int
+    expires_at: Optional[datetime] = None
+    active: bool
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ConnectByTokenRequest(BaseModel):
+    token: str
+
+class CoachApprovalRequest(BaseModel):
+    coach_id: int
+    action: str  # "approve" or "reject"
+
+# === PRESENCE VALIDATION ===
+class PresenceValidationCreate(BaseModel):
+    treino_id: Optional[int] = None
+    foto_base64: Optional[str] = None
+    method: Optional[str] = "selfie"
+
+class PresenceValidationResponse(BaseModel):
+    id: int
+    usuario_id: int
+    treino_id: Optional[int] = None
+    validated: bool
+    method: str
+    criado_em: datetime
+    
+    class Config:
+        from_attributes = True
+
+# === AI ASSISTANT ===
+class AIAssistantRequest(BaseModel):
+    message: str
+    context: Optional[str] = None  # "coach_training", "exercise_suggestion", etc.
+    student_id: Optional[int] = None
+
+class AIAssistantResponse(BaseModel):
+    response: str
+    suggestions: Optional[List[dict]] = None
+    exercises: Optional[List[dict]] = None
 
 # Exercicio Schemas
 class ExercicioCreate(BaseModel):
     nome: str
     grupo_muscular: Optional[str] = None
     descricao: Optional[str] = None
+    instrucoes: Optional[str] = None
+    dicas: Optional[str] = None
+    musculos_trabalhados: Optional[str] = None
+    nivel: Optional[str] = "iniciante"
+    equipamento: Optional[str] = None
 
 class ExercicioResponse(BaseModel):
     id: int
     nome: str
     grupo_muscular: Optional[str]
     descricao: Optional[str]
+    instrucoes: Optional[str] = None
+    dicas: Optional[str] = None
+    musculos_trabalhados: Optional[str] = None
+    nivel: Optional[str] = None
+    equipamento: Optional[str] = None
+    video_url: Optional[str] = None
+    imagem_url: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -87,6 +190,9 @@ class TreinoCreate(BaseModel):
     descricao: Optional[str] = None
     duracao: Optional[int] = 45
     exercicios: List[TreinoExercicioCreate] = []
+    origem: Optional[str] = "user"  # user, coach, ai
+    locked: Optional[bool] = False
+    aluno_id: Optional[int] = None  # If coach creates for a student
 
 class TreinoResponse(BaseModel):
     id: int
@@ -94,6 +200,8 @@ class TreinoResponse(BaseModel):
     descricao: Optional[str]
     duracao: Optional[int] = 45
     criado_por: Optional[int]
+    origem: Optional[str] = "user"
+    locked: Optional[bool] = False
     criado_em: datetime
     
     class Config:

@@ -15,6 +15,46 @@ const Skeleton = ({ className = '' }) => (
   <div className={`animate-pulse bg-slate-700/50 rounded ${className}`} />
 );
 
+// ============= EMOJI BUTTON =============
+const EMOJI_LIST = ['😀', '😂', '❤️', '👍', '💪', '🔥', '🏆', '🎯', '👏', '🙌', '💥', '⭐', '🚀', '😎', '🤝', '✅'];
+
+const EmojiButton = ({ onSelect }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+      >
+        <Smile className="w-5 h-5" />
+      </button>
+      {open && (
+        <div className="absolute bottom-12 left-0 bg-slate-700 border border-slate-600 rounded-xl p-2 grid grid-cols-8 gap-1 shadow-xl z-50 min-w-[200px]">
+          {EMOJI_LIST.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => { onSelect(emoji); setOpen(false); }}
+              className="w-8 h-8 flex items-center justify-center rounded hover:bg-slate-600 transition-colors text-lg"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ============= CHAT MODAL =============
 const ChatModal = ({ isOpen, onClose, amigo }) => {
   const [mensagens, setMensagens] = useState([]);
@@ -177,9 +217,7 @@ const ChatModal = ({ isOpen, onClose, amigo }) => {
           {/* Input */}
           <div className="p-4 border-t border-slate-700 bg-slate-800/90">
             <div className="flex items-center gap-3">
-              <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white">
-                <Smile className="w-5 h-5" />
-              </button>
+              <EmojiButton onSelect={(emoji) => setNovaMensagem(prev => prev + emoji)} />
               <input
                 type="text"
                 value={novaMensagem}
@@ -211,10 +249,27 @@ const ChatModal = ({ isOpen, onClose, amigo }) => {
 
 // ============= AMIGO CARD =============
 const AmigoCard = ({ amigo, onChat, onLike, index }) => {
-  const [liked, setLiked] = useState(false);
+  // Persistir curtida no localStorage
+  const [liked, setLiked] = useState(() => {
+    try {
+      const savedLikes = JSON.parse(localStorage.getItem('fitdata_likes') || '{}');
+      return !!savedLikes[amigo.id];
+    } catch { return false; }
+  });
 
   const handleLike = () => {
-    setLiked(!liked);
+    const newLiked = !liked;
+    setLiked(newLiked);
+    // Salvar no localStorage para persistir entre trocas de página
+    try {
+      const savedLikes = JSON.parse(localStorage.getItem('fitdata_likes') || '{}');
+      if (newLiked) {
+        savedLikes[amigo.id] = true;
+      } else {
+        delete savedLikes[amigo.id];
+      }
+      localStorage.setItem('fitdata_likes', JSON.stringify(savedLikes));
+    } catch (e) { /* ignore */ }
     onLike?.(amigo.id);
   };
 

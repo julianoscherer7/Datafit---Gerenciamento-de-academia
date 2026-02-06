@@ -10,6 +10,8 @@ import { amigosService } from './amigos.service';
 import { historicoService } from './historico.service';
 import { exerciciosService } from './exercicios.service';
 import { configsService } from './configs.service';
+import { coachService } from './coach.service';
+import { aiService } from './ai.service';
 
 export {
   api,
@@ -24,6 +26,8 @@ export {
   historicoService,
   exerciciosService,
   configsService,
+  coachService,
+  aiService,
 };
 
 // Export default para compatibilidade

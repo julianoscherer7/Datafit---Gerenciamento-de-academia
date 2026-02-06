@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import Treino, TreinoAtribuido, TreinoExercicio, Exercicio
+from models import Treino, TreinoAtribuido, TreinoExercicio, Exercicio, CoachStudent
 from schemas import TreinoResponse, TreinoDetalheResponse, TreinoCreate, TreinoAtribuidoResponse
 from security import get_current_user
 
@@ -45,7 +45,11 @@ def listar_treinos(
                 "grupo_muscular": ex.Exercicio.grupo_muscular,
                 "series_sugeridas": ex.TreinoExercicio.series_sugeridas,
                 "reps_sugeridas": ex.TreinoExercicio.reps_sugeridas,
-                "ordem": ex.TreinoExercicio.ordem
+                "ordem": ex.TreinoExercicio.ordem,
+                "instrucoes": ex.Exercicio.instrucoes,
+                "dicas": ex.Exercicio.dicas,
+                "nivel": ex.Exercicio.nivel,
+                "equipamento": ex.Exercicio.equipamento,
             }
             for ex in te
         ]
@@ -56,6 +60,8 @@ def listar_treinos(
             "descricao": treino.descricao,
             "duracao": treino.duracao or 45,
             "criado_por": treino.criado_por,
+            "origem": treino.origem or "user",
+            "locked": treino.locked or False,
             "criado_em": treino.criado_em,
             "exercicios": exercicios
         })
@@ -111,12 +117,19 @@ def criar_treino(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Cria novo treino - qualquer usuário pode criar seus próprios treinos"""
+    """Cria novo treino - qualquer usuário pode criar seus próprios treinos.
+       Coaches can create locked trainings for their students."""
+    
+    is_coach = current_user["perfil"] == "instrutor"
+    origem = treino.origem or ("coach" if is_coach else "user")
+    
     db_treino = Treino(
         nome=treino.nome,
         descricao=treino.descricao,
         duracao=treino.duracao or 45,
-        criado_por=current_user["user_id"]
+        criado_por=current_user["user_id"],
+        origem=origem,
+        locked=treino.locked if is_coach else False  # Only coaches can lock
     )
     db.add(db_treino)
     db.flush()
@@ -132,13 +145,36 @@ def criar_treino(
         )
         db.add(te)
     
-    # Auto-atribui o treino ao próprio usuário
-    treino_atribuido = TreinoAtribuido(
-        treino_id=db_treino.id,
-        aluno_id=current_user["user_id"],
-        ativo=True
-    )
-    db.add(treino_atribuido)
+    # If coach creating for a student, assign to student
+    target_student = treino.aluno_id if (is_coach and treino.aluno_id) else None
+    
+    if target_student:
+        # Verify coach-student connection
+        connection = db.query(CoachStudent).filter(
+            CoachStudent.coach_id == current_user["user_id"],
+            CoachStudent.student_id == target_student,
+            CoachStudent.status == "active"
+        ).first()
+        if not connection:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não está conectado a este aluno"
+            )
+        treino_atribuido = TreinoAtribuido(
+            treino_id=db_treino.id,
+            aluno_id=target_student,
+            ativo=True,
+            observacao=f"Criado pelo coach"
+        )
+        db.add(treino_atribuido)
+    else:
+        # Auto-atribui o treino ao próprio usuário
+        treino_atribuido = TreinoAtribuido(
+            treino_id=db_treino.id,
+            aluno_id=current_user["user_id"],
+            ativo=True
+        )
+        db.add(treino_atribuido)
     
     db.commit()
     db.refresh(db_treino)
@@ -165,6 +201,13 @@ def atualizar_treino(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você não tem permissão para editar este treino"
+        )
+    
+    # Check if training is locked by coach
+    if db_treino.locked and db_treino.criado_por != current_user["user_id"] and current_user["perfil"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Este treino foi bloqueado pelo seu coach e não pode ser editado"
         )
     
     # Atualiza dados básicos

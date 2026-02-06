@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 import logging
 from database import get_db
-from models import Usuario, UsuarioProgresso
+from models import Usuario, UsuarioProgresso, CoachStudent, CoachInviteToken
 from schemas import (
     UsuarioRegister, UsuarioLogin, TokenResponse, UsuarioResponse, UsuarioUpdate
 )
@@ -11,6 +11,7 @@ from security import (
     hash_password, verify_password, create_access_token, get_current_user,
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from datetime import datetime
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -20,8 +21,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=TokenResponse)
 def register(user: UsuarioRegister, db: Session = Depends(get_db)):
-    """Registra novo usuário"""
-    logger.info(f"[REGISTER] Tentativa de registro para email: {user.email}")
+    """Registra novo usuário (aluno or instrutor)"""
+    logger.info(f"[REGISTER] Tentativa de registro para email: {user.email}, perfil: {user.perfil}")
     
     # Verifica se email já existe (case insensitive)
     existing = db.query(Usuario).filter(Usuario.email.ilike(user.email.strip())).first()
@@ -43,6 +44,17 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
                 detail="Nickname já em uso. Escolha outro."
             )
     
+    # Validate coach registration
+    perfil = user.perfil or "aluno"
+    coach_status = None
+    if perfil == "instrutor":
+        if not user.cref:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CREF é obrigatório para registro como instrutor."
+            )
+        coach_status = "pending"  # Coaches need admin approval
+    
     # Cria novo usuário
     try:
         hashed = hash_password(user.senha)
@@ -53,13 +65,36 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
             nickname=user.nickname.strip().lower() if user.nickname else None,
             email=user.email.strip().lower(),
             senha_hash=hashed,
-            perfil=user.perfil or "aluno"
+            perfil=perfil,
+            coach_status=coach_status,
+            cref=user.cref,
+            especialidade=user.especialidade,
+            coach_bio=user.coach_bio,
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
         
-        logger.info(f"[REGISTER] Usuário criado com sucesso: ID={db_user.id}, email={db_user.email}")
+        logger.info(f"[REGISTER] Usuário criado com sucesso: ID={db_user.id}, email={db_user.email}, perfil={perfil}")
+        
+        # If student registered with an invite_token, auto-connect to coach
+        if user.invite_token and perfil == "aluno":
+            invite = db.query(CoachInviteToken).filter(
+                CoachInviteToken.token == user.invite_token,
+                CoachInviteToken.active == True
+            ).first()
+            if invite and (invite.expires_at is None or invite.expires_at > datetime.utcnow()) and invite.uses < invite.max_uses:
+                connection = CoachStudent(
+                    coach_id=invite.coach_id,
+                    student_id=db_user.id,
+                    status="active",
+                    connected_at=datetime.utcnow()
+                )
+                db.add(connection)
+                invite.uses += 1
+                db.commit()
+                logger.info(f"[REGISTER] Aluno auto-conectado ao coach ID={invite.coach_id}")
+        
     except Exception as e:
         db.rollback()
         logger.error(f"[REGISTER] Erro ao criar usuário: {e}")
@@ -68,10 +103,14 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
             detail="Erro interno ao criar conta. Tente novamente."
         )
     
-    # Cria token
+    # Cria token (include coach_status for coaches)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    token_data = {"sub": str(db_user.id), "perfil": db_user.perfil}
+    if db_user.coach_status:
+        token_data["coach_status"] = db_user.coach_status
+    
     access_token = create_access_token(
-        data={"sub": str(db_user.id), "perfil": db_user.perfil},
+        data=token_data,
         expires_delta=access_token_expires
     )
     
@@ -81,7 +120,8 @@ def register(user: UsuarioRegister, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "user_id": db_user.id,
-        "perfil": db_user.perfil
+        "perfil": db_user.perfil,
+        "coach_status": db_user.coach_status
     }
 
 @router.post("/login", response_model=TokenResponse)
@@ -110,8 +150,12 @@ def login(user: UsuarioLogin, db: Session = Depends(get_db)):
     logger.info(f"[LOGIN] Login bem-sucedido: ID={db_user.id}, email={db_user.email}")
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    token_data = {"sub": str(db_user.id), "perfil": db_user.perfil}
+    if db_user.coach_status:
+        token_data["coach_status"] = db_user.coach_status
+    
     access_token = create_access_token(
-        data={"sub": str(db_user.id), "perfil": db_user.perfil},
+        data=token_data,
         expires_delta=access_token_expires
     )
     
@@ -119,7 +163,8 @@ def login(user: UsuarioLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "user_id": db_user.id,
-        "perfil": db_user.perfil
+        "perfil": db_user.perfil,
+        "coach_status": db_user.coach_status
     }
 
 @router.get("/me")
@@ -148,6 +193,10 @@ def get_current_user_info(
         "nickname": user.nickname,
         "email": user.email,
         "perfil": user.perfil,
+        "coach_status": user.coach_status,
+        "cref": user.cref,
+        "especialidade": user.especialidade,
+        "coach_bio": user.coach_bio,
         "foto_url": user.foto_url,
         "foto_base64": user.foto_base64,
         "banner_base64": user.banner_base64,

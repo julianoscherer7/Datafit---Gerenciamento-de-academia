@@ -80,7 +80,11 @@ def get_current_user(credentials = Depends(security)) -> dict:
                 detail="Token inválido"
             )
         
-        return {"user_id": int(user_id), "perfil": payload.get("perfil")}
+        return {
+            "user_id": int(user_id), 
+            "perfil": payload.get("perfil"),
+            "coach_status": payload.get("coach_status")
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -89,5 +93,39 @@ def get_current_user(credentials = Depends(security)) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado"
         )
+
+def require_role(*roles):
+    """Dependency factory: requires user to have one of the specified roles"""
+    def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user["perfil"] not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Acesso restrito. Perfil necessário: {', '.join(roles)}"
+            )
+        return current_user
+    return role_checker
+
+def require_approved_coach(current_user: dict = Depends(get_current_user)):
+    """Dependency: requires user to be an approved coach"""
+    if current_user["perfil"] != "instrutor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas instrutores podem acessar este recurso"
+        )
+    if current_user.get("coach_status") != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seu perfil de instrutor ainda não foi aprovado"
+        )
+    return current_user
+
+def require_admin(current_user: dict = Depends(get_current_user)):
+    """Dependency: requires user to be an admin"""
+    if current_user["perfil"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso restrito a administradores"
+        )
+    return current_user
 
 

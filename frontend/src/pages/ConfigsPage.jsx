@@ -408,7 +408,7 @@ export const ConfigsPage = ({ onNavigate }) => {
       {/* App Info */}
       <motion.div variants={itemVariants} className="text-center text-slate-500 text-sm">
         <p>FITDATA v1.0.0</p>
-        <p>© 2024 FITDATA. Todos os direitos reservados.</p>
+        <p>© 2026 FITDATA. Todos os direitos reservados.</p>
       </motion.div>
 
       {/* Modals */}

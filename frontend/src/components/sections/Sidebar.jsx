@@ -2,24 +2,59 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Dumbbell, Users, TrendingUp, User,
-  LogOut, Menu, X, History, Bot
+  LogOut, Menu, X, History, Bot, LayoutDashboard, 
+  UserPlus, Link, Shield
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LogoutModal } from '../common/LogoutModal';
 
 export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
-  const { logout, user } = useAuth();
+  const { logout, user, isCoach, isApprovedCoach, isAdmin, isStudent } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Menu simplificado - principais itens
-  const menuItems = [
+  // Base menu items for all users
+  const baseItems = [
     { id: 'dashboard', label: 'Início', icon: Home, description: 'Seu resumo diário' },
+  ];
+
+  // Coach-specific items
+  const coachItems = isApprovedCoach ? [
+    { id: 'coachDashboard', label: 'Painel Coach', icon: LayoutDashboard, description: 'Gerenciar alunos' },
+    { id: 'coachTreinos', label: 'Criar Treino', icon: UserPlus, description: 'Treino para aluno' },
+  ] : [];
+
+  // Student items
+  const studentItems = [
     { id: 'treinos', label: 'Treino', icon: Dumbbell, description: 'Treinar agora' },
     { id: 'historico', label: 'Histórico', icon: History, description: 'Seus treinos passados' },
     { id: 'progresso', label: 'Progresso', icon: TrendingUp, description: 'Suas conquistas' },
+  ];
+
+  // Social & Connection
+  const socialItems = [
     { id: 'amigos', label: 'Social', icon: Users, description: 'Amigos e chat' },
-    { id: 'chat', label: 'FitBot AI', icon: Bot, description: 'Assistente de treinos', badge: 'NOVO' },
+    ...(isStudent ? [{ id: 'connection', label: 'Meu Coach', icon: Link, description: 'Conectar ao coach' }] : []),
+    { id: 'chat', label: 'FitBot AI', icon: Bot, description: 'Assistente de treinos' },
+  ];
+
+  // Admin items
+  const adminItems = isAdmin ? [
+    { id: 'adminCoaches', label: 'Admin', icon: Shield, description: 'Aprovar coaches' },
+  ] : [];
+
+  // Profile
+  const profileItems = [
     { id: 'perfil', label: 'Perfil', icon: User, description: 'Configurações' },
+  ];
+
+  // Build menu - coaches see their items, but also student items (they can also train)
+  const menuItems = [
+    ...baseItems,
+    ...coachItems,
+    ...studentItems,
+    ...socialItems,
+    ...adminItems,
+    ...profileItems,
   ];
 
   const handleLogoutClick = () => {
@@ -80,6 +115,11 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-white text-sm truncate">{user?.nome || 'Usuário'}</div>
                 <div className="text-xs text-slate-500 truncate">{user?.email}</div>
+                {isCoach && (
+                  <div className={`text-xs mt-0.5 ${isApprovedCoach ? 'text-green-400' : 'text-amber-400'}`}>
+                    {isApprovedCoach ? '✅ Coach Aprovado' : '⏳ Aguardando Aprovação'}
+                  </div>
+                )}
               </div>
             </div>
           </div>

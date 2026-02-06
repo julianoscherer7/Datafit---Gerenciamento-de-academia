@@ -79,13 +79,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (nome, email, senha, nickname = null) => {
+  const register = async (nome, email, senha, nickname = null, perfil = 'aluno', coachData = {}) => {
     try {
-      console.log('Tentando registrar:', { nome, email, nickname });
-      const res = await authService.register(nome, email, senha, nickname);
+      console.log('Tentando registrar:', { nome, email, nickname, perfil });
+      const res = await authService.register(nome, email, senha, nickname, perfil, coachData);
       console.log('Registro bem-sucedido:', res.data);
       
-      const { access_token, user_id, perfil } = res.data;
+      const { access_token, user_id, perfil: userPerfil } = res.data;
       
       // Salva token
       setToken(access_token);
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userRes.data);
       } catch (userErr) {
         console.warn('Usando dados básicos do registro:', userErr);
-        setUser({ id: user_id, perfil, email, nome, nickname });
+        setUser({ id: user_id, perfil: userPerfil, email, nome, nickname });
       }
       
       return res.data;
@@ -138,7 +138,13 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     refreshUser,
-    isAuthenticated: !!token && !!user
+    isAuthenticated: !!token && !!user,
+    // Role helpers
+    isCoach: user?.perfil === 'instrutor',
+    isAdmin: user?.perfil === 'admin',
+    isStudent: user?.perfil === 'aluno',
+    isApprovedCoach: user?.perfil === 'instrutor' && user?.coach_status === 'approved',
+    coachStatus: user?.coach_status,
   };
 
   return (

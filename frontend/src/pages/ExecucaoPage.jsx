@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Dumbbell, Clock, Flame, Target, Check, X, Play, Pause, 
-  ChevronRight, ChevronDown, Save, Trophy, ArrowLeft, Plus, Minus
+  ChevronRight, ChevronDown, Save, Trophy, ArrowLeft, Plus, Minus,
+  BookOpen, Timer, RotateCcw, Info
 } from 'lucide-react';
 import { Card, Button } from '../components/common';
 import { treinoService } from '../services';
@@ -41,6 +42,189 @@ const useTimer = (initialRunning = false) => {
     pause: () => setIsRunning(false),
     reset: () => { setSeconds(0); setIsRunning(false); }
   };
+};
+
+// Rest Timer Component
+const RestTimer = ({ show, onClose, defaultSeconds = 90 }) => {
+  const [restSeconds, setRestSeconds] = useState(defaultSeconds);
+  const [restRunning, setRestRunning] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (restRunning && restSeconds > 0) {
+      intervalRef.current = setInterval(() => {
+        setRestSeconds(prev => {
+          if (prev <= 1) {
+            setRestRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [restRunning, restSeconds]);
+
+  useEffect(() => {
+    if (show) {
+      setRestSeconds(defaultSeconds);
+      setRestRunning(true);
+    } else {
+      setRestRunning(false);
+    }
+  }, [show, defaultSeconds]);
+
+  if (!show) return null;
+
+  const mins = Math.floor(restSeconds / 60);
+  const secs = restSeconds % 60;
+  const progress = ((defaultSeconds - restSeconds) / defaultSeconds) * 100;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 50 }}
+      className="fixed bottom-4 inset-x-4 md:left-auto md:right-4 md:w-80 bg-slate-800 rounded-2xl p-4 border border-purple-500/30 shadow-2xl z-40"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Timer className="w-5 h-5 text-purple-400" />
+          <span className="text-white font-semibold text-sm">Descanso</span>
+        </div>
+        <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="text-center mb-3">
+        <span className={`text-4xl font-bold font-mono ${restSeconds === 0 ? 'text-green-400' : 'text-white'}`}>
+          {mins}:{secs.toString().padStart(2, '0')}
+        </span>
+        {restSeconds === 0 && <p className="text-green-400 text-sm mt-1">Descanso concluído!</p>}
+      </div>
+      <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-3">
+        <motion.div
+          animate={{ width: `${progress}%` }}
+          className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => { setRestSeconds(60); setRestRunning(true); }}
+          className="flex-1 py-2 bg-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-600"
+        >
+          60s
+        </button>
+        <button
+          onClick={() => { setRestSeconds(90); setRestRunning(true); }}
+          className="flex-1 py-2 bg-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-600"
+        >
+          90s
+        </button>
+        <button
+          onClick={() => { setRestSeconds(120); setRestRunning(true); }}
+          className="flex-1 py-2 bg-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-600"
+        >
+          2min
+        </button>
+        <button
+          onClick={() => { setRestRunning(false); setRestSeconds(defaultSeconds); }}
+          className="py-2 px-3 bg-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-600"
+        >
+          <RotateCcw className="w-3 h-3" />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+// Tutorial Modal Component
+const TutorialModal = ({ exercise, isOpen, onClose }) => {
+  if (!isOpen || !exercise) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-slate-800 rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto border border-slate-700"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-purple-400" />
+            <h3 className="text-lg font-bold text-white">{exercise.nome}</h3>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {exercise.grupo_muscular && (
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium">
+                {exercise.grupo_muscular}
+              </span>
+              {exercise.nivel && (
+                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium">
+                  {exercise.nivel}
+                </span>
+              )}
+              {exercise.equipamento && (
+                <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded-lg text-xs">
+                  {exercise.equipamento}
+                </span>
+              )}
+            </div>
+          )}
+
+          {exercise.instrucoes && (
+            <div>
+              <h4 className="text-sm font-semibold text-purple-400 mb-2">📋 Como Executar</h4>
+              <p className="text-slate-300 text-sm whitespace-pre-line leading-relaxed">
+                {exercise.instrucoes}
+              </p>
+            </div>
+          )}
+
+          {exercise.dicas && (
+            <div>
+              <h4 className="text-sm font-semibold text-amber-400 mb-2">💡 Dicas</h4>
+              <p className="text-slate-300 text-sm whitespace-pre-line leading-relaxed">
+                {exercise.dicas}
+              </p>
+            </div>
+          )}
+
+          {exercise.musculos_trabalhados && (
+            <div>
+              <h4 className="text-sm font-semibold text-green-400 mb-2">💪 Músculos Trabalhados</h4>
+              <p className="text-slate-300 text-sm">{exercise.musculos_trabalhados}</p>
+            </div>
+          )}
+
+          {exercise.video_url && (
+            <a
+              href={exercise.video_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-2.5 bg-purple-500/20 border border-purple-500/30 rounded-xl text-purple-400 text-sm font-medium text-center hover:bg-purple-500/30 transition-colors"
+            >
+              ▶ Assistir Vídeo Tutorial
+            </a>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 // Set Input Component
@@ -102,9 +286,10 @@ const SetInput = ({ setNumber, reps, load, onRepsChange, onLoadChange, completed
 );
 
 // Exercise Card Component
-const ExerciseCard = ({ exercise, index, expanded, onToggle, onSetComplete, onSetUpdate }) => {
+const ExerciseCard = ({ exercise, index, expanded, onToggle, onSetComplete, onSetUpdate, onShowTutorial, onStartRest }) => {
   const completedSets = exercise.sets.filter(s => s.completed).length;
   const isComplete = completedSets === exercise.sets.length;
+  const hasTutorial = exercise.instrucoes || exercise.dicas || exercise.musculos_trabalhados;
 
   return (
     <motion.div
@@ -135,12 +320,23 @@ const ExerciseCard = ({ exercise, index, expanded, onToggle, onSetComplete, onSe
             </p>
           </div>
         </div>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown className="w-5 h-5 text-slate-400" />
-        </motion.div>
+        <div className="flex items-center gap-2">
+          {hasTutorial && (
+            <div
+              onClick={(e) => { e.stopPropagation(); onShowTutorial(exercise); }}
+              className="p-2 bg-purple-500/10 rounded-lg text-purple-400 hover:bg-purple-500/20 transition-colors"
+              title="Como executar"
+            >
+              <BookOpen className="w-4 h-4" />
+            </div>
+          )}
+          <motion.div
+            animate={{ rotate: expanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="w-5 h-5 text-slate-400" />
+          </motion.div>
+        </div>
       </button>
 
       {/* Expanded Content */}
@@ -162,7 +358,13 @@ const ExerciseCard = ({ exercise, index, expanded, onToggle, onSetComplete, onSe
                 completed={set.completed}
                 onRepsChange={(reps) => onSetUpdate(setIndex, 'reps', reps)}
                 onLoadChange={(load) => onSetUpdate(setIndex, 'load', load)}
-                onComplete={() => onSetComplete(setIndex)}
+                onComplete={() => {
+                  onSetComplete(setIndex);
+                  // Auto-trigger rest timer when completing a set (not the last set)
+                  if (setIndex < exercise.sets.length - 1) {
+                    onStartRest();
+                  }
+                }}
               />
             ))}
           </motion.div>
@@ -266,6 +468,8 @@ export const ExecucaoPage = ({ treinoId, validationData, onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [tutorialExercise, setTutorialExercise] = useState(null);
 
   // Load workout data
   useEffect(() => {
@@ -528,6 +732,8 @@ export const ExecucaoPage = ({ treinoId, validationData, onNavigate }) => {
             onToggle={() => setExpandedExercise(expandedExercise === index ? -1 : index)}
             onSetComplete={(setIndex) => handleSetComplete(index, setIndex)}
             onSetUpdate={(setIndex, field, value) => handleSetUpdate(index, setIndex, field, value)}
+            onShowTutorial={(ex) => setTutorialExercise(ex)}
+            onStartRest={() => setShowRestTimer(true)}
           />
         ))}
       </div>
@@ -556,6 +762,24 @@ export const ExecucaoPage = ({ treinoId, validationData, onNavigate }) => {
         onSave={handleSaveWorkout}
         saving={saving}
       />
+
+      {/* Rest Timer */}
+      <AnimatePresence>
+        <RestTimer
+          show={showRestTimer}
+          onClose={() => setShowRestTimer(false)}
+          defaultSeconds={90}
+        />
+      </AnimatePresence>
+
+      {/* Tutorial Modal */}
+      <AnimatePresence>
+        <TutorialModal
+          exercise={tutorialExercise}
+          isOpen={!!tutorialExercise}
+          onClose={() => setTutorialExercise(null)}
+        />
+      </AnimatePresence>
     </motion.div>
   );
 };
