@@ -1,81 +1,57 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, TrendingUp, Users, Trophy, Sparkles, Zap, Target, Camera, MessageCircle } from 'lucide-react';
+import { Dumbbell, TrendingUp, Users, Trophy, Sparkles, Zap, Target, Bot, BarChart3, Shield } from 'lucide-react';
 
-// Counter Animation
 const Counter = ({ end, duration = 2 }) => {
   const [count, setCount] = React.useState(0);
-
   React.useEffect(() => {
-    let start = 0;
-    const increment = end / (duration * 60);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 1000 / 60);
-    return () => clearInterval(timer);
+    let s = 0; const inc = end / (duration * 60);
+    const t = setInterval(() => { s += inc; if (s >= end) { setCount(end); clearInterval(t); } else setCount(Math.floor(s)); }, 1000 / 60);
+    return () => clearInterval(t);
   }, [end, duration]);
-
   return <span>{count.toLocaleString()}</span>;
 };
 
 export const LandingPage = ({ onNavigate }) => {
   const features = [
-    { icon: Camera, title: 'Check-in de Treino', desc: 'Comprove seu treino com fotos', color: 'from-purple-500 to-pink-500' },
-    { icon: Sparkles, title: 'Stories', desc: 'Compartilhe seu progresso', color: 'from-pink-500 to-orange-500' },
-    { icon: MessageCircle, title: 'Chat', desc: 'Converse com amigos', color: 'from-blue-500 to-cyan-500' },
-    { icon: Trophy, title: 'Gamificação', desc: 'Conquiste badges', color: 'from-green-500 to-emerald-500' },
-    { icon: TrendingUp, title: 'Analytics', desc: 'Acompanhe o progresso', color: 'from-indigo-500 to-purple-500' },
+    { icon: Dumbbell, title: 'Gestao de Treinos', desc: 'Crie, edite e execute treinos', color: 'from-indigo-500 to-purple-500' },
+    { icon: Bot, title: 'FitBot AI', desc: 'Assistente inteligente', color: 'from-purple-500 to-violet-500' },
+    { icon: BarChart3, title: 'Analytics', desc: 'Acompanhe sua evolucao', color: 'from-emerald-500 to-teal-500' },
+    { icon: Trophy, title: 'Gamificacao', desc: 'Badges e conquistas', color: 'from-amber-500 to-orange-500' },
+    { icon: Users, title: 'Ranking', desc: 'Compare com amigos', color: 'from-cyan-500 to-blue-500' },
+    { icon: Shield, title: 'Coach', desc: 'Gestao de alunos', color: 'from-rose-500 to-pink-500' },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 overflow-hidden">
-      {/* Background Effects */}
+    <div className="min-h-screen overflow-hidden" style={{ background: '#0c0f1a' }}>
+      {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[128px]" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-[128px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full blur-[100px]" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[128px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[128px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <header className="py-6 px-4 md:px-8">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Dumbbell className="w-6 h-6 text-white" />
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Dumbbell className="w-5 h-5 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                FITDATA
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                DATAFIT
               </span>
             </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex gap-3"
-            >
-              <button 
-                onClick={() => onNavigate('login')}
-                className="px-4 py-2 text-slate-300 hover:text-white transition-colors font-medium"
-              >
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-3">
+              <button onClick={() => onNavigate('login')}
+                className="px-4 py-2 text-slate-400 hover:text-white transition-colors font-medium text-sm">
                 Entrar
               </button>
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => onNavigate('register')}
-                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium shadow-lg shadow-purple-500/25"
-              >
-                Começar
+                className="px-5 py-2 bg-indigo-500 text-white rounded-xl font-medium text-sm hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-500/20">
+                Comecar
               </motion.button>
             </motion.div>
           </div>
@@ -84,74 +60,46 @@ export const LandingPage = ({ onNavigate }) => {
         {/* Hero */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
           <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-6"
-            >
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-sm font-medium">
-                <Sparkles className="w-4 h-4" />
-                A rede social fitness
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-sm font-medium">
+                <Sparkles className="w-4 h-4" /> Plataforma fitness inteligente
               </span>
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
-            >
-              Transforme seus
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              Gerencie seus
               <br />
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
-                treinos em conquistas
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-300 bg-clip-text text-transparent">
+                treinos com dados
               </span>
             </motion.h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto"
-            >
-              Check-in de treinos, stories, chat com amigos, badges e muito mais.
-              A rede social fitness mais completa do Brasil.
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="text-lg text-slate-400 mb-10 max-w-2xl mx-auto">
+              Analytics avancado, assistente AI, gamificacao e gestao de treinos.
+              A plataforma completa para atletas e coaches.
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
-            >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => onNavigate('register')}
-                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow"
-              >
-                Criar Conta Grátis
+                className="px-8 py-4 bg-indigo-500 text-white rounded-xl font-semibold text-lg shadow-lg shadow-indigo-500/20 hover:bg-indigo-600 hover:shadow-indigo-500/30 transition-all">
+                Criar Conta Gratis
               </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={() => onNavigate('login')}
-                className="px-8 py-4 bg-slate-800 text-white rounded-xl font-semibold text-lg border border-slate-700 hover:bg-slate-700 transition-colors"
-              >
-                Já tenho conta
+                className="px-8 py-4 bg-slate-800/60 text-white rounded-xl font-semibold text-lg border border-slate-700/30 hover:bg-slate-800 transition-all">
+                Ja tenho conta
               </motion.button>
             </motion.div>
 
             {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex flex-wrap justify-center gap-8 md:gap-16 mb-16"
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              className="flex flex-wrap justify-center gap-8 md:gap-16 mb-16">
               {[
-                { value: 1000, label: 'Usuários Ativos', suffix: '+' },
+                { value: 1000, label: 'Usuarios Ativos', suffix: '+' },
                 { value: 50000, label: 'Treinos Realizados', suffix: '+' },
                 { value: 500, label: 'Badges Conquistados', suffix: '+' },
               ].map((stat, i) => (
@@ -165,41 +113,22 @@ export const LandingPage = ({ onNavigate }) => {
             </motion.div>
           </div>
 
-          {/* Features Carousel - Continuous Movement */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="w-full overflow-hidden py-8"
-          >
+          {/* Features Carousel */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+            className="w-full overflow-hidden py-8">
             <div className="relative">
-              {/* Gradient overlays for smooth fade */}
-              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-900 to-transparent z-10 pointer-events-none" />
-              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-900 to-transparent z-10 pointer-events-none" />
-              
-              {/* Scrolling container */}
-              <motion.div
-                animate={{ x: [0, -1200] }}
-                transition={{
-                  x: {
-                    duration: 25,
-                    repeat: Infinity,
-                    ease: "linear",
-                  },
-                }}
-                className="flex gap-4"
-              >
-                {/* Duplicate features for seamless loop */}
+              <div className="absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, #0c0f1a, transparent)' }} />
+              <div className="absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, #0c0f1a, transparent)' }} />
+              <motion.div animate={{ x: [0, -1200] }}
+                transition={{ x: { duration: 30, repeat: Infinity, ease: "linear" } }}
+                className="flex gap-4">
                 {[...features, ...features, ...features, ...features].map((feature, i) => {
                   const Icon = feature.icon;
                   return (
-                    <motion.div
-                      key={i}
-                      whileHover={{ y: -8, scale: 1.05 }}
-                      className="flex-shrink-0 w-48 bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50 text-center group hover:border-purple-500/50 hover:bg-slate-800/80 transition-all cursor-pointer"
-                    >
-                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
-                        <Icon className="w-7 h-7 text-white" />
+                    <motion.div key={i} whileHover={{ y: -8, scale: 1.05 }}
+                      className="flex-shrink-0 w-48 bg-slate-800/30 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/20 text-center group hover:border-indigo-500/30 hover:bg-slate-800/50 transition-all cursor-pointer">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
+                        <Icon className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="font-bold text-white text-sm mb-1">{feature.title}</h3>
                       <p className="text-xs text-slate-400">{feature.desc}</p>
@@ -212,8 +141,8 @@ export const LandingPage = ({ onNavigate }) => {
         </main>
 
         {/* Footer */}
-        <footer className="py-6 px-4 text-center text-slate-500 text-sm">
-          <p>© 2026 FITDATA. Transformando vidas através do fitness.</p>
+        <footer className="py-6 px-4 text-center text-slate-600 text-sm">
+          <p>&copy; 2026 DATAFIT. Transformando dados em resultados.</p>
         </footer>
       </div>
     </div>

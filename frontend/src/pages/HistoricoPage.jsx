@@ -1,540 +1,275 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Clock, Dumbbell, Flame, TrendingUp, Calendar, ChevronRight, 
-  X, BarChart2, Eye, Filter, ChevronDown, Trophy, Target
+import {
+  Calendar, Clock, Flame, TrendingUp, ChevronDown, Search,
+  Dumbbell, X, ArrowUpRight, ArrowDownRight, Minus, BarChart3,
+  Filter, CheckCircle
 } from 'lucide-react';
-import { Card, Button } from '../components/common';
 import { historicoService } from '../services';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from 'recharts';
 
-// Skeleton for loading
 const Skeleton = ({ className = '' }) => (
-  <div className={`animate-pulse bg-slate-700/50 rounded ${className}`} />
+  <div className={`animate-pulse rounded-lg ${className}`} style={{ background: 'rgba(148,163,184,0.08)' }} />
 );
 
-// Simple bar chart component
-const MiniBarChart = ({ data, color = 'purple' }) => {
-  const maxValue = Math.max(...data.map(d => d.value), 1);
-  
+const Counter = ({ end, suffix = '' }) => {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const dur = 800;
+    const step = (end - start) / (dur / 16);
+    const id = setInterval(() => {
+      start += step;
+      if (start >= end) { setVal(end); clearInterval(id); }
+      else setVal(Math.round(start));
+    }, 16);
+    return () => clearInterval(id);
+  }, [end]);
+  return <>{val.toLocaleString()}{suffix}</>;
+};
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="flex items-end justify-between gap-1 h-20">
-      {data.map((item, index) => (
-        <div key={index} className="flex-1 flex flex-col items-center gap-1">
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: `${(item.value / maxValue) * 100}%` }}
-            transition={{ delay: index * 0.1, duration: 0.5 }}
-            className={`w-full rounded-t-sm bg-gradient-to-t ${
-              color === 'purple' ? 'from-purple-600 to-purple-400' :
-              color === 'orange' ? 'from-orange-600 to-orange-400' :
-              'from-blue-600 to-blue-400'
-            } min-h-[4px]`}
-          />
-          <span className="text-[10px] text-slate-500">{item.label}</span>
-        </div>
+    <div className="bg-slate-900/95 border border-slate-700/30 rounded-lg px-3 py-2 text-xs backdrop-blur-sm">
+      <div className="text-slate-400 mb-1">{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} className="text-white font-medium">{p.name}: <span style={{ color: p.color }}>{p.value}</span></div>
       ))}
     </div>
   );
 };
 
-// Stats Card Component
-const StatsCard = ({ icon: Icon, label, value, trend, color = 'purple' }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50"
-  >
-    <div className="flex items-center gap-3">
-      <div className={`p-2 rounded-lg ${
-        color === 'purple' ? 'bg-purple-500/20' :
-        color === 'orange' ? 'bg-orange-500/20' :
-        color === 'blue' ? 'bg-blue-500/20' :
-        'bg-green-500/20'
-      }`}>
-        <Icon className={`w-5 h-5 ${
-          color === 'purple' ? 'text-purple-400' :
-          color === 'orange' ? 'text-orange-400' :
-          color === 'blue' ? 'text-blue-400' :
-          'text-green-400'
-        }`} />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm text-slate-400">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-white">{value}</span>
-          {trend && (
-            <span className={`text-xs font-medium ${
-              trend > 0 ? 'text-green-400' : trend < 0 ? 'text-red-400' : 'text-slate-400'
-            }`}>
-              {trend > 0 ? '+' : ''}{trend}%
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  </motion.div>
-);
-
-// Workout Detail Modal
-const WorkoutDetailModal = ({ isOpen, onClose, workout }) => {
-  if (!isOpen || !workout) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-700"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">{workout.treino_nome || workout.treino}</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-              <Clock className="w-5 h-5 text-blue-400 mx-auto mb-1" />
-              <div className="text-xl font-bold text-white">{workout.duracao || 0}</div>
-              <div className="text-xs text-slate-400">minutos</div>
-            </div>
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-              <Flame className="w-5 h-5 text-orange-400 mx-auto mb-1" />
-              <div className="text-xl font-bold text-white">{workout.calorias || 0}</div>
-              <div className="text-xs text-slate-400">kcal</div>
-            </div>
-            <div className="bg-slate-700/50 rounded-xl p-3 text-center">
-              <Target className="w-5 h-5 text-green-400 mx-auto mb-1" />
-              <div className="text-xl font-bold text-white">{workout.volume_total || 0}</div>
-              <div className="text-xs text-slate-400">kg volume</div>
-            </div>
-          </div>
-
-          {/* Exercises */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-slate-300">Exercícios Realizados</h3>
-            {workout.exercicios?.length > 0 ? (
-              workout.exercicios.map((ex, index) => (
-                <div key={index} className="bg-slate-700/50 rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-white">{ex.nome}</span>
-                    <span className="text-xs text-slate-400">{ex.grupo_muscular}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {ex.series?.map((serie, sIndex) => (
-                      <div key={sIndex} className="bg-slate-600/50 rounded-lg p-2">
-                        <div className="text-xs text-slate-400">Série {sIndex + 1}</div>
-                        <div className="text-sm font-medium text-white">{serie.reps}x {serie.carga_kg}kg</div>
-                      </div>
-                    )) || (
-                      <div className="col-span-3 text-sm text-slate-400">
-                        {ex.series_realizadas || 3}x{ex.reps_realizadas || 12} • {ex.carga_utilizada || 0}kg
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
-                Detalhes dos exercícios não disponíveis
-              </p>
-            )}
-          </div>
-
-          {/* Date */}
-          <div className="mt-6 pt-4 border-t border-slate-700 text-center">
-            <p className="text-sm text-slate-400">
-              Realizado em {new Date(workout.data || workout.created_at).toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-// Comparison Section Component
-const ComparisonSection = ({ historico }) => {
-  const [selectedExercise, setSelectedExercise] = useState(null);
-  
-  // Get unique exercises from history
-  const exercises = [...new Set(historico.flatMap(h => 
-    h.exercicios?.map(e => e.nome) || []
-  ))].filter(Boolean);
-
-  // Get comparison data for selected exercise
-  const getExerciseProgress = (exerciseName) => {
-    return historico
-      .filter(h => h.exercicios?.some(e => e.nome === exerciseName))
-      .slice(0, 7)
-      .reverse()
-      .map(h => {
-        const ex = h.exercicios?.find(e => e.nome === exerciseName);
-        return {
-          date: new Date(h.data || h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-          maxLoad: ex?.series ? Math.max(...ex.series.map(s => s.carga_kg || 0)) : (ex?.carga_utilizada || 0),
-          totalVolume: ex?.series ? ex.series.reduce((acc, s) => acc + (s.reps || 0) * (s.carga_kg || 0), 0) : 0
-        };
-      });
-  };
-
-  if (exercises.length === 0) {
-    return null;
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50"
-    >
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-5 h-5 text-green-400" />
-        <h2 className="text-lg font-bold text-white">Comparativo de Evolução</h2>
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-sm text-slate-400 mb-2">Selecione um exercício</label>
-        <select
-          value={selectedExercise || ''}
-          onChange={(e) => setSelectedExercise(e.target.value || null)}
-          className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="">Escolha um exercício...</option>
-          {exercises.map(ex => (
-            <option key={ex} value={ex}>{ex}</option>
-          ))}
-        </select>
-      </div>
-
-      {selectedExercise && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="space-y-4"
-        >
-          {getExerciseProgress(selectedExercise).length > 0 ? (
-            <>
-              <div>
-                <h4 className="text-sm text-slate-400 mb-2">Carga Máxima (kg)</h4>
-                <MiniBarChart 
-                  data={getExerciseProgress(selectedExercise).map(d => ({ value: d.maxLoad, label: d.date }))}
-                  color="purple"
-                />
-              </div>
-              <div>
-                <h4 className="text-sm text-slate-400 mb-2">Volume Total (kg)</h4>
-                <MiniBarChart 
-                  data={getExerciseProgress(selectedExercise).map(d => ({ value: d.totalVolume, label: d.date }))}
-                  color="blue"
-                />
-              </div>
-            </>
-          ) : (
-            <p className="text-sm text-slate-400 text-center py-4">
-              Sem dados suficientes para comparação
-            </p>
-          )}
-        </motion.div>
-      )}
-    </motion.div>
-  );
-};
-
-export const HistoricoPage = () => {
+export const HistoricoPage = ({ onNavigate }) => {
   const [historico, setHistorico] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedWorkout, setSelectedWorkout] = useState(null);
-  const [filter, setFilter] = useState('all'); // all, week, month
-  const [showFilters, setShowFilters] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [filter, setFilter] = useState('todos');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchHistorico();
-  }, []);
+  useEffect(() => { fetchHistorico(); }, []);
 
   const fetchHistorico = async () => {
     setLoading(true);
     try {
       const res = await historicoService.getHistorico();
       setHistorico(res.data || []);
-    } catch (err) {
-      console.error('Erro ao buscar histórico:', err);
-      // Use mock data as fallback
+    } catch {
+      // Demo data
       setHistorico([
-        {
-          id: 1,
-          data: '2026-01-28T10:30:00',
-          treino_nome: 'Peito e Tríceps',
-          duracao: 60,
-          calorias: 450,
-          volume_total: 3200,
-          exercicios: [
-            { nome: 'Supino Reto', grupo_muscular: 'Peito', series: [{ reps: 12, carga_kg: 80 }, { reps: 10, carga_kg: 85 }, { reps: 8, carga_kg: 90 }] },
-            { nome: 'Desenvolvimento', grupo_muscular: 'Ombros', series: [{ reps: 12, carga_kg: 40 }, { reps: 10, carga_kg: 45 }] }
-          ]
-        },
-        {
-          id: 2,
-          data: '2026-01-27T09:15:00',
-          treino_nome: 'Costas e Bíceps',
-          duracao: 55,
-          calorias: 380,
-          volume_total: 2800,
-          exercicios: [
-            { nome: 'Puxada Frontal', grupo_muscular: 'Costas', series: [{ reps: 12, carga_kg: 60 }, { reps: 10, carga_kg: 65 }] }
-          ]
-        },
-        {
-          id: 3,
-          data: '2026-01-25T16:00:00',
-          treino_nome: 'Pernas',
-          duracao: 70,
-          calorias: 520,
-          volume_total: 4500,
-          exercicios: []
-        }
+        { id: 1, treino_nome: 'Treino A - Peito e Triceps', data: '2024-01-15', duracao: 65, calorias: 420, exercicios_completos: 6, exercicios_total: 6, volume_total: 4800, tipo: 'musculacao' },
+        { id: 2, treino_nome: 'Treino B - Costas e Biceps', data: '2024-01-13', duracao: 58, calorias: 380, exercicios_completos: 5, exercicios_total: 6, volume_total: 4200, tipo: 'musculacao' },
+        { id: 3, treino_nome: 'Treino C - Pernas', data: '2024-01-11', duracao: 72, calorias: 520, exercicios_completos: 7, exercicios_total: 7, volume_total: 6100, tipo: 'musculacao' },
+        { id: 4, treino_nome: 'Cardio - HIIT', data: '2024-01-10', duracao: 30, calorias: 350, exercicios_completos: 8, exercicios_total: 8, volume_total: 0, tipo: 'cardio' },
+        { id: 5, treino_nome: 'Treino A - Peito e Triceps', data: '2024-01-08', duracao: 60, calorias: 400, exercicios_completos: 6, exercicios_total: 6, volume_total: 4600, tipo: 'musculacao' },
+        { id: 6, treino_nome: 'Treino B - Costas e Biceps', data: '2024-01-06', duracao: 55, calorias: 360, exercicios_completos: 6, exercicios_total: 6, volume_total: 4000, tipo: 'musculacao' },
       ]);
-    } finally {
-      setLoading(false);
     }
+    finally { setLoading(false); }
   };
 
-  // Filter logic
-  const filteredHistorico = historico.filter(item => {
-    const itemDate = new Date(item.data || item.created_at);
-    const now = new Date();
-    
-    if (filter === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return itemDate >= weekAgo;
-    }
-    if (filter === 'month') {
-      const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      return itemDate >= monthAgo;
-    }
+  const stats = useMemo(() => {
+    if (!historico.length) return { total: 0, totalMin: 0, totalCal: 0, avgDur: 0 };
+    const total = historico.length;
+    const totalMin = historico.reduce((s, h) => s + (h.duracao || 0), 0);
+    const totalCal = historico.reduce((s, h) => s + (h.calorias || 0), 0);
+    return { total, totalMin, totalCal, avgDur: Math.round(totalMin / total) };
+  }, [historico]);
+
+  const chartData = useMemo(() => {
+    return historico.slice(0, 7).reverse().map(h => ({
+      name: new Date(h.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      volume: h.volume_total || 0,
+      calorias: h.calorias || 0,
+      duracao: h.duracao || 0
+    }));
+  }, [historico]);
+
+  const filtered = historico.filter(h => {
+    if (filter !== 'todos' && h.tipo !== filter) return false;
+    if (searchTerm && !(h.treino_nome || '').toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
   });
 
-  // Calculate stats
-  const stats = {
-    totalWorkouts: filteredHistorico.length,
-    totalMinutes: filteredHistorico.reduce((acc, h) => acc + (h.duracao || 0), 0),
-    totalCalories: filteredHistorico.reduce((acc, h) => acc + (h.calorias || 0), 0),
-    totalVolume: filteredHistorico.reduce((acc, h) => acc + (h.volume_total || 0), 0)
-  };
-
-  // Weekly chart data
-  const weeklyData = () => {
-    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const now = new Date();
-    return days.map((day, index) => {
-      const count = filteredHistorico.filter(h => {
-        const d = new Date(h.data || h.created_at);
-        return d.getDay() === index;
-      }).length;
-      return { label: day, value: count };
-    });
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+  const formatDate = (d) => {
+    const date = new Date(d);
+    const today = new Date();
+    const diff = Math.floor((today - date) / 86400000);
+    if (diff === 0) return 'Hoje';
+    if (diff === 1) return 'Ontem';
+    if (diff < 7) return `${diff} dias atras`;
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-9 w-64 mb-4" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-48 rounded-2xl" />
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
-          ))}
-        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+        <Skeleton className="h-48 rounded-xl" />
+        <div className="space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="space-y-6 pb-8"
-    >
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Histórico de Treinos</h1>
-          <p className="text-slate-400">Acompanhe sua evolução</p>
+      <div>
+        <h1 className="text-xl font-bold text-white">Historico</h1>
+        <p className="text-sm text-slate-500">{historico.length} treinos registrados</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Treinos', value: stats.total, icon: Dumbbell, color: 'indigo' },
+          { label: 'Tempo Total', value: stats.totalMin, suffix: 'min', icon: Clock, color: 'emerald' },
+          { label: 'Calorias', value: stats.totalCal, suffix: 'kcal', icon: Flame, color: 'amber' },
+          { label: 'Media', value: stats.avgDur, suffix: 'min', icon: TrendingUp, color: 'purple' },
+        ].map((s, i) => (
+          <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="card-base p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <s.icon className={`w-4 h-4 text-${s.color}-400`} />
+              <span className="text-[11px] text-slate-500">{s.label}</span>
+            </div>
+            <div className="text-lg font-bold text-white"><Counter end={s.value} suffix={s.suffix ? ` ${s.suffix}` : ''} /></div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="card-base p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-white">Volume por Sessao</h3>
+          <span className="text-[11px] text-slate-500">Ultimos 7 treinos</span>
         </div>
-        
-        {/* Filter */}
-        <div className="relative">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowFilters(!showFilters)}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            {filter === 'all' ? 'Todos' : filter === 'week' ? 'Última Semana' : 'Último Mês'}
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </motion.button>
-          
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute right-0 mt-2 bg-slate-800 border border-slate-700 rounded-xl overflow-hidden z-10 w-40"
-              >
-                {['all', 'week', 'month'].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => { setFilter(f); setShowFilters(false); }}
-                    className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${
-                      filter === f ? 'text-purple-400 bg-slate-700/50' : 'text-white'
-                    }`}
-                  >
-                    {f === 'all' ? 'Todos' : f === 'week' ? 'Última Semana' : 'Último Mês'}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.05)" />
+              <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="volume" stroke="#6366f1" fill="url(#volGrad)" strokeWidth={2} name="Volume (kg)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : <div className="h-40 flex items-center justify-center text-slate-600 text-sm">Sem dados</div>}
+      </motion.div>
+
+      {/* Filters + Search */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar treino..."
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
+        </div>
+        <div className="flex gap-1 p-1 rounded-xl bg-slate-800/30 border border-slate-700/10 w-fit">
+          {[{ key: 'todos', label: 'Todos' }, { key: 'musculacao', label: 'Musculacao' }, { key: 'cardio', label: 'Cardio' }].map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                filter === f.key ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-slate-400 hover:text-white'
+              }`}>{f.label}</button>
+          ))}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatsCard icon={Trophy} label="Treinos" value={stats.totalWorkouts} color="purple" />
-        <StatsCard icon={Clock} label="Minutos" value={stats.totalMinutes} color="blue" />
-        <StatsCard icon={Flame} label="Calorias" value={stats.totalCalories} color="orange" />
-        <StatsCard icon={Target} label="Volume (kg)" value={stats.totalVolume.toLocaleString()} color="green" />
-      </motion.div>
-
-      {/* Weekly Activity Chart */}
-      <motion.div variants={itemVariants}>
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart2 className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-bold text-white">Atividade Semanal</h2>
-          </div>
-          <MiniBarChart data={weeklyData()} color="purple" />
-        </Card>
-      </motion.div>
-
-      {/* Comparison Section */}
-      {filteredHistorico.length > 0 && (
-        <motion.div variants={itemVariants}>
-          <ComparisonSection historico={filteredHistorico} />
-        </motion.div>
-      )}
-
-      {/* History List */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-purple-400" />
-          Treinos Realizados
-        </h2>
-        
-        {filteredHistorico.length === 0 ? (
-          <motion.div variants={itemVariants} className="text-center py-12">
-            <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
-              <Dumbbell className="w-10 h-10 text-slate-600" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Nenhum treino registrado</h3>
-            <p className="text-slate-400">Complete seu primeiro treino para ver o histórico aqui!</p>
-          </motion.div>
-        ) : (
-          filteredHistorico.map((item, index) => (
-            <motion.div key={item.id} variants={itemVariants}>
-              <Card hover className="cursor-pointer" onClick={() => setSelectedWorkout(item)}>
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-white">{item.treino_nome || item.treino}</h3>
-                      {index === 0 && (
-                        <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
-                          Último
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(item.data || item.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'short'
-                        })}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {item.duracao || 0} min
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Dumbbell className="w-4 h-4" />
-                        {item.exercicios?.length || item.exercicios_count || 0} exercícios
-                      </div>
-                      <div className="flex items-center gap-1 text-orange-400">
-                        <Flame className="w-4 h-4" />
-                        {item.calorias || 0} kcal
-                      </div>
-                    </div>
-                  </div>
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </motion.div>
+      {/* Sessions List */}
+      <div className="space-y-2">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 text-sm">Nenhum treino encontrado</div>
+        ) : filtered.map((h, i) => (
+          <motion.div key={h.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.03 }}
+            onClick={() => setSelected(h)}
+            className="card-base p-4 hover:border-slate-700/30 cursor-pointer transition-all group">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                h.tipo === 'cardio' ? 'bg-amber-500/10' : 'bg-indigo-500/10'
+              }`}>
+                {h.tipo === 'cardio' ? <Flame className="w-5 h-5 text-amber-400" /> : <Dumbbell className="w-5 h-5 text-indigo-400" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-white truncate group-hover:text-indigo-300 transition-colors">
+                  {h.treino_nome}
                 </div>
-              </Card>
-            </motion.div>
-          ))
-        )}
+                <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+                  <span>{formatDate(h.data)}</span>
+                  <span>·</span>
+                  <span>{h.duracao}min</span>
+                  <span>·</span>
+                  <span className="flex items-center gap-0.5">
+                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+                    {h.exercicios_completos}/{h.exercicios_total}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-white">{(h.calorias || 0).toLocaleString()}</div>
+                <div className="text-[10px] text-slate-500">kcal</div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Detail Modal */}
-      <WorkoutDetailModal
-        isOpen={!!selectedWorkout}
-        onClose={() => setSelectedWorkout(null)}
-        workout={selectedWorkout}
-      />
-    </motion.div>
+      <AnimatePresence>
+        {selected && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setSelected(null)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-lg card-base p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">{selected.treino_nome}</h3>
+                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {[
+                  { label: 'Data', value: new Date(selected.data).toLocaleDateString('pt-BR') },
+                  { label: 'Duracao', value: `${selected.duracao} min` },
+                  { label: 'Calorias', value: `${selected.calorias} kcal` },
+                  { label: 'Volume', value: `${(selected.volume_total || 0).toLocaleString()} kg` },
+                  { label: 'Exercicios', value: `${selected.exercicios_completos}/${selected.exercicios_total}` },
+                  { label: 'Tipo', value: selected.tipo || 'musculacao' },
+                ].map(item => (
+                  <div key={item.label} className="bg-slate-800/20 rounded-lg p-3">
+                    <div className="text-[11px] text-slate-500 mb-0.5">{item.label}</div>
+                    <div className="text-sm font-medium text-white">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Completion bar */}
+              <div className="mb-2">
+                <div className="flex justify-between text-[11px] mb-1.5">
+                  <span className="text-slate-500">Conclusao</span>
+                  <span className="text-indigo-400 font-medium">
+                    {Math.round((selected.exercicios_completos / Math.max(selected.exercicios_total, 1)) * 100)}%
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-800/40 overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${(selected.exercicios_completos / Math.max(selected.exercicios_total, 1)) * 100}%` }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

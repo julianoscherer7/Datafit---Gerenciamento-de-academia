@@ -1,4 +1,4 @@
-// Services Index - Exportação centralizada de todos os serviços
+// Services Index - Exportacao centralizada
 import api from './api';
 import { authService } from './auth.service';
 import { treinoService, execucaoService } from './treino.service';
@@ -12,6 +12,16 @@ import { exerciciosService } from './exercicios.service';
 import { configsService } from './configs.service';
 import { coachService } from './coach.service';
 import { aiService } from './ai.service';
+import { chatService, checkinService, storiesService, lojaService } from './social.service';
+
+// Create socialService alias for ChatPage compatibility
+const socialService = {
+  getConversas: chatService.getConversas,
+  getMensagens: (convId, limite) => chatService.getHistorico(convId, limite),
+  enviarMensagem: (convId, data) => chatService.enviarMensagem({ ...data, destinatario_id: convId }),
+  marcarLida: chatService.marcarLida,
+  contarNaoLidas: chatService.contarNaoLidas,
+};
 
 export {
   api,
@@ -28,7 +38,11 @@ export {
   configsService,
   coachService,
   aiService,
+  chatService,
+  checkinService,
+  storiesService,
+  lojaService,
+  socialService,
 };
 
-// Export default para compatibilidade
 export default api;

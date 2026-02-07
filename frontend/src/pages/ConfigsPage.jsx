@@ -1,428 +1,197 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, Mail, Lock, Bell, Moon, Settings as SettingsIcon, 
-  ChevronRight, Shield, Globe, LogOut, Save, Check, X, Eye, EyeOff
+import {
+  Settings, Bell, Moon, Sun, Globe, Lock, Shield, Eye, EyeOff,
+  ChevronRight, LogOut, User, Palette, Volume2, Smartphone, Check
 } from 'lucide-react';
-import { Card, Button, Input, Badge, LogoutModal } from '../components/common';
+import { configsService } from '../services';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import api from '../services/api';
 
-// Section Toggle Component
-const SettingToggle = ({ label, description, value, onChange, disabled = false }) => (
-  <div className="flex items-center justify-between py-3 border-b border-slate-700/50 last:border-0">
-    <div className="flex-1 mr-4">
-      <p className="text-white font-medium">{label}</p>
-      {description && <p className="text-sm text-slate-400">{description}</p>}
+const Toggle = ({ enabled, onChange, label, desc }) => (
+  <div className="flex items-center justify-between py-3">
+    <div>
+      <div className="text-sm text-white font-medium">{label}</div>
+      {desc && <div className="text-[11px] text-slate-500 mt-0.5">{desc}</div>}
     </div>
-    <motion.button
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => !disabled && onChange(!value)}
-      disabled={disabled}
-      className={`relative w-12 h-6 rounded-full transition-colors ${
-        value ? 'bg-purple-500' : 'bg-slate-600'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-    >
-      <motion.div
-        animate={{ x: value ? 24 : 2 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-md"
-      />
-    </motion.button>
+    <button onClick={() => onChange(!enabled)}
+      className={`relative w-10 h-5.5 rounded-full transition-colors ${enabled ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+      <motion.div layout className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white shadow-sm ${enabled ? 'left-[22px]' : 'left-0.5'}`}
+        style={{ width: 18, height: 18 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+    </button>
   </div>
 );
 
-// Change Password Modal
-const ChangePasswordModal = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    senhaAtual: '',
-    novaSenha: '',
-    confirmarSenha: ''
-  });
-  const [showPasswords, setShowPasswords] = useState({
-    atual: false,
-    nova: false,
-    confirmar: false
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!formData.senhaAtual || !formData.novaSenha || !formData.confirmarSenha) {
-      setError('Preencha todos os campos');
-      return;
-    }
-    if (formData.novaSenha !== formData.confirmarSenha) {
-      setError('As senhas não coincidem');
-      return;
-    }
-    if (formData.novaSenha.length < 6) {
-      setError('A nova senha deve ter pelo menos 6 caracteres');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    try {
-      await api.put('/auth/change-password', {
-        senha_atual: formData.senhaAtual,
-        nova_senha: formData.novaSenha
-      });
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-        setFormData({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
-        setSuccess(false);
-      }, 2000);
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Erro ao alterar senha');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-slate-800 rounded-2xl p-6 w-full max-w-md border border-slate-700"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Alterar Senha</h2>
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {success ? (
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              className="text-center py-8"
-            >
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-400" />
-              </div>
-              <p className="text-white font-medium">Senha alterada com sucesso!</p>
-            </motion.div>
-          ) : (
-            <div className="space-y-4">
-              {/* Current Password */}
-              <div className="space-y-2">
-                <label className="block text-sm text-slate-400">Senha Atual</label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.atual ? 'text' : 'password'}
-                    value={formData.senhaAtual}
-                    onChange={(e) => setFormData({ ...formData, senhaAtual: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white pr-12 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords({ ...showPasswords, atual: !showPasswords.atual })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showPasswords.atual ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* New Password */}
-              <div className="space-y-2">
-                <label className="block text-sm text-slate-400">Nova Senha</label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.nova ? 'text' : 'password'}
-                    value={formData.novaSenha}
-                    onChange={(e) => setFormData({ ...formData, novaSenha: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white pr-12 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords({ ...showPasswords, nova: !showPasswords.nova })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showPasswords.nova ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-2">
-                <label className="block text-sm text-slate-400">Confirmar Nova Senha</label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.confirmar ? 'text' : 'password'}
-                    value={formData.confirmarSenha}
-                    onChange={(e) => setFormData({ ...formData, confirmarSenha: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white pr-12 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords({ ...showPasswords, confirmar: !showPasswords.confirmar })}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
-                  >
-                    {showPasswords.confirmar ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-red-400 text-sm"
-                >
-                  {error}
-                </motion.p>
-              )}
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSubmit}
-                disabled={loading}
-                className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Salvar Nova Senha
-                  </>
-                )}
-              </motion.button>
-            </div>
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
+const SectionHeader = ({ icon: Icon, title }) => (
+  <div className="flex items-center gap-2.5 mb-3 mt-6 first:mt-0">
+    <Icon className="w-4 h-4 text-indigo-400" />
+    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</span>
+  </div>
+);
 
 export const ConfigsPage = ({ onNavigate }) => {
   const { user, logout } = useAuth();
-  const { darkMode, toggleTheme } = useTheme();
-  const [settings, setSettings] = useState({
-    notificacoes: true,
-    emailMarketing: false,
-    lembretesTreino: true,
-    sonsTreino: true
+  const { theme, toggleTheme } = useTheme();
+  const [configs, setConfigs] = useState({
+    notificacoes: true, notif_treino: true, notif_social: false, notif_badges: true,
+    privacidade_perfil: false, som: true
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
   const [saving, setSaving] = useState(false);
 
-  // Load settings from localStorage
   useEffect(() => {
-    const savedSettings = localStorage.getItem('fitdata_settings');
-    if (savedSettings) {
-      try {
-        setSettings(JSON.parse(savedSettings));
-      } catch (e) {
-        console.error('Error loading settings:', e);
-      }
-    }
+    configsService.getConfigs().then(res => {
+      if (res.data) setConfigs(prev => ({ ...prev, ...res.data }));
+    }).catch(() => {});
   }, []);
 
-  // Save settings to localStorage
-  const updateSetting = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    localStorage.setItem('fitdata_settings', JSON.stringify(newSettings));
+  const updateConfig = async (key, val) => {
+    setConfigs(prev => ({ ...prev, [key]: val }));
+    try { await configsService.updateConfig(key, val); } catch {}
   };
 
-  const handleLogout = async () => {
-    await logout();
-    setShowLogoutModal(false);
+  const handlePasswordChange = async () => {
+    if (passwordData.new !== passwordData.confirm) return;
+    setSaving(true);
+    try {
+      await configsService.changePassword(passwordData.current, passwordData.new);
+      setShowPasswordModal(false);
+      setPasswordData({ current: '', new: '', confirm: '' });
+    } catch {}
+    finally { setSaving(false); }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
+  const handleLogout = () => { logout(); };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const PasswordInput = ({ value, onChange, placeholder, field }) => (
+    <div className="relative">
+      <input type={showPasswords[field] ? 'text' : 'password'} value={value} onChange={onChange}
+        placeholder={placeholder}
+        className="w-full px-3.5 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 pr-10 transition-colors" />
+      <button onClick={() => setShowPasswords(p => ({ ...p, [field]: !p[field] }))}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+        {showPasswords[field] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="space-y-6 max-w-2xl mx-auto pb-8"
-    >
-      <div>
-        <h1 className="text-3xl font-bold text-white">Configurações</h1>
-        <p className="text-slate-400">Personalize sua experiência</p>
+    <div className="max-w-2xl mx-auto space-y-1">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-white">Configuracoes</h1>
+        <p className="text-sm text-slate-500">Personalize sua experiencia</p>
       </div>
 
-      {/* Perfil */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <User className="w-5 h-5 text-purple-400" /> Conta
-          </h3>
-          
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
-              {user?.foto_base64 ? (
-                <img src={user.foto_base64} alt={user.nome} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-2xl">👤</span>
-              )}
-            </div>
-            <div className="flex-1">
-              <p className="text-white font-semibold">{user?.nome || 'Usuário'}</p>
-              {user?.nickname && <p className="text-sm text-purple-400">@{user.nickname}</p>}
-              <p className="text-sm text-slate-400">{user?.email}</p>
-            </div>
+      <div className="card-base p-5">
+        {/* APPEARANCE */}
+        <SectionHeader icon={Palette} title="Aparencia" />
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <div className="text-sm text-white font-medium">Tema escuro</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Alternar entre claro e escuro</div>
           </div>
-          
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onNavigate('editPerfil')}
-            className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            Editar Perfil
-            <ChevronRight className="w-4 h-4" />
-          </motion.button>
-        </Card>
-      </motion.div>
+          <button onClick={toggleTheme}
+            className={`relative w-10 rounded-full transition-colors ${theme === 'dark' ? 'bg-indigo-500' : 'bg-slate-700'}`}
+            style={{ height: 22 }}>
+            <motion.div layout style={{ width: 18, height: 18, top: 2 }}
+              className={`absolute rounded-full bg-white shadow-sm ${theme === 'dark' ? 'left-[20px]' : 'left-0.5'}`}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+          </button>
+        </div>
+        <div className="border-t border-slate-800/30 my-1" />
 
-      {/* Notificações */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-purple-400" /> Notificações
-          </h3>
-          <div className="space-y-1">
-            <SettingToggle
-              label="Notificações push"
-              description="Receber notificações no dispositivo"
-              value={settings.notificacoes}
-              onChange={(v) => updateSetting('notificacoes', v)}
-            />
-            <SettingToggle
-              label="Lembretes de treino"
-              description="Receber lembretes para treinar"
-              value={settings.lembretesTreino}
-              onChange={(v) => updateSetting('lembretesTreino', v)}
-            />
-            <SettingToggle
-              label="Emails promocionais"
-              description="Receber ofertas e novidades"
-              value={settings.emailMarketing}
-              onChange={(v) => updateSetting('emailMarketing', v)}
-            />
+        {/* NOTIFICATIONS */}
+        <SectionHeader icon={Bell} title="Notificacoes" />
+        <Toggle label="Notificacoes" desc="Receber notificacoes push" enabled={configs.notificacoes} onChange={v => updateConfig('notificacoes', v)} />
+        <Toggle label="Lembretes de treino" desc="Avisar nos horarios de treino" enabled={configs.notif_treino} onChange={v => updateConfig('notif_treino', v)} />
+        <Toggle label="Conquistas" desc="Avisar ao ganhar badges" enabled={configs.notif_badges} onChange={v => updateConfig('notif_badges', v)} />
+        <Toggle label="Social" desc="Notificacoes de amigos" enabled={configs.notif_social} onChange={v => updateConfig('notif_social', v)} />
+        <div className="border-t border-slate-800/30 my-1" />
+
+        {/* SOUND */}
+        <SectionHeader icon={Volume2} title="Sons" />
+        <Toggle label="Efeitos sonoros" desc="Sons ao completar acoes" enabled={configs.som} onChange={v => updateConfig('som', v)} />
+        <div className="border-t border-slate-800/30 my-1" />
+
+        {/* PRIVACY */}
+        <SectionHeader icon={Shield} title="Privacidade" />
+        <Toggle label="Perfil publico" desc="Outros usuarios podem ver seu perfil" enabled={configs.privacidade_perfil} onChange={v => updateConfig('privacidade_perfil', v)} />
+
+        <button onClick={() => setShowPasswordModal(true)}
+          className="flex items-center justify-between w-full py-3 group">
+          <div className="flex items-center gap-2.5">
+            <Lock className="w-4 h-4 text-slate-500" />
+            <span className="text-sm text-white font-medium">Alterar senha</span>
           </div>
-        </Card>
-      </motion.div>
+          <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
+        </button>
+      </div>
 
-      {/* Aparência */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Moon className="w-5 h-5 text-purple-400" /> Aparência
-          </h3>
-          <SettingToggle
-            label="Modo escuro"
-            description="Usar tema escuro na interface"
-            value={darkMode}
-            onChange={toggleTheme}
-          />
-        </Card>
-      </motion.div>
+      {/* Logout */}
+      <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={() => setShowLogoutModal(true)}
+        className="w-full flex items-center justify-center gap-2 py-3 mt-4 rounded-xl bg-red-500/5 border border-red-500/10 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-all">
+        <LogOut className="w-4 h-4" /> Sair da conta
+      </motion.button>
 
-      {/* Treino */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-purple-400" /> Treino
-          </h3>
-          <SettingToggle
-            label="Sons durante treino"
-            description="Tocar sons de conclusão e alertas"
-            value={settings.sonsTreino}
-            onChange={(v) => updateSetting('sonsTreino', v)}
-          />
-        </Card>
-      </motion.div>
+      <div className="text-center text-[11px] text-slate-600 mt-4 pb-8">DATAFIT v2.0 · Todos os direitos reservados</div>
 
-      {/* Segurança */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-purple-400" /> Segurança
-          </h3>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowPasswordModal(true)}
-            className="w-full py-3 px-4 bg-slate-700 hover:bg-slate-600 rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
-          >
-            <Lock className="w-4 h-4" />
-            Alterar Senha
-          </motion.button>
-        </Card>
-      </motion.div>
+      {/* Password Modal */}
+      <AnimatePresence>
+        {showPasswordModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowPasswordModal(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md card-base p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Alterar Senha</h3>
+              <div className="space-y-3">
+                <PasswordInput value={passwordData.current} onChange={e => setPasswordData(p => ({ ...p, current: e.target.value }))} placeholder="Senha atual" field="current" />
+                <PasswordInput value={passwordData.new} onChange={e => setPasswordData(p => ({ ...p, new: e.target.value }))} placeholder="Nova senha" field="new" />
+                <PasswordInput value={passwordData.confirm} onChange={e => setPasswordData(p => ({ ...p, confirm: e.target.value }))} placeholder="Confirmar nova senha" field="confirm" />
+                {passwordData.new && passwordData.confirm && passwordData.new !== passwordData.confirm && (
+                  <p className="text-xs text-red-400">As senhas nao coincidem</p>
+                )}
+              </div>
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 text-sm text-slate-400 rounded-xl hover:bg-slate-800/40 transition-all">Cancelar</button>
+                <button onClick={handlePasswordChange} disabled={saving || !passwordData.current || !passwordData.new || passwordData.new !== passwordData.confirm}
+                  className="flex-1 py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+                  {saving ? 'Salvando...' : 'Alterar'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Sair */}
-      <motion.div variants={itemVariants}>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowLogoutModal(true)}
-          className="w-full py-3 px-4 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-red-400 font-medium transition-colors flex items-center justify-center gap-2"
-        >
-          <LogOut className="w-4 h-4" />
-          Sair da Conta
-        </motion.button>
-      </motion.div>
-
-      {/* App Info */}
-      <motion.div variants={itemVariants} className="text-center text-slate-500 text-sm">
-        <p>FITDATA v1.0.0</p>
-        <p>© 2026 FITDATA. Todos os direitos reservados.</p>
-      </motion.div>
-
-      {/* Modals */}
-      <ChangePasswordModal 
-        isOpen={showPasswordModal} 
-        onClose={() => setShowPasswordModal(false)} 
-      />
-      
-      <LogoutModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        onConfirm={handleLogout}
-      />
-    </motion.div>
+      {/* Logout Modal */}
+      <AnimatePresence>
+        {showLogoutModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowLogoutModal(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm card-base p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-3">
+                <LogOut className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">Sair da conta?</h3>
+              <p className="text-sm text-slate-400 mb-5">Voce precisara fazer login novamente.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowLogoutModal(false)} className="flex-1 py-2.5 text-sm text-slate-400 rounded-xl hover:bg-slate-800/40 transition-all">Cancelar</button>
+                <button onClick={handleLogout} className="flex-1 py-2.5 text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all">Sair</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
