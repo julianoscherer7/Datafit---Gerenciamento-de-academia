@@ -8,6 +8,15 @@ const validatePassword = (password) => ({
   number: /\d/.test(password),
 });
 
+// Componente InputField extraído para evitar re-criação em cada render
+const InputField = ({ label, icon: Icon, error: err, children }) => (
+  <div>
+    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
+    {children}
+    {err && <p className="text-[11px] text-red-400 mt-1">{err}</p>}
+  </div>
+);
+
 export const RegisterPage = ({ onNavigate }) => {
   const { register } = useAuth();
   const [step, setStep] = useState(1); // 1: role select, 2: form
@@ -59,14 +68,6 @@ export const RegisterPage = ({ onNavigate }) => {
       setError(err.message || 'Erro ao registrar.');
     } finally { setLoading(false); }
   };
-
-  const InputField = ({ label, icon: Icon, error: err, children }) => (
-    <div>
-      <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
-      {children}
-      {err && <p className="text-[11px] text-red-400 mt-1">{err}</p>}
-    </div>
-  );
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0c0f1a' }}>

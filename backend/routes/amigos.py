@@ -2,12 +2,88 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
-from models import Amizade, Usuario
+from models import Amizade, Usuario, UsuarioProgresso, Streak
 from schemas import AmizadeCreate, AmizadeResponse
 from security import get_current_user
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 router = APIRouter(prefix="/amigos", tags=["amigos"])
+
+@router.get("/ranking", response_model=List[dict])
+def obter_ranking(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtém ranking global de usuários por XP/nível"""
+    results = db.query(
+        Usuario, UsuarioProgresso, Streak
+    ).outerjoin(
+        UsuarioProgresso, UsuarioProgresso.usuario_id == Usuario.id
+    ).outerjoin(
+        Streak, Streak.usuario_id == Usuario.id
+    ).filter(
+        Usuario.perfil == "aluno"
+    ).order_by(
+        (UsuarioProgresso.xp_total).desc().nullslast()
+    ).limit(50).all()
+    
+    return [
+        {
+            "id": u.id,
+            "nome": u.nome,
+            "nickname": u.nickname,
+            "email": u.email,
+            "perfil": u.perfil,
+            "xp": p.xp_total if p else 0,
+            "nivel": p.nivel if p else 1,
+            "streak": s.atual if s else 0,
+        }
+        for u, p, s in results
+    ]
+
+@router.get("/buscar", response_model=List[dict])
+def buscar_usuarios(
+    q: str = "",
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Busca usuários para adicionar como amigo"""
+    if not q or len(q) < 2:
+        return []
+    
+    usuarios = db.query(Usuario).filter(
+        Usuario.id != current_user["user_id"],
+        or_(
+            Usuario.nome.ilike(f"%{q}%"),
+            Usuario.email.ilike(f"%{q}%"),
+            Usuario.nickname.ilike(f"%{q}%")
+        )
+    ).limit(20).all()
+    
+    # Get existing friendship IDs to mark status
+    amizades = db.query(Amizade).filter(
+        or_(
+            Amizade.solicitante_id == current_user["user_id"],
+            Amizade.solicitado_id == current_user["user_id"]
+        )
+    ).all()
+    
+    amizade_map = {}
+    for a in amizades:
+        other_id = a.solicitado_id if a.solicitante_id == current_user["user_id"] else a.solicitante_id
+        amizade_map[other_id] = a.status
+    
+    return [
+        {
+            "id": u.id,
+            "nome": u.nome,
+            "email": u.email,
+            "nickname": u.nickname,
+            "perfil": u.perfil,
+            "amizade_status": amizade_map.get(u.id, None)
+        }
+        for u in usuarios
+    ]
 
 @router.get("", response_model=List[dict])
 def listar_amigos(

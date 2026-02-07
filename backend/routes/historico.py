@@ -10,6 +10,24 @@ from sqlalchemy import func
 
 router = APIRouter(prefix="/historico", tags=["historico"])
 
+@router.get("", response_model=List[dict])
+def obter_meu_historico(
+    dias: int = 30,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtém histórico de treinos do usuário autenticado"""
+    return obter_historico(current_user["user_id"], dias, current_user, db)
+
+@router.get("/resumo-por-dia")
+def obter_meu_resumo_por_dia(
+    dias: int = 30,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Resumo de treinos agrupado por dia do usuário autenticado"""
+    return obter_resumo_por_dia(current_user["user_id"], dias, current_user, db)
+
 @router.get("/{usuario_id}", response_model=List[dict])
 def obter_historico(
     usuario_id: int,

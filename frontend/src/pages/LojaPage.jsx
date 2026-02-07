@@ -427,7 +427,7 @@ export const LojaPage = () => {
   const handleComprar = async (itemId) => {
     try {
       setActionLoading(true);
-      await lojaService.comprar(itemId);
+      await lojaService.comprarItem(itemId);
       fetchData();
     } catch (err) {
       console.error('Erro ao comprar:', err);
@@ -439,7 +439,7 @@ export const LojaPage = () => {
   const handleEquipar = async (itemId) => {
     try {
       setActionLoading(true);
-      await lojaService.equipar(itemId);
+      await lojaService.equiparItem(itemId);
       fetchData();
     } catch (err) {
       console.error('Erro ao equipar:', err);

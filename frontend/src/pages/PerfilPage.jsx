@@ -23,14 +23,27 @@ export const PerfilPage = ({ onNavigate }) => {
   const [badges, setBadges] = useState([]);
 
   useEffect(() => {
-    dashboardService.getStats().then(r => setStats(r.data)).catch(() => setStats({
-      nivel: 5, xp: 2800, xp_proximo_nivel: 4000, streak: 7, treinos_semana: 4, total_treinos: 85
-    }));
-    badgesService.getBadges().then(r => setBadges((r.data || []).filter(b => b.conquistado).slice(0, 6))).catch(() => setBadges([
-      { id: 1, nome: 'Primeiro Treino', icone: '🏋️', conquistado: true },
-      { id: 2, nome: 'Streak 7 dias', icone: '🔥', conquistado: true },
-      { id: 3, nome: 'Volume 100kg', icone: '💪', conquistado: true }
-    ]));
+    dashboardService.getDashboard()
+      .then(r => {
+        const d = r.data || {};
+        setStats({
+          nivel: d.usuario?.nivel || d.nivel || 1,
+          xp: d.usuario?.xp || d.xp || 0,
+          xp_proximo_nivel: d.usuario?.xp_proximo_nivel || d.xp_proximo_nivel || 1000,
+          streak: d.streak_atual || d.streak || 0,
+          treinos_semana: d.treinos_semana || 0,
+          total_treinos: d.total_treinos || (d.ultimos_treinos || []).length || 0
+        });
+      })
+      .catch(() => setStats({
+        nivel: 1, xp: 0, xp_proximo_nivel: 1000, streak: 0, treinos_semana: 0, total_treinos: 0
+      }));
+    badgesService.getMeusBadges()
+      .then(r => setBadges((r.data || []).slice(0, 6)))
+      .catch(() => badgesService.getBadges()
+        .then(r => setBadges((r.data || []).slice(0, 6)))
+        .catch(() => setBadges([]))
+      );
   }, []);
 
   const s = stats || {};
@@ -46,7 +59,7 @@ export const PerfilPage = ({ onNavigate }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-white truncate">{user?.nome || 'Usuario'}</h2>
-              {user?.tipo === 'instrutor' && (
+              {user?.perfil === 'instrutor' && (
                 <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-400/10 text-amber-400 rounded-full border border-amber-400/20">COACH</span>
               )}
             </div>

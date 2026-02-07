@@ -31,13 +31,13 @@ export const CoachTreinosPage = ({ onNavigate }) => {
   const fetchAlunos = async () => {
     try {
       const res = await coachService.getAlunos();
-      setAlunos(res.data || []);
+      setAlunos((res.data || []).map(s => ({
+        id: s.student_id || s.id,
+        nome: s.student_name || s.nome,
+        email: s.student_email || s.email,
+      })));
     } catch {
-      setAlunos([
-        { id: 1, nome: 'Joao Silva' },
-        { id: 2, nome: 'Maria Santos' },
-        { id: 3, nome: 'Pedro Costa' },
-      ]);
+      setAlunos([]);
     }
     setLoading(false);
   };
@@ -47,22 +47,17 @@ export const CoachTreinosPage = ({ onNavigate }) => {
       const res = await coachService.getTreinosAluno(selectedAluno.id);
       setTreinos(res.data || []);
     } catch {
-      setTreinos([
-        { id: 1, nome: 'Treino A - Peito/Triceps', descricao: 'Foco em peito', exercicios: [{ nome: 'Supino reto', series: 4, reps: 12 }] },
-        { id: 2, nome: 'Treino B - Costas/Biceps', descricao: 'Foco em costas', exercicios: [{ nome: 'Puxada frontal', series: 4, reps: 12 }] },
-      ]);
+      setTreinos([]);
     }
     try {
       const res = await exerciciosService.getExercicios();
-      setExercicios(res.data || []);
+      setExercicios((res.data || []).map(e => ({
+        id: e.id,
+        nome: e.nome,
+        grupo: e.grupo_muscular || e.grupo,
+      })));
     } catch {
-      setExercicios([
-        { id: 1, nome: 'Supino reto', grupo: 'Peito' },
-        { id: 2, nome: 'Puxada frontal', grupo: 'Costas' },
-        { id: 3, nome: 'Agachamento', grupo: 'Pernas' },
-        { id: 4, nome: 'Desenvolvimento', grupo: 'Ombro' },
-        { id: 5, nome: 'Rosca direta', grupo: 'Biceps' },
-      ]);
+      setExercicios([]);
     }
   };
 

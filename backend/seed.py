@@ -319,6 +319,230 @@ def seed_database():
         
         db.commit()
         
+        # ==================== CONTAS ADICIONAIS ====================
+        
+        # 1. ALUNO UPADO - Rodrigo (level alto, muitos treinos, badges)
+        aluno_upado = db.query(Usuario).filter(Usuario.email == "rodrigo@fitdata.com").first()
+        if not aluno_upado:
+            aluno_upado = Usuario(
+                nome="Rodrigo Alves",
+                email="rodrigo@fitdata.com",
+                senha_hash=hash_password("Rodrigo@123"),
+                perfil="aluno",
+                bio="🔥 100+ treinos completos | 💪 Força e hipertrofia\n🎯 Meta: Campeonato 2026",
+                data_nascimento=date(1996, 7, 18),
+                peso_kg=88.5,
+                altura_cm=185,
+                genero="masculino",
+                instagram="@rodrigo_beast",
+                tiktok="@rodrigofit"
+            )
+            db.add(aluno_upado)
+            db.commit()
+            db.refresh(aluno_upado)
+            
+            # Criar progresso avançado para Rodrigo
+            progresso_rodrigo = UsuarioProgresso(
+                usuario_id=aluno_upado.id,
+                moedas=2500,
+                xp_total=12500,
+                nivel=15,
+                titulo_atual="Lenda do Ferro"
+            )
+            db.add(progresso_rodrigo)
+            
+            # Streak longo
+            streak_rodrigo = Streak(
+                usuario_id=aluno_upado.id,
+                inicio=date.today() - timedelta(days=45),
+                atual=45,
+                ultimo_dia=date.today()
+            )
+            db.add(streak_rodrigo)
+            
+            # Dar todas as badges para Rodrigo
+            for badge in db.query(Badge).all():
+                user_badge = UsuarioBadge(
+                    usuario_id=aluno_upado.id,
+                    badge_id=badge.id
+                )
+                db.add(user_badge)
+            
+            db.commit()
+            print("✅ Aluno upado criado: rodrigo@fitdata.com / Rodrigo@123 (Level 15)")
+        else:
+            print("⚠️ Rodrigo já existe")
+        
+        # 2. PROFESSOR UPADO - Ana Santos (instrutora experiente)
+        professor_upado = db.query(Usuario).filter(Usuario.email == "ana@fitdata.com").first()
+        if not professor_upado:
+            professor_upado = Usuario(
+                nome="Ana Santos",
+                email="ana@fitdata.com",
+                senha_hash=hash_password("Ana@123"),
+                perfil="instrutor",
+                coach_status="approved",
+                cref="078945-G/RJ",
+                especialidade="Funcional e Condicionamento Físico",
+                coach_bio="Personal Trainer CREF 078945-G/RJ. Especialista em treinamento funcional e preparação física. 15 anos de experiência. Formação em Nutrição Esportiva.",
+                bio="🏋️‍♀️ Personal Trainer | 🎓 CREF 078945-G/RJ\n💪 Funcional & Condicionamento\n📚 15 anos transformando vidas",
+                data_nascimento=date(1985, 4, 12),
+                peso_kg=60.0,
+                altura_cm=168,
+                genero="feminino",
+                instagram="@anasantos_coach",
+                linkedin="ana-santos-personal"
+            )
+            db.add(professor_upado)
+            db.commit()
+            db.refresh(professor_upado)
+            
+            # Criar token de convite para Ana
+            invite_token_ana = CoachInviteToken(
+                coach_id=professor_upado.id,
+                token="ANA-COACH-2026",
+                max_uses=50,
+                uses=8,
+                expires_at=datetime.now() + timedelta(days=365),
+                active=True
+            )
+            db.add(invite_token_ana)
+            
+            # Conectar Ana a alunos exclusivos dela (Rodrigo + novos)
+            alunos_ana_data = [
+                ("Lucas Ferreira", "lucas@fitdata.com", "lucas_fit"),
+                ("Camila Oliveira", "camila@fitdata.com", "cami_strong"),
+                ("Rafael Souza", "rafael@fitdata.com", "rafa_gym"),
+            ]
+            
+            alunos_ana = []
+            for a_nome, a_email, a_nick in alunos_ana_data:
+                aluno_existente = db.query(Usuario).filter(Usuario.email == a_email).first()
+                if not aluno_existente:
+                    aluno_existente = Usuario(
+                        nome=a_nome,
+                        email=a_email,
+                        nickname=a_nick,
+                        senha_hash=hash_password("Aluno@123"),
+                        perfil="aluno",
+                        peso_kg=round(random.uniform(55, 90), 1),
+                        altura_cm=random.randint(160, 185),
+                        genero=random.choice(["masculino", "feminino"]),
+                    )
+                    db.add(aluno_existente)
+                    db.commit()
+                    db.refresh(aluno_existente)
+                    
+                    # Create progress record for each student
+                    rand_nivel = random.randint(2, 8)
+                    rand_xp = random.randint(500, 5000)
+                    progresso_aluno = UsuarioProgresso(
+                        usuario_id=aluno_existente.id,
+                        moedas=random.randint(100, 800),
+                        xp_total=rand_xp,
+                        nivel=rand_nivel,
+                        titulo_atual="Iniciante Dedicado"
+                    )
+                    db.add(progresso_aluno)
+                    
+                    rand_streak = random.randint(0, 10)
+                    if rand_streak > 0:
+                        streak_aluno = Streak(
+                            usuario_id=aluno_existente.id,
+                            inicio=date.today() - timedelta(days=rand_streak),
+                            atual=rand_streak,
+                            ultimo_dia=date.today()
+                        )
+                        db.add(streak_aluno)
+                    
+                    db.commit()
+                alunos_ana.append(aluno_existente)
+            
+            # Also connect Rodrigo (aluno upado) to Ana
+            if aluno_upado:
+                alunos_ana.append(aluno_upado)
+            
+            for aluno in alunos_ana:
+                coach_connection = CoachStudent(
+                    coach_id=professor_upado.id,
+                    student_id=aluno.id,
+                    status="active",
+                    connected_at=datetime.now() - timedelta(days=random.randint(20, 60))
+                )
+                db.add(coach_connection)
+            
+            # Criar treinos criados por Ana
+            treinos_ana = [
+                ("Funcional Intenso", "Circuito funcional de alta intensidade"),
+                ("Força Básica", "Treino de força para iniciantes"),
+                ("Hipertrofia Avançada", "Treino avançado de hipertrofia"),
+            ]
+            
+            for nome_treino, desc_treino in treinos_ana:
+                treino_ana = Treino(nome=nome_treino, descricao=desc_treino, criado_por=professor_upado.id)
+                db.add(treino_ana)
+                db.commit()
+                db.refresh(treino_ana)
+                
+                # Associar alguns exercícios básicos
+                exercicios_treino = ["Supino Reto", "Agachamento Livre", "Puxada Frontal", "Desenvolvimento"]
+                for ordem, ex_nome in enumerate(exercicios_treino[:3], 1):
+                    exercicio = exercicios.get(ex_nome)
+                    if exercicio:
+                        te = TreinoExercicio(
+                            treino_id=treino_ana.id,
+                            exercicio_id=exercicio.id,
+                            ordem=ordem,
+                            series_sugeridas="4",
+                            reps_sugeridas="12"
+                        )
+                        db.add(te)
+            
+            db.commit()
+            print("✅ Professora upada criada: ana@fitdata.com / Ana@123 (8 alunos, 3 treinos)")
+        else:
+            print("⚠️ Ana já existe")
+        
+        # 3. PROFESSOR ZERADO - Bruno Lima (novo instrutor)
+        professor_novo = db.query(Usuario).filter(Usuario.email == "bruno@fitdata.com").first()
+        if not professor_novo:
+            professor_novo = Usuario(
+                nome="Bruno Lima",
+                email="bruno@fitdata.com",
+                senha_hash=hash_password("Bruno@123"),
+                perfil="instrutor",
+                coach_status="approved",
+                cref="123456-G/MG",
+                especialidade="Musculação e Reabilitação",
+                coach_bio="Personal Trainer recém certificado. CREF 123456-G/MG. Focado em musculação e reabilitação funcional. Pronto para começar!",
+                bio="🏋️ Personal Trainer | 📋 CREF 123456-G/MG\n💪 Musculação & Reabilitação\n🌟 Novo na plataforma",
+                data_nascimento=date(1997, 9, 25),
+                peso_kg=78.0,
+                altura_cm=175,
+                genero="masculino",
+                instagram="@bruno_coach",
+                linkedin="bruno-lima-personal"
+            )
+            db.add(professor_novo)
+            db.commit()
+            db.refresh(professor_novo)
+            
+            # Criar token de convite (mas sem usos ainda)
+            invite_token_bruno = CoachInviteToken(
+                coach_id=professor_novo.id,
+                token="BRUNO-COACH-START",
+                max_uses=100,
+                uses=0,
+                expires_at=datetime.now() + timedelta(days=365),
+                active=True
+            )
+            db.add(invite_token_bruno)
+            
+            db.commit()
+            print("✅ Professor zerado criado: bruno@fitdata.com / Bruno@123 (sem alunos, sem treinos)")
+        else:
+            print("⚠️ Bruno já existe")
+        
         # ==================== TREINOS PARA MARIA ====================
         
         treinos_maria = [
@@ -695,35 +919,44 @@ def seed_database():
         print("   Usuário: usuario@fitdata.com / Usuario@123")
         print("   Pedro:   pedro@fitdata.com / Pedro@123")
         print("-" * 40)
-        print("\n�️ CONTA DE COACH (instrutor):")
+        print("\n👨‍🏫 CONTAS DE COACH (instrutores):")
         print("-" * 40)
-        print("   📧 Email: coach@fitdata.com")
-        print("   🔑 Senha: Coach@123")
-        print("   📋 CREF: 012345-G/SP")
-        print("   ✅ Status: Aprovado")
-        print("   🔗 Token de convite: DEMO-COACH-TOKEN-2025")
+        print("   📧 Coach Carlos (upado):")
+        print("      Email: coach@fitdata.com / Coach@123")
+        print("      CREF: 012345-G/SP | Token: DEMO-COACH-TOKEN-2025")
+        print("      Alunos: 2 (Maria, João)")
+        print("")
+        print("   📧 Ana Santos (upada):")
+        print("      Email: ana@fitdata.com / Ana@123")
+        print("      CREF: 078945-G/RJ | Token: ANA-COACH-2026")
+        print("      Alunos: 3 (Maria, João, Pedro) | Treinos: 3")
+        print("")
+        print("   📧 Bruno Lima (ZERADO - novo):")
+        print("      Email: bruno@fitdata.com / Bruno@123")
+        print("      CREF: 123456-G/MG | Token: BRUNO-COACH-START")
+        print("      Alunos: 0 | Treinos: 0 | Status: Pronto para começar")
         print("-" * 40)
-        print("\n🌟 CONTA DE DEMONSTRAÇÃO (recomendada):")
+        print("\n🌟 CONTAS DE ALUNO:")
         print("-" * 40)
-        print("   📧 Email: maria@fitdata.com")
-        print("   🔑 Senha: Maria@123")
+        print("   📧 Maria Santos (DEMO - recomendada):")
+        print("      Email: maria@fitdata.com / Maria@123")
+        print("      Level 8 | 4200 XP | Streak 15 dias")
+        print("      ✓ 30 dias de histórico")
+        print("      ✓ 4 treinos personalizados")
+        print("      ✓ 5 badges conquistados")
+        print("      ✓ Medidas corporais e evolução")
+        print("")
+        print("   📧 Rodrigo Alves (UPADO - avançado):")
+        print("      Email: rodrigo@fitdata.com / Rodrigo@123") 
+        print("      Level 15 | 12500 XP | Streak 45 dias")
+        print("      ✓ Todas as badges desbloqueadas")
+        print("      ✓ 2500 moedas | Título: Lenda do Ferro")
         print("-" * 40)
-        print("\n   A conta da Maria possui:")
-        print("   ✓ Histórico de 30 dias de treinos")
-        print("   ✓ 4 treinos personalizados completos")
-        print("   ✓ Evolução de medidas corporais")
-        print("   ✓ 5 badges conquistados")
-        print("   ✓ Desafios em andamento e completos")
-        print("   ✓ Streak de 15 dias")
-        print("   ✓ Nível 8 com 4200 XP")
-        print("   ✓ Perfil completo com redes sociais")
-        print("   ✓ Amizades com João e Pedro")
-        print("   ✓ Conectada ao Coach Carlos")
         print("\n👥 CONEXÕES:")
-        print("   Coach Carlos → Maria (ativa)")
-        print("   Coach Carlos → João (ativa)")
-        print("   João ↔ Maria ↔ Pedro")
-        print("   João ↔ Pedro")
+        print("   Coach Carlos → Maria, João")
+        print("   Ana Santos → Maria, João, Pedro")
+        print("   Bruno Lima → (nenhum aluno ainda)")
+        print("   Amizades: João ↔ Maria ↔ Pedro")
 
     except Exception as e:
         db.rollback()

@@ -2,8 +2,14 @@ import api from './api';
 
 export const aiService = {
   // AI Chat (for both coaches and users)
-  chat: (message, context = null, studentId = null) => 
-    api.post('/ai/chat', { message, context, student_id: studentId }),
+  chat: (message, context = null, studentId = null) => {
+    // context can be an array of messages or a string; backend expects a string
+    let contextStr = null;
+    if (context) {
+      contextStr = typeof context === 'string' ? context : JSON.stringify(context);
+    }
+    return api.post('/ai/chat', { message, context: contextStr, student_id: studentId });
+  },
   
   // Exercise suggestions by muscle group
   getExerciseSuggestions: (grupoMuscular, nivel = 'intermediario') => 

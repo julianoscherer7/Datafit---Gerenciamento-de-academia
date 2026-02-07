@@ -53,9 +53,18 @@ const MessageBubble = ({ msg, onCopy }) => {
             ? 'bg-indigo-500 text-white rounded-br-md'
             : 'bg-slate-800/40 border border-slate-700/10 text-slate-200 rounded-bl-md'
         }`}>
-          {msg.content.split('\n').map((line, i) => (
-            <React.Fragment key={i}>{line}{i < msg.content.split('\n').length - 1 && <br />}</React.Fragment>
-          ))}
+          {msg.content.split('\n').map((line, i) => {
+            // Parse basic markdown: **bold**, _italic_, • bullets
+            const parsed = line
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>');
+            return (
+              <React.Fragment key={i}>
+                <span dangerouslySetInnerHTML={{ __html: parsed }} />
+                {i < msg.content.split('\n').length - 1 && <br />}
+              </React.Fragment>
+            );
+          })}
         </div>
         {!isUser && (
           <button onClick={handleCopy}
@@ -89,7 +98,7 @@ export const AIChatPage = ({ onNavigate }) => {
     setLoading(true);
 
     try {
-      const res = await aiService.chat(content, messages.slice(-10));
+      const res = await aiService.chat(content, JSON.stringify(messages.slice(-10).map(m => `${m.role}: ${m.content}`)));
       const reply = res.data?.resposta || res.data?.response || res.data?.message || 'Desculpe, nao consegui processar sua pergunta.';
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch {

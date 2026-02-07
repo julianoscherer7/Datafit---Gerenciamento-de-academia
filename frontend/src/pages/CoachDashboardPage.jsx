@@ -34,8 +34,17 @@ export const CoachDashboardPage = ({ onNavigate }) => {
     setLoading(true);
     try {
       const [aRes, tRes] = await Promise.all([coachService.getAlunos(), coachService.getToken()]);
-      setAlunos(aRes.data || []);
-      setToken(tRes.data?.token || '');
+      setAlunos((aRes.data || []).map(s => ({
+        id: s.student_id || s.id,
+        nome: s.student_name || s.nome,
+        email: s.student_email || s.email,
+        nivel: s.nivel || 1,
+        xp: s.xp || 0,
+        status: s.status
+      })));
+      const tokens = tRes.data || [];
+      const activeToken = tokens.find(t => t.active);
+      setToken(activeToken?.token || '');
     } catch {
       setAlunos([
         { id: 1, nome: 'Joao Silva', email: 'joao@email.com', nivel: 5, xp: 2800, treinos_semana: 4 },
@@ -55,7 +64,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
 
   const handleGenerateToken = async () => {
     try {
-      const res = await coachService.gerarToken();
+      const res = await coachService.createInviteToken({ max_uses: 10, expires_hours: 168 });
       setToken(res.data?.token || '');
     } catch {}
   };

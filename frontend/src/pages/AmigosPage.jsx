@@ -71,34 +71,60 @@ const Podium = ({ users }) => {
 export const AmigosPage = ({ onNavigate }) => {
   const { user } = useAuth();
   const [amigos, setAmigos] = useState([]);
+  const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('ranking');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await amigosService.getAmigos();
-      const data = res.data || [];
-      // Sort by XP for ranking
-      data.sort((a, b) => (b.xp || b.pontos || 0) - (a.xp || a.pontos || 0));
-      setAmigos(data);
-    } catch (err) {
-      // Demo data
-      setAmigos([
-        { id: 1, nome: 'Joao Silva', nickname: 'joao_fit', xp: 4500, nivel: 8, streak: 12, online: true },
-        { id: 2, nome: 'Ana Santos', nickname: 'ana_strong', xp: 3800, nivel: 7, streak: 8, online: true },
-        { id: 3, nome: 'Carlos Lima', nickname: 'carlos_gym', xp: 3200, nivel: 6, streak: 5, online: false },
-        { id: 4, nome: 'Julia Costa', nickname: 'julia_fit', xp: 2800, nivel: 5, streak: 3, online: true },
-        { id: 5, nome: 'Pedro Alves', nickname: 'pedro_a', xp: 2100, nivel: 4, streak: 1, online: false },
+      const [amigosRes, rankingRes] = await Promise.allSettled([
+        amigosService.getAmigos(),
+        amigosService.getRanking()
       ]);
+      
+      if (amigosRes.status === 'fulfilled') {
+        setAmigos(amigosRes.value.data || []);
+      }
+      
+      if (rankingRes.status === 'fulfilled') {
+        const data = rankingRes.value.data || [];
+        data.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+        setRanking(data);
+      }
+    } catch {
+      setAmigos([]);
+      setRanking([]);
     }
     finally { setLoading(false); }
   };
 
-  const filteredAmigos = amigos.filter(a =>
+  const handleSearch = async (term) => {
+    setSearchTerm(term);
+    if (term.length < 2) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await amigosService.buscarUsuarios(term);
+      setSearchResults(res.data || []);
+    } catch { setSearchResults([]); }
+    finally { setSearching(false); }
+  };
+
+  const handleAddFriend = async (userId) => {
+    try {
+      await amigosService.enviarSolicitacao(userId);
+      setSearchResults(prev => prev.map(u => u.id === userId ? { ...u, amizade_status: 'pendente' } : u));
+    } catch {}
+  };
+
+  const displayList = activeTab === 'ranking' ? ranking : amigos;
+  const filteredList = displayList.filter(a =>
     !searchTerm || (a.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (a.nickname || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -123,20 +149,66 @@ export const AmigosPage = ({ onNavigate }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Ranking & Amigos</h1>
-          <p className="text-sm text-slate-500">{amigos.length} conexoes</p>
+          <p className="text-sm text-slate-500">{amigos.length} amigos</p>
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={() => setShowSearch(!showSearch)}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-sm font-medium hover:bg-indigo-500/15 transition-all">
           <UserPlus className="w-4 h-4" /> Adicionar
         </motion.button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-        <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Buscar..."
-          className="w-full pl-10 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
-      </div>
+      {/* User Search for adding friends */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden">
+            <div className="card-base p-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input value={searchTerm} onChange={e => handleSearch(e.target.value)} placeholder="Buscar usuarios por nome, email ou nickname..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
+              </div>
+              {searching && <div className="text-xs text-slate-500 text-center py-2">Buscando...</div>}
+              {searchResults.length > 0 && (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {searchResults.map(u => (
+                    <div key={u.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/30">
+                      <Avatar nome={u.nome} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-white truncate">{u.nome}</div>
+                        <div className="text-[11px] text-slate-500">{u.nickname ? `@${u.nickname}` : u.email}</div>
+                      </div>
+                      {u.amizade_status === 'aceito' ? (
+                        <span className="text-[11px] text-emerald-400 px-2 py-1 rounded-lg bg-emerald-500/10">Amigo</span>
+                      ) : u.amizade_status === 'pendente' ? (
+                        <span className="text-[11px] text-amber-400 px-2 py-1 rounded-lg bg-amber-500/10">Pendente</span>
+                      ) : (
+                        <button onClick={() => handleAddFriend(u.id)}
+                          className="text-[11px] text-indigo-400 px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+                          Adicionar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searchTerm.length >= 2 && !searching && searchResults.length === 0 && (
+                <div className="text-xs text-slate-500 text-center py-2">Nenhum usuario encontrado</div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Filter within current tab */}
+      {!showSearch && filteredList.length > 10 && (
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <input placeholder="Filtrar..." onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl bg-slate-800/30 border border-slate-700/10 w-fit">
@@ -154,11 +226,13 @@ export const AmigosPage = ({ onNavigate }) => {
         {activeTab === 'ranking' && (
           <motion.div key="ranking" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
             {/* Podium */}
-            {filteredAmigos.length >= 3 && <Podium users={filteredAmigos.slice(0, 3)} />}
+            {filteredList.length >= 3 && <Podium users={filteredList.slice(0, 3)} />}
 
             {/* Ranking list */}
             <div className="space-y-1.5">
-              {filteredAmigos.map((amigo, i) => (
+              {filteredList.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-sm">Nenhum usuario no ranking ainda</div>
+              ) : filteredList.map((amigo, i) => (
                 <motion.div key={amigo.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-slate-800/30 ${
@@ -194,7 +268,9 @@ export const AmigosPage = ({ onNavigate }) => {
         {activeTab === 'amigos' && (
           <motion.div key="amigos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredAmigos.map((amigo, i) => (
+              {filteredList.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-sm">Voce ainda nao tem amigos. Use o botao Adicionar para buscar usuarios!</div>
+              ) : filteredList.map((amigo, i) => (
                 <motion.div key={amigo.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.03 }}
                   className="card-base p-4 hover:border-slate-700/30 transition-all group">

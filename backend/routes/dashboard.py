@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import (
     Usuario, Treino, TreinoAtribuido, TreinoExercicio, Exercicio,
-    SerieExecutada, Desafio, UsuarioDesafio, Badge, UsuarioBadge
+    SerieExecutada, Desafio, UsuarioDesafio, Badge, UsuarioBadge,
+    UsuarioProgresso
 )
 from schemas import DashboardResponse, UsuarioResponse, BadgeResponse
 from security import get_current_user
@@ -68,9 +69,16 @@ def get_dashboard(
         for ud in proximos_desafios
     ]
     
+    # Fetch user progress (XP, nivel, moedas)
+    progresso = db.query(UsuarioProgresso).filter(UsuarioProgresso.usuario_id == user.id).first()
+    
     return DashboardResponse(
         usuario=UsuarioResponse.model_validate(user),
         streak_atual=streak_atual,
+        xp_total=progresso.xp_total if progresso else 0,
+        nivel=progresso.nivel if progresso else 1,
+        moedas=progresso.moedas if progresso else 0,
+        titulo_atual=progresso.titulo_atual if progresso else None,
         ultimos_treinos=obter_ultimos_treinos(db, user.id, 5),
         badges_recentes=obter_badges_recentes(db, user.id, 5),
         proximos_desafios=proximos

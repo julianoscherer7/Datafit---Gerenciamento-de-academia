@@ -4,17 +4,23 @@ export const coachService = {
   // === INVITE TOKENS ===
   createInviteToken: (data = {}) => api.post('/coach/invite-token', data),
   listInviteTokens: () => api.get('/coach/invite-tokens'),
+  getToken: () => api.get('/coach/invite-tokens'),
   revokeInviteToken: (tokenId) => api.delete(`/coach/invite-token/${tokenId}`),
   
   // === STUDENT CONNECTION ===
   connectByToken: (token) => api.post('/coach/connect-by-token', { token }),
   getMyStudents: () => api.get('/coach/my-students'),
+  getAlunos: () => api.get('/coach/my-students'),
   getMyCoach: () => api.get('/coach/my-coach'),
   disconnectStudent: (studentId) => api.delete(`/coach/disconnect/${studentId}`),
   getStudentDetails: (studentId) => api.get(`/coach/student/${studentId}/details`),
   
   // === COACH DASHBOARD ===
   getDashboard: () => api.get('/coach/dashboard'),
+  
+  // === TREINOS (Coach creates for students) ===
+  getTreinosAluno: (studentId) => api.get(`/treinos?aluno_id=${studentId}`),
+  criarTreinoAluno: (studentId, treino) => api.post('/treinos', { ...treino, aluno_id: studentId }),
   
   // === PRESENCE VALIDATION ===
   validatePresence: (data) => api.post('/coach/validate-presence', data),

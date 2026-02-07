@@ -8,6 +8,11 @@ export const amigosService = {
   getAmigos: () => api.get('/amigos'),
 
   /**
+   * Obtém ranking global de usuários
+   */
+  getRanking: () => api.get('/amigos/ranking'),
+
+  /**
    * Busca usuários para adicionar como amigo
    * @param {string} query - Termo de busca
    */
@@ -17,7 +22,7 @@ export const amigosService = {
    * Envia solicitação de amizade
    * @param {number} usuarioId - ID do usuário
    */
-  enviarSolicitacao: (usuarioId) => api.post(`/amigos/solicitar/${usuarioId}`),
+  enviarSolicitacao: (usuarioId) => api.post('/amigos/solicitar', { solicitado_id: usuarioId }),
 
   /**
    * Aceita solicitação de amizade
@@ -29,7 +34,7 @@ export const amigosService = {
    * Recusa solicitação de amizade
    * @param {number} solicitacaoId - ID da solicitação
    */
-  recusarSolicitacao: (solicitacaoId) => api.delete(`/amigos/recusar/${solicitacaoId}`),
+  recusarSolicitacao: (solicitacaoId) => api.post(`/amigos/rejeitar/${solicitacaoId}`),
 
   /**
    * Remove um amigo
@@ -40,7 +45,7 @@ export const amigosService = {
   /**
    * Lista solicitações pendentes
    */
-  getSolicitacoesPendentes: () => api.get('/amigos/solicitacoes'),
+  getSolicitacoesPendentes: () => api.get('/amigos/pendentes'),
 
   /**
    * Obtém perfil público de um amigo

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowLeft, Eye, EyeOff, Dumbbell, Zap } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Eye, EyeOff, Dumbbell, Activity, CheckCircle, XCircle } from 'lucide-react';
 import API_BASE from '../config';
 
 export const LoginPage = ({ onNavigate }) => {
@@ -11,6 +11,8 @@ export const LoginPage = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState(null);
 
   const handleSubmit = async () => {
     if (!email || !senha) { setError('Preencha todos os campos.'); return; }
@@ -23,7 +25,38 @@ export const LoginPage = ({ onNavigate }) => {
     } finally { setLoading(false); }
   };
 
-  const fillDemo = () => { setEmail('maria@fitdata.com'); setSenha('Maria@123'); setError(''); };
+  const testConnection = async () => {
+    setTestingConnection(true);
+    setConnectionStatus(null);
+    try {
+      const response = await fetch(`${API_BASE}/health`, { 
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConnectionStatus({ 
+          success: true, 
+          message: `API conectada: ${data.status || 'healthy'}`,
+          details: `Backend: ${API_BASE}`
+        });
+      } else {
+        setConnectionStatus({ 
+          success: false, 
+          message: `Erro ${response.status}: ${response.statusText}` 
+        });
+      }
+    } catch (err) {
+      setConnectionStatus({ 
+        success: false, 
+        message: 'Falha ao conectar com a API',
+        details: err.message 
+      });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0c0f1a' }}>
@@ -111,18 +144,51 @@ export const LoginPage = ({ onNavigate }) => {
             </p>
           </motion.div>
 
-          {/* Demo */}
+          {/* API Connection Test */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
             className="mt-5 p-4 rounded-xl" style={{ background: 'rgba(26,31,46,0.3)', border: '1px solid rgba(148,163,184,0.05)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-sm text-slate-300 font-medium">Conta Demo</span>
+              <Activity className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-sm text-slate-300 font-medium">Teste de Conexão</span>
             </div>
-            <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-              onClick={fillDemo}
-              className="w-full px-4 py-2.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm rounded-xl hover:bg-indigo-500/15 transition-all">
-              Usar maria@fitdata.com / Maria@123
+            <motion.button 
+              whileHover={{ scale: 1.01 }} 
+              whileTap={{ scale: 0.99 }}
+              onClick={testConnection}
+              disabled={testingConnection}
+              className="w-full px-4 py-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm rounded-xl hover:bg-emerald-500/15 transition-all disabled:opacity-50">
+              {testingConnection ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-3 h-3 border-2 border-emerald-300/30 border-t-emerald-300 rounded-full animate-spin" />
+                  Testando...
+                </span>
+              ) : 'Testar Conexão com API'}
             </motion.button>
+            
+            {connectionStatus && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-3 p-3 rounded-lg text-xs ${
+                  connectionStatus.success 
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300' 
+                    : 'bg-red-500/10 border border-red-500/20 text-red-300'
+                }`}>
+                <div className="flex items-start gap-2">
+                  {connectionStatus.success ? (
+                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-medium">{connectionStatus.message}</div>
+                    {connectionStatus.details && (
+                      <div className="mt-1 text-[10px] opacity-70">{connectionStatus.details}</div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
       </main>

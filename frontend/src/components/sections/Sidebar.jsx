@@ -16,7 +16,7 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
     {
       label: 'Principal',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: Home },
+        { id: 'dashboard', label: 'Home', icon: Home },
         { id: 'treinos', label: 'Treinos', icon: Dumbbell },
         { id: 'evolucao', label: 'Evolução', icon: TrendingUp },
       ],

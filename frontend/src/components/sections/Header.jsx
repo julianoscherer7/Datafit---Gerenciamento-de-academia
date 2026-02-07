@@ -8,6 +8,7 @@ export const Header = ({ onProfileClick, onSettingsClick }) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const displayName = user?.nickname || user?.nome?.split(' ')[0] || 'Atleta';
   const userInitial = (user?.nickname || user?.nome)?.charAt(0)?.toUpperCase() || 'U';
@@ -27,21 +28,45 @@ export const Header = ({ onProfileClick, onSettingsClick }) => {
         <div className="hidden md:block" />
 
         <div className="flex items-center gap-3 ml-auto">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative p-2 text-slate-500 hover:text-slate-300 rounded-lg transition-colors"
-          >
-            <Bell className="w-[18px] h-[18px]" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-          </motion.button>
+          <div className="relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
+              className="relative p-2 text-slate-500 hover:text-slate-300 rounded-lg transition-colors"
+            >
+              <Bell className="w-[18px] h-[18px]" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+            </motion.button>
+
+            <AnimatePresence>
+              {showNotifications && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-12 w-72 rounded-xl shadow-2xl overflow-hidden z-50"
+                  style={{ background: 'rgba(26, 31, 46, 0.95)', border: '1px solid rgba(148,163,184,0.1)' }}
+                >
+                  <div className="p-3 border-b border-slate-700/30">
+                    <p className="font-medium text-white text-sm">Notificacoes</p>
+                  </div>
+                  <div className="p-4 text-center">
+                    <Bell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">Nenhuma notificacao no momento</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <div className="w-px h-5 bg-slate-800 mx-1" />
 
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.01 }}
-              onClick={() => setShowUserMenu(!showUserMenu)}
+              onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
               className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-slate-800/50 transition-all"
             >
               <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -96,8 +121,8 @@ export const Header = ({ onProfileClick, onSettingsClick }) => {
         </div>
       </div>
 
-      {showUserMenu && (
-        <div className="fixed inset-0 z-[-1]" onClick={() => setShowUserMenu(false)} />
+      {(showUserMenu || showNotifications) && (
+        <div className="fixed inset-0 z-[-1]" onClick={() => { setShowUserMenu(false); setShowNotifications(false); }} />
       )}
 
       <LogoutModal 

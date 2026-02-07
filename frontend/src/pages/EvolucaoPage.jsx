@@ -138,7 +138,7 @@ export const EvolucaoPage = () => {
   const xp = stats?.xp || stats?.xp_total || user?.xp || 0;
   const xpNext = stats?.xp_proximo_nivel || stats?.xp_next_level || (nivel * 500);
   const xpPct = xpNext > 0 ? Math.min((xp / xpNext) * 100, 100) : 0;
-  const streak = stats?.streak || stats?.dias_seguidos || 0;
+  const streak = stats?.streak_atual || stats?.streak || stats?.dias_seguidos || 0;
   const treinosTotal = stats?.treinos_total || stats?.total_treinos || 0;
 
   const tabs = [

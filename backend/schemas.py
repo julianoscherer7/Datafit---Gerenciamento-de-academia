@@ -301,6 +301,10 @@ class AmizadeResponse(BaseModel):
 class DashboardResponse(BaseModel):
     usuario: UsuarioResponse
     streak_atual: int
+    xp_total: int = 0
+    nivel: int = 1
+    moedas: int = 0
+    titulo_atual: Optional[str] = None
     ultimos_treinos: List[dict]
     badges_recentes: List[BadgeResponse]
     proximos_desafios: List[dict]

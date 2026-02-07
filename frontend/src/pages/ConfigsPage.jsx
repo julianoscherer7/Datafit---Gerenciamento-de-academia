@@ -51,14 +51,14 @@ export const ConfigsPage = ({ onNavigate }) => {
 
   const updateConfig = async (key, val) => {
     setConfigs(prev => ({ ...prev, [key]: val }));
-    try { await configsService.updateConfig(key, val); } catch {}
+    try { await configsService.atualizarConfigs({ [key]: val }); } catch {}
   };
 
   const handlePasswordChange = async () => {
     if (passwordData.new !== passwordData.confirm) return;
     setSaving(true);
     try {
-      await configsService.changePassword(passwordData.current, passwordData.new);
+      await configsService.atualizarConfigs({ senha_atual: passwordData.current, nova_senha: passwordData.new });
       setShowPasswordModal(false);
       setPasswordData({ current: '', new: '', confirm: '' });
     } catch {}

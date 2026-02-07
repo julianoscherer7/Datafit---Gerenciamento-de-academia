@@ -79,10 +79,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (nome, email, senha, nickname = null, perfil = 'aluno', coachData = {}) => {
+  const register = async (nomeOrData, email, senha, nickname = null, perfil = 'aluno', coachData = {}) => {
+    // Support both object and positional args
+    let nome, nick, em, pw, pf, cd;
+    if (typeof nomeOrData === 'object' && nomeOrData !== null) {
+      const data = nomeOrData;
+      nome = data.nome;
+      em = data.email;
+      pw = data.senha;
+      nick = data.nickname || null;
+      pf = data.perfil || 'aluno';
+      cd = {};
+      if (data.cref) cd.cref = data.cref;
+      if (data.especialidade) cd.especialidade = data.especialidade;
+      if (data.bio) cd.coach_bio = data.bio;
+    } else {
+      nome = nomeOrData;
+      em = email;
+      pw = senha;
+      nick = nickname;
+      pf = perfil;
+      cd = coachData;
+    }
     try {
-      console.log('Tentando registrar:', { nome, email, nickname, perfil });
-      const res = await authService.register(nome, email, senha, nickname, perfil, coachData);
+      console.log('Tentando registrar:', { nome, em, nick, pf });
+      const res = await authService.register(nome, em, pw, nick, pf, cd);
       console.log('Registro bem-sucedido:', res.data);
       
       const { access_token, user_id, perfil: userPerfil } = res.data;
