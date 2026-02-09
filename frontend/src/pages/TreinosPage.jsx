@@ -80,36 +80,97 @@ const ExerciseList = ({ treinos, selectedTreino, onSelect, onCreateNew, loading 
 );
 
 // ===== COLUMN 2: Workout Editor =====
-const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStart, onCreateExercise, saving }) => {
+const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onCreateExercise, onUpdateExercicios, saving }) => {
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({ nome: '', descricao: '', duracao: 45, exercicios_selecionados: [] });
+  const [formData, setFormData] = useState({ nome: '', descricao: '', duracao: 45, exercicios_detalhados: [] });
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [newExName, setNewExName] = useState('');
   const [newExGrupo, setNewExGrupo] = useState('');
 
   const gruposMusculares = ['Peito', 'Costas', 'Ombros', 'Biceps', 'Triceps', 'Pernas', 'Gluteos', 'Abdomen', 'Cardio'];
+  
+  const tecnicasAvancadas = [
+    { id: 'dropset', nome: 'Drop Set', desc: 'Reduz carga sem descanso' },
+    { id: 'restpause', nome: 'Rest-Pause', desc: 'Pausa 10-15s e continua' },
+    { id: 'supersets', nome: 'Super Set', desc: 'Dois exercícios sem pausa' },
+    { id: 'negativa', nome: 'Negativa', desc: 'Foco na fase excêntrica' },
+    { id: 'isometria', nome: 'Isometria', desc: 'Manter contração' },
+  ];
 
   useEffect(() => {
     if (treino) {
+      const exercicios = (treino.exercicios || []).map(e => ({
+        id: e.id || e.exercicio_id,
+        exercicio_id: e.id || e.exercicio_id,
+        nome: e.nome || e.exercicio_nome,
+        grupo_muscular: e.grupo_muscular,
+        series: e.series_sugeridas || e.series || '3',
+        reps: e.reps_sugeridas || e.reps || '12',
+        reps_min: e.reps_min || '',
+        reps_max: e.reps_max || '',
+        tecnica: e.tecnica || '',
+        tecnica_obs: e.tecnica_obs || '',
+      }));
       setFormData({
         nome: treino.nome || '',
         descricao: treino.descricao || '',
         duracao: treino.duracao || 45,
-        exercicios_selecionados: treino.exercicios?.map(e => e.id || e.exercicio_id) || []
+        exercicios_detalhados: exercicios
       });
       setEditing(false);
     }
-  }, [treino?.id]);
+  }, [treino?.id, treino?.exercicios]);
 
   const handleSave = async () => {
     const data = {
-      nome: formData.nome, descricao: formData.descricao, duracao: formData.duracao,
-      exercicios: formData.exercicios_selecionados.map((id, i) => ({
-        exercicio_id: id, ordem: i + 1, series_sugeridas: "3", reps_sugeridas: "12"
+      nome: formData.nome, 
+      descricao: formData.descricao, 
+      duracao: formData.duracao,
+      exercicios: formData.exercicios_detalhados.map((ex, i) => ({
+        exercicio_id: ex.exercicio_id || ex.id, 
+        ordem: i + 1, 
+        series_sugeridas: ex.series || "3",
+        reps_sugeridas: ex.reps_min && ex.reps_max ? `${ex.reps_min}-${ex.reps_max}` : (ex.reps || "12"),
+        tecnica: ex.tecnica || null,
+        tecnica_obs: ex.tecnica_obs || null
       }))
     };
     await onSave(data, treino?.id);
     setEditing(false);
+  };
+  
+  const addExercicio = (ex) => {
+    const newEx = {
+      id: ex.id,
+      exercicio_id: ex.id,
+      nome: ex.nome,
+      grupo_muscular: ex.grupo_muscular,
+      series: '3',
+      reps: '12',
+      reps_min: '',
+      reps_max: '',
+      tecnica: '',
+      tecnica_obs: ''
+    };
+    setFormData(prev => ({
+      ...prev,
+      exercicios_detalhados: [...prev.exercicios_detalhados, newEx]
+    }));
+  };
+  
+  const removeExercicio = (exId) => {
+    setFormData(prev => ({
+      ...prev,
+      exercicios_detalhados: prev.exercicios_detalhados.filter(e => (e.id || e.exercicio_id) !== exId)
+    }));
+  };
+  
+  const updateExercicio = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.exercicios_detalhados];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, exercicios_detalhados: updated };
+    });
   };
 
   if (!treino) {
@@ -137,7 +198,7 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
           )}
           {!editing && (
             <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-full">
-              {treino.exercicios?.length || 0} exerc.
+              {formData.exercicios_detalhados?.length || treino.exercicios?.length || 0} exerc.
             </span>
           )}
         </div>
@@ -163,10 +224,6 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
                 className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all">
                 <Trash2 className="w-4 h-4" />
               </motion.button>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => onStart(treino)}
-                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">
-                <Play className="w-4 h-4" />
-              </motion.button>
             </>
           )}
         </div>
@@ -177,12 +234,12 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
         {editing && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4 space-y-3">
             <div>
-              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Descricao</label>
+              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Descrição</label>
               <textarea value={formData.descricao} onChange={(e) => setFormData({...formData, descricao: e.target.value})}
                 className="input-base text-sm resize-none" rows={2} placeholder="Objetivo do treino..." />
             </div>
             <div>
-              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Duracao: {formData.duracao}min</label>
+              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Duração: {formData.duracao}min</label>
               <input type="range" min="15" max="120" step="5" value={formData.duracao}
                 onChange={(e) => setFormData({...formData, duracao: parseInt(e.target.value)})}
                 className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
@@ -191,42 +248,101 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
         )}
 
         {/* Exercises list */}
-        {(treino.exercicios || []).map((ex, i) => (
+        {(editing ? formData.exercicios_detalhados : (treino.exercicios || [])).map((ex, i) => (
           <motion.div
-            key={ex.id || i}
+            key={ex.id || ex.exercicio_id || i}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.03 }}
-            className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/20 hover:border-slate-700/40 transition-all group"
+            className={`p-3 rounded-xl bg-slate-800/30 border border-slate-700/20 hover:border-slate-700/40 transition-all group ${editing ? 'space-y-2' : ''}`}
           >
-            <span className="text-xs text-slate-600 font-mono w-5">{String(i + 1).padStart(2, '0')}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-slate-200">{ex.nome || ex.exercicio_nome || `Exercicio ${i+1}`}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
-                <span>{ex.series_sugeridas || 3} series</span>
-                <span className="text-slate-700">·</span>
-                <span>{ex.reps_sugeridas || 12} reps</span>
-                {ex.grupo_muscular && <>
-                  <span className="text-slate-700">·</span>
-                  <span>{ex.grupo_muscular}</span>
-                </>}
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-slate-600 font-mono w-5">{String(i + 1).padStart(2, '0')}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-slate-200">{ex.nome || ex.exercicio_nome || `Exercício ${i+1}`}</div>
+                {!editing && (
+                  <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+                    <span>{ex.series_sugeridas || ex.series || 3} séries</span>
+                    <span className="text-slate-700">·</span>
+                    <span>{ex.reps_sugeridas || ex.reps || 12} reps</span>
+                    {ex.grupo_muscular && <>
+                      <span className="text-slate-700">·</span>
+                      <span>{ex.grupo_muscular}</span>
+                    </>}
+                    {ex.tecnica && (
+                      <span className="text-indigo-400 text-[10px] bg-indigo-500/10 px-1.5 py-0.5 rounded">{ex.tecnica}</span>
+                    )}
+                  </div>
+                )}
               </div>
+              {editing && (
+                <button onClick={() => removeExercicio(ex.id || ex.exercicio_id)}
+                  className="p-1 text-slate-600 hover:text-red-400 transition-all">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
+            
+            {/* Editing mode - Series/Reps/Technique inputs */}
             {editing && (
-              <button onClick={() => setFormData({...formData, exercicios_selecionados: formData.exercicios_selecionados.filter(id => id !== (ex.id || ex.exercicio_id))})}
-                className="p-1 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <div className="pt-2 space-y-2 border-t border-slate-700/20 mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <label className="text-[9px] text-slate-600 mb-0.5 block">Séries</label>
+                    <input type="number" min="1" max="10" value={ex.series || '3'}
+                      onChange={(e) => updateExercicio(i, 'series', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white text-center" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[9px] text-slate-600 mb-0.5 block">Reps (fixo)</label>
+                    <input type="text" value={ex.reps || '12'} placeholder="12"
+                      onChange={(e) => updateExercicio(i, 'reps', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white text-center" />
+                  </div>
+                  <div className="text-[9px] text-slate-600 px-1">ou</div>
+                  <div className="flex-1">
+                    <label className="text-[9px] text-slate-600 mb-0.5 block">Min</label>
+                    <input type="number" min="1" max="50" value={ex.reps_min || ''} placeholder="8"
+                      onChange={(e) => updateExercicio(i, 'reps_min', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white text-center" />
+                  </div>
+                  <span className="text-slate-600">-</span>
+                  <div className="flex-1">
+                    <label className="text-[9px] text-slate-600 mb-0.5 block">Max</label>
+                    <input type="number" min="1" max="50" value={ex.reps_max || ''} placeholder="12"
+                      onChange={(e) => updateExercicio(i, 'reps_max', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white text-center" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[9px] text-slate-600 mb-0.5 block">Técnica Avançada (opcional)</label>
+                  <select value={ex.tecnica || ''} onChange={(e) => updateExercicio(i, 'tecnica', e.target.value)}
+                    className="w-full px-2 py-1.5 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white">
+                    <option value="">Nenhuma</option>
+                    {tecnicasAvancadas.map(t => (
+                      <option key={t.id} value={t.nome}>{t.nome} - {t.desc}</option>
+                    ))}
+                  </select>
+                </div>
+                {ex.tecnica && (
+                  <div>
+                    <label className="text-[9px] text-slate-600 mb-0.5 block">Observação da técnica</label>
+                    <input type="text" value={ex.tecnica_obs || ''} placeholder="Ex: Drop set na última série"
+                      onChange={(e) => updateExercicio(i, 'tecnica_obs', e.target.value)}
+                      className="w-full px-2 py-1 bg-slate-800/40 border border-slate-700/20 rounded text-xs text-white" />
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
         ))}
 
         {editing && (
           <div className="pt-3 space-y-2">
-            <div className="text-[11px] text-slate-500 uppercase tracking-wider">Adicionar exercicios</div>
+            <div className="text-[11px] text-slate-500 uppercase tracking-wider">Adicionar exercícios</div>
             <div className="max-h-40 overflow-y-auto space-y-1 p-2 rounded-xl bg-slate-800/20 border border-slate-700/20">
-              {exerciciosDisponiveis.filter(ex => !formData.exercicios_selecionados.includes(ex.id)).map(ex => (
-                <button key={ex.id} onClick={() => setFormData({...formData, exercicios_selecionados: [...formData.exercicios_selecionados, ex.id]})}
+              {exerciciosDisponiveis.filter(ex => !formData.exercicios_detalhados.some(e => (e.id || e.exercicio_id) === ex.id)).map(ex => (
+                <button key={ex.id} onClick={() => addExercicio(ex)}
                   className="w-full text-left flex items-center gap-2 p-2 rounded-lg hover:bg-slate-700/30 transition-colors text-sm text-slate-400 hover:text-white">
                   <Plus className="w-3.5 h-3.5 text-indigo-400" />
                   <span>{ex.nome}</span>
@@ -237,11 +353,11 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
             {!showAddExercise ? (
               <button onClick={() => setShowAddExercise(true)}
                 className="w-full text-xs text-indigo-400 p-2 border border-dashed border-slate-700 rounded-lg hover:border-indigo-500/30 hover:bg-indigo-500/5 transition-all">
-                + Criar novo exercicio
+                + Criar novo exercício
               </button>
             ) : (
               <div className="p-3 rounded-xl bg-slate-800/30 border border-slate-700/20 space-y-2">
-                <input value={newExName} onChange={(e) => setNewExName(e.target.value)} placeholder="Nome do exercicio"
+                <input value={newExName} onChange={(e) => setNewExName(e.target.value)} placeholder="Nome do exercício"
                   className="input-base text-sm py-2" />
                 <select value={newExGrupo} onChange={(e) => setNewExGrupo(e.target.value)}
                   className="input-base text-sm py-2">
@@ -253,7 +369,10 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onStar
                     className="flex-1 btn-ghost text-xs py-1.5">Cancelar</button>
                   <button onClick={async () => {
                     if (newExName.trim()) {
-                      await onCreateExercise({ nome: newExName, grupo_muscular: newExGrupo });
+                      const newEx = await onCreateExercise({ nome: newExName, grupo_muscular: newExGrupo });
+                      if (newEx?.data?.id) {
+                        addExercicio(newEx.data);
+                      }
                       setNewExName(''); setNewExGrupo(''); setShowAddExercise(false);
                     }
                   }} disabled={!newExName.trim()} className="flex-1 btn-primary text-xs py-1.5 disabled:opacity-50">Criar</button>
@@ -490,12 +609,28 @@ export const TreinosPage = ({ onNavigate }) => {
   const handleSaveTreino = async (data, treinoId) => {
     setSaving(true);
     try {
+      let updatedId = treinoId;
       if (treinoId) {
         await treinoService.updateTreino(treinoId, data);
       } else {
-        await treinoService.createTreino(data);
+        const res = await treinoService.createTreino(data);
+        updatedId = res?.data?.id;
       }
-      await fetchData();
+      // Refresh data and move edited training to top
+      const [t, e] = await Promise.allSettled([treinoService.getTreinos(), exerciciosService.getExercicios()]);
+      let treinosList = t.status === 'fulfilled' ? (t.value.data || []) : [];
+      if (e.status === 'fulfilled') setExercicios(e.value.data || []);
+      
+      // Move edited/created training to top
+      if (updatedId) {
+        const editedIndex = treinosList.findIndex(tr => tr.id === updatedId);
+        if (editedIndex > 0) {
+          const [edited] = treinosList.splice(editedIndex, 1);
+          treinosList.unshift(edited);
+        }
+        setSelectedTreino(treinosList.find(tr => tr.id === updatedId) || treinosList[0]);
+      }
+      setTreinos(treinosList);
     } catch (err) { throw err; }
     finally { setSaving(false); }
   };
@@ -513,16 +648,9 @@ export const TreinosPage = ({ onNavigate }) => {
   };
 
   const handleCreateExercise = async (data) => {
-    await exerciciosService.createExercicio(data);
+    const res = await exerciciosService.createExercicio(data);
     await fetchData();
-  };
-
-  const handleStart = (treino) => {
-    if (user?.email === 'MARIA' || user?.nome === 'MARIA') {
-      onNavigate && onNavigate('execucao', { treinoId: treino.id });
-      return;
-    }
-    onNavigate && onNavigate('execucao', { treinoId: treino.id });
+    return res;
   };
 
   return (
@@ -539,7 +667,7 @@ export const TreinosPage = ({ onNavigate }) => {
           <div className="lg:col-span-5 h-full overflow-hidden">
             <WorkoutEditor treino={selectedTreino} exerciciosDisponiveis={exercicios}
               onSave={handleSaveTreino} onDelete={(t) => setDeleteModal({ open: true, treino: t })}
-              onStart={handleStart} onCreateExercise={handleCreateExercise} saving={saving} />
+              onCreateExercise={handleCreateExercise} saving={saving} />
           </div>
           {/* Col 3: FitBot */}
           <div className="hidden lg:block lg:col-span-4 h-full overflow-hidden">

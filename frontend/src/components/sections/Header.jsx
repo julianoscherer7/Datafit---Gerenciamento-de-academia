@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Settings, ChevronDown, UserCircle, LogOut, Search } from 'lucide-react';
+import { Bell, ChevronDown, UserCircle, LogOut, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LogoutModal } from '../common/LogoutModal';
 
-export const Header = ({ onProfileClick, onSettingsClick }) => {
+export const Header = ({ onProfileClick }) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -98,12 +98,6 @@ export const Header = ({ onProfileClick, onSettingsClick }) => {
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 transition-colors"
                     >
                       <UserCircle className="w-4 h-4" /><span>Meu Perfil</span>
-                    </button>
-                    <button
-                      onClick={() => { setShowUserMenu(false); onSettingsClick?.(); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 transition-colors"
-                    >
-                      <Settings className="w-4 h-4" /><span>Configurações</span>
                     </button>
                   </div>
                   <div className="border-t border-slate-700/30 py-1">

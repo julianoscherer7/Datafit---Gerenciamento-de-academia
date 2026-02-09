@@ -176,28 +176,84 @@ GOAL_ADVICE = {
 
 def generate_ai_response(message: str, context: str = None, student_data: dict = None):
     """Generate an intelligent response based on the message and context"""
-    msg_lower = message.lower()
+    msg_lower = message.lower().strip()
+    
+    # Remove accents for better matching
+    import unicodedata
+    def remove_accents(text):
+        return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn')
+    
+    msg_normalized = remove_accents(msg_lower)
+    
+    # GREETING DETECTION
+    greetings = ["oi", "ola", "olá", "bom dia", "boa tarde", "boa noite", "hey", "hello", "hi", "e ai", "eai", "fala"]
+    if any(g == msg_lower or msg_normalized.startswith(g + " ") or msg_normalized == g for g in greetings):
+        return {
+            "response": "Olá! 👋 Sou o FitBot, seu assistente de treino. Como posso ajudar você hoje?\n\n"
+                       "Posso ajudar com:\n"
+                       "• **Treinos** - Montar, sugerir ou analisar seu treino\n"
+                       "• **Exercícios** - Técnicas, substituições e progressões\n"
+                       "• **Objetivos** - Hipertrofia, força, emagrecimento\n"
+                       "• **Dicas** - Nutrição, descanso e suplementação\n\n"
+                       "O que você gostaria de saber?"
+        }
+    
+    # WORKOUT BALANCE/ANALYSIS
+    balance_keywords = ["equilibrado", "balanceado", "esta bom", "está bom", "analisa", "analise", "analizar", "analisar", "o que acha", "avalia", "avaliar", "feedback", "correto", "certo"]
+    if any(w in msg_normalized for w in balance_keywords):
+        return {
+            "response": "📊 **Análise do Treino:**\n\n"
+                       "Para um treino bem equilibrado, considere:\n\n"
+                       "✅ **Volume adequado:** 12-20 séries por grupo muscular/semana\n"
+                       "✅ **Progressão de carga:** Aumente 2-5% quando completar todas as reps\n"
+                       "✅ **Variedade:** Misture exercícios compostos e isoladores\n"
+                       "✅ **Ordem:** Comece com compostos e finalize com isoladores\n"
+                       "✅ **Descanso:** 48-72h entre o mesmo grupo muscular\n\n"
+                       "💡 **Dica:** Se seu treino tem mais de 6-8 exercícios, considere dividir em dois dias."
+        }
+    
+    # EQUIVALENT/SUBSTITUTE EXERCISES
+    substitute_keywords = ["equivalente", "substitui", "substituir", "trocar", "troca", "alternativa", "no lugar", "invés", "vez de", "similar", "parecido"]
+    if any(w in msg_normalized for w in substitute_keywords):
+        return {
+            "response": "🔄 **Exercícios Substitutos:**\n\n"
+                       "**Peito:**\n"
+                       "• Supino reto → Supino máquina / Flexão\n"
+                       "• Crucifixo → Crossover / Peck deck\n\n"
+                       "**Costas:**\n"
+                       "• Puxada frontal → Barra fixa / Pulldown\n"
+                       "• Remada curvada → Remada cavaleiro / Remada unilateral\n\n"
+                       "**Pernas:**\n"
+                       "• Agachamento → Leg press / Hack squat\n"
+                       "• Stiff → Flexora / Good morning\n\n"
+                       "**Ombros:**\n"
+                       "• Desenvolvimento → Arnold press / Máquina\n\n"
+                       "**Braços:**\n"
+                       "• Rosca direta → Rosca scott / Rosca martelo\n"
+                       "• Tríceps testa → Tríceps corda / Francês\n\n"
+                       "💡 Qual exercício precisa substituir?"
+        }
     
     # COACH CONTEXT: Training plan suggestions
-    if context == "coach_training" or any(w in msg_lower for w in ["treino para", "montar treino", "plano de treino", "criar treino"]):
+    if context == "coach_training" or any(w in msg_normalized for w in ["treino para", "montar treino", "plano de treino", "criar treino", "montar um treino", "monta um treino", "faz um treino", "faca um treino"]):
         # Detect level
         nivel = "intermediario"
-        if any(w in msg_lower for w in ["iniciante", "começando", "novo"]):
+        if any(w in msg_normalized for w in ["iniciante", "comecando", "novo", "basico"]):
             nivel = "iniciante"
-        elif any(w in msg_lower for w in ["avançado", "avancado", "experiente", "pesado"]):
+        elif any(w in msg_normalized for w in ["avancado", "experiente", "pesado", "hardcore"]):
             nivel = "avancado"
         
         # Detect muscle group
         grupo = None
-        if any(w in msg_lower for w in ["peito", "peitoral", "chest"]):
+        if any(w in msg_normalized for w in ["peito", "peitoral", "chest"]):
             grupo = "peito"
-        elif any(w in msg_lower for w in ["costas", "dorsal", "back"]):
+        elif any(w in msg_normalized for w in ["costas", "dorsal", "back"]):
             grupo = "costas"
-        elif any(w in msg_lower for w in ["perna", "quadríceps", "posterior", "legs"]):
+        elif any(w in msg_normalized for w in ["perna", "quadriceps", "posterior", "legs", "pernas"]):
             grupo = "pernas"
-        elif any(w in msg_lower for w in ["ombro", "deltóide", "shoulder"]):
+        elif any(w in msg_normalized for w in ["ombro", "deltoide", "shoulder", "ombros"]):
             grupo = "ombros"
-        elif any(w in msg_lower for w in ["braço", "bíceps", "tríceps", "arms"]):
+        elif any(w in msg_normalized for w in ["braco", "biceps", "triceps", "arms", "bracos"]):
             grupo = "bracos"
         
         if grupo and grupo in EXERCISE_DB:
@@ -230,10 +286,11 @@ def generate_ai_response(message: str, context: str = None, student_data: dict =
         ]}
     
     # EXERCISE SUGGESTIONS
-    if context == "exercise_suggestion" or any(w in msg_lower for w in ["exercício para", "exercicio para", "sugestão de exercício", "qual exercício"]):
+    exercise_keywords = ["exercicio para", "exercício para", "sugestao de exercicio", "sugestão de exercício", "qual exercicio", "qual exercício", "opção de", "opcao de", "sugere", "sugerir", "sugestao", "sugestão", "exercícios de", "exercicios de"]
+    if context == "exercise_suggestion" or any(w in msg_normalized for w in exercise_keywords):
         grupo = None
         for g in ["peito", "costas", "pernas", "ombros", "bracos"]:
-            if g in msg_lower or (g == "bracos" and any(w in msg_lower for w in ["braço", "bíceps", "tríceps"])):
+            if g in msg_normalized or (g == "bracos" and any(w in msg_normalized for w in ["braco", "biceps", "triceps"])):
                 grupo = g
                 break
         
@@ -255,38 +312,56 @@ def generate_ai_response(message: str, context: str = None, student_data: dict =
         return {"response": response}
     
     # GOAL-BASED ADVICE
-    if any(w in msg_lower for w in ["hipertrofia", "ganhar massa", "crescer", "volume muscular"]):
+    hipertrofia_keywords = ["hipertrofia", "ganhar massa", "crescer", "volume muscular", "ganho de massa", "aumentar musculo", "ficar grande", "massa muscular", "musculos", "músculos"]
+    if any(w in msg_normalized for w in hipertrofia_keywords):
         advice = GOAL_ADVICE["hipertrofia"]
         response = f"🎯 **Protocolo para Hipertrofia**\n\n"
         response += f"📊 **Séries:** {advice['series']}\n"
         response += f"🔄 **Repetições:** {advice['reps']}\n"
         response += f"⏱️ **Descanso:** {advice['descanso']}\n"
         response += f"📅 **Frequência:** {advice['frequencia']}\n\n"
-        response += f"💡 {advice['dica']}"
+        response += f"💡 {advice['dica']}\n\n"
+        response += "**Princípios chave:**\n"
+        response += "• Progressão de carga gradual (2-5% por semana)\n"
+        response += "• Tensão mecânica: controle da fase excêntrica\n"
+        response += "• Volume semanal: 10-20 séries por grupo muscular\n"
+        response += "• Frequência: cada músculo 2x por semana"
         return {"response": response}
     
-    if any(w in msg_lower for w in ["emagrecer", "perder peso", "secar", "definir", "cutting"]):
+    emagrecimento_keywords = ["emagrecer", "perder peso", "secar", "definir", "cutting", "gordura", "perder gordura", "queimar", "definição", "definicao"]
+    if any(w in msg_normalized for w in emagrecimento_keywords):
         advice = GOAL_ADVICE["emagrecimento"]
         response = f"🔥 **Protocolo para Emagrecimento**\n\n"
         response += f"📊 **Séries:** {advice['series']}\n"
         response += f"🔄 **Repetições:** {advice['reps']}\n"
         response += f"⏱️ **Descanso:** {advice['descanso']}\n"
         response += f"📅 **Frequência:** {advice['frequencia']}\n\n"
-        response += f"💡 {advice['dica']}"
+        response += f"💡 {advice['dica']}\n\n"
+        response += "**Princípios chave:**\n"
+        response += "• Déficit calórico moderado (300-500 kcal)\n"
+        response += "• Priorize proteína (1.8-2.2g/kg)\n"
+        response += "• Cardio: 2-4x semana (HIIT ou LISS)\n"
+        response += "• Mantenha o treino de força para preservar massa"
         return {"response": response}
     
-    if any(w in msg_lower for w in ["força", "forca", "powerlifting", "carga máxima"]):
+    forca_keywords = ["forca", "força", "powerlifting", "carga maxima", "carga máxima", "mais forte", "aumentar forca", "aumentar força", "levantar mais"]
+    if any(w in msg_normalized for w in forca_keywords):
         advice = GOAL_ADVICE["forca"]
         response = f"⚡ **Protocolo para Força**\n\n"
         response += f"📊 **Séries:** {advice['series']}\n"
         response += f"🔄 **Repetições:** {advice['reps']}\n"
         response += f"⏱️ **Descanso:** {advice['descanso']}\n"
         response += f"📅 **Frequência:** {advice['frequencia']}\n\n"
-        response += f"💡 {advice['dica']}"
+        response += f"💡 {advice['dica']}\n\n"
+        response += "**Princípios chave:**\n"
+        response += "• Foque nos \"Big 3\": Agachamento, Supino, Terra\n"
+        response += "• Progressão linear ou ondulatória\n"
+        response += "• Técnica perfeita antes de aumentar carga\n"
+        response += "• Periodização: Acumulação → Intensificação → Realização"
         return {"response": response}
     
     # NUTRITION CONTEXT
-    if any(w in msg_lower for w in ["dieta", "nutrição", "alimentação", "calorias", "proteína", "macros"]):
+    if any(w in msg_normalized for w in ["dieta", "nutricao", "alimentacao", "calorias", "proteina", "macros", "comer", "comida", "alimentar", "nutrir", "pre treino", "pos treino", "pre-treino", "pos-treino"]):
         response = "🥗 **Orientações Nutricionais Gerais**\n\n"
         response += "**Proteína:** 1.6-2.2g por kg de peso corporal\n"
         response += "**Carboidratos:** 3-5g por kg (ajustar com objetivo)\n"
@@ -300,7 +375,8 @@ def generate_ai_response(message: str, context: str = None, student_data: dict =
         return {"response": response}
     
     # SUPPLEMENT CONTEXT
-    if any(w in msg_lower for w in ["suplemento", "creatina", "whey", "pré-treino", "bcaa"]):
+    suplemento_keywords = ["suplemento", "creatina", "whey", "pre-treino", "pré-treino", "bcaa", "cafeina", "proteina", "glutamina", "termogenico"]
+    if any(w in msg_normalized for w in suplemento_keywords):
         response = "💊 **Guia de Suplementação**\n\n"
         response += "**Essenciais (com evidência científica):**\n"
         response += "• **Creatina Monohidratada** - 3-5g/dia (todos os dias)\n"
@@ -314,7 +390,8 @@ def generate_ai_response(message: str, context: str = None, student_data: dict =
         return {"response": response}
     
     # REST/RECOVERY
-    if any(w in msg_lower for w in ["descanso", "recovery", "recuperação", "overtraining", "dor muscular"]):
+    recovery_keywords = ["descanso", "recovery", "recuperacao", "recuperação", "overtraining", "dor muscular", "doms", "dormir", "sono", "fadiga", "cansado"]
+    if any(w in msg_normalized for w in recovery_keywords):
         response = "😴 **Recuperação e Descanso**\n\n"
         response += "• **Sono:** 7-9 horas por noite\n"
         response += "• **Descanso entre treinos:** Mesmo grupo muscular a cada 48-72h\n"
@@ -328,19 +405,119 @@ def generate_ai_response(message: str, context: str = None, student_data: dict =
         response += "• Lesões frequentes"
         return {"response": response}
     
-    # DEFAULT: General fitness help
-    response = "👋 **Como posso ajudar?**\n\n"
-    response += "Sou o assistente AI do DATAFIT. Posso ajudar com:\n\n"
-    response += "🏋️ **Treinos** - Montar planos, sugerir exercícios\n"
-    response += "🎯 **Objetivos** - Hipertrofia, emagrecimento, força\n"
-    response += "🥗 **Nutrição** - Orientações sobre dieta e macros\n"
-    response += "💊 **Suplementação** - Guia baseado em evidências\n"
-    response += "😴 **Recuperação** - Descanso e prevenção de overtraining\n\n"
-    response += "Tente perguntar algo como:\n"
-    response += '• _"Montar treino de peito intermediário"_\n'
-    response += '• _"Exercícios para costas avançado"_\n'
-    response += '• _"Protocolo de hipertrofia"_\n'
-    response += '• _"Dicas de nutrição"_'
+    # TECHNIQUE QUESTIONS
+    tecnica_keywords = ["tecnica", "técnica", "postura", "forma", "execucao", "execução", "como fazer", "como executar", "forma correta", "jeito certo"]
+    if any(w in msg_normalized for w in tecnica_keywords):
+        response = "📐 **Técnica e Execução**\n\n"
+        response += "**Princípios fundamentais:**\n"
+        response += "• **Amplitude:** Use amplitude total controlada\n"
+        response += "• **Excêntrica:** Controle a descida (2-3 segundos)\n"
+        response += "• **Concêntrica:** Explosiva mas controlada\n"
+        response += "• **Respiração:** Expire no esforço, inspire na volta\n\n"
+        response += "**Erros comuns:**\n"
+        response += "• Usar impulso/embalo para levantar peso\n"
+        response += "• Amplitude parcial para usar mais carga\n"
+        response += "• Descanso insuficiente entre séries pesadas\n\n"
+        response += "💡 Qual exercício específico você quer melhorar?"
+        return {"response": response}
+    
+    # WARM UP / INJURY PREVENTION
+    warmup_keywords = ["aquecimento", "aquecer", "alongar", "alongamento", "esticar", "lesao", "lesão", "prevenir", "prevenção", "prevencao", "mobilidade"]
+    if any(w in msg_normalized for w in warmup_keywords):
+        response = "🔥 **Aquecimento e Prevenção de Lesões**\n\n"
+        response += "**Aquecimento ideal (10-15min):**\n"
+        response += "1. **Aquecimento geral:** 5min cardio leve\n"
+        response += "2. **Mobilidade articular:** Círculos e rotações\n"
+        response += "3. **Ativação muscular:** Séries leves do exercício\n\n"
+        response += "**Progressão de aquecimento:**\n"
+        response += "• 1ª série: 50% da carga de trabalho x 12 reps\n"
+        response += "• 2ª série: 70% da carga x 8 reps\n"
+        response += "• 3ª série: 85% da carga x 4 reps\n"
+        response += "• Depois: séries efetivas\n\n"
+        response += "⚠️ Nunca pule o aquecimento, especialmente em exercícios pesados!"
+        return {"response": response}
+    
+    # PLATEAU / STUCK PROGRESS
+    plateau_keywords = ["estagnado", "estagnei", "nao evoluo", "não evoluo", "travado", "parei de", "nao consigo", "não consigo", "plateau", "platô"]
+    if any(w in msg_normalized for w in plateau_keywords):
+        response = "📈 **Quebrando Estagnação**\n\n"
+        response += "**Estratégias para superar o platô:**\n\n"
+        response += "1. **Variar estímulo:** Mude exercícios, ordem ou ângulos\n"
+        response += "2. **Técnicas avançadas:** Drop-set, rest-pause, giant sets\n"
+        response += "3. **Deload:** 1 semana com 50% do volume\n"
+        response += "4. **Revisar dieta:** Ajuste calorias e proteína\n"
+        response += "5. **Sono:** Priorize 7-9h de sono reparador\n\n"
+        response += "**Técnicas intensificadoras:**\n"
+        response += "• **Drop-set:** Reduz peso sem descanso\n"
+        response += "• **Rest-pause:** Descansa 10-15s e continua\n"
+        response += "• **Negativas:** Foco na fase excêntrica\n"
+        response += "• **Super-séries:** Exercícios antagonistas sem descanso"
+        return {"response": response}
+    
+    # BEGINNER QUESTIONS
+    iniciante_keywords = ["iniciante", "comecando", "começando", "comeco", "começo", "primeiro treino", "nunca treinei", "novo na academia", "como comecar", "como começar"]
+    if any(w in msg_normalized for w in iniciante_keywords):
+        response = "🌱 **Guia para Iniciantes**\n\n"
+        response += "**Primeiras semanas:**\n"
+        response += "• 3x por semana é suficiente\n"
+        response += "• Foque em aprender a técnica\n"
+        response += "• Use cargas leves a moderadas\n"
+        response += "• 2-3 séries de 12-15 repetições\n\n"
+        response += "**Treino A/B sugerido:**\n"
+        response += "**Dia A:** Peito, Ombros, Tríceps\n"
+        response += "• Supino máquina 3x12\n"
+        response += "• Desenvolvimento máquina 3x12\n"
+        response += "• Tríceps pulley 3x15\n\n"
+        response += "**Dia B:** Costas, Bíceps, Pernas\n"
+        response += "• Puxada frontal 3x12\n"
+        response += "• Rosca direta 3x12\n"
+        response += "• Leg press 3x15\n\n"
+        response += "💡 Nas primeiras 4 semanas, seu corpo está se adaptando. A evolução virá!"
+        return {"response": response}
+    
+    # CONTEXT-AWARE: If there's training context, provide analysis
+    if context and ("treino" in msg_normalized or "exercicio" in msg_normalized or len(msg_normalized) < 50):
+        response = "🔍 **Analisando seu treino...**\n\n"
+        response += "Sobre o treino atual, posso ajudar com:\n"
+        response += "• Verificar se os exercícios estão bem ordenados\n"
+        response += "• Sugerir alternativas ou adições\n"
+        response += "• Ajustar volume e intensidade\n"
+        response += "• Equilibrar grupos musculares\n\n"
+        response += "O que você gostaria de saber especificamente?"
+        return {"response": response}
+    
+    # DEFAULT: Contextual response based on message content
+    # Try to extract something useful from the message
+    if len(msg_normalized) > 3:
+        response = f"🤔 Entendi que você quer saber sobre: **{message[:50]}{'...' if len(message) > 50 else ''}**\n\n"
+        response += "Posso ajudar melhor se você especificar:\n\n"
+        response += "**Sobre treinos:**\n"
+        response += "• _\"Montar treino de [grupo muscular]\"_\n"
+        response += "• _\"Esse treino está equilibrado?\"_\n"
+        response += "• _\"Substituto para [exercício]\"_\n\n"
+        response += "**Sobre objetivos:**\n"
+        response += "• _\"Protocolo para hipertrofia\"_\n"
+        response += "• _\"Como emagrecer treinando\"_\n"
+        response += "• _\"Aumentar força\"_\n\n"
+        response += "**Outras dúvidas:**\n"
+        response += "• _\"Dicas de nutrição\"_\n"
+        response += "• _\"Suplementos essenciais\"_\n"
+        response += "• _\"Quanto tempo descansar\"_"
+        return {"response": response}
+    
+    # ULTIMATE DEFAULT: Help message
+    response = "👋 **Olá! Sou o FitBot, seu assistente de treino.**\n\n"
+    response += "Posso ajudar você com:\n\n"
+    response += "🏋️ **Treinos** - Montar planos personalizados\n"
+    response += "💪 **Exercícios** - Técnicas e substituições\n"
+    response += "🎯 **Objetivos** - Hipertrofia, força, emagrecimento\n"
+    response += "🥗 **Nutrição** - Dieta e macros\n"
+    response += "💊 **Suplementos** - Guia baseado em ciência\n"
+    response += "😴 **Recuperação** - Descanso e prevenção\n\n"
+    response += "**Digite sua pergunta!** Por exemplo:\n"
+    response += "• _\"Monte um treino de peito\"_\n"
+    response += "• _\"Protocolo de hipertrofia\"_\n"
+    response += "• _\"Exercícios para iniciante\"_"
     return {"response": response}
 
 

@@ -58,7 +58,7 @@ const StatCard = ({ icon: Icon, label, value, suffix = '', color, delay = 0, tre
         <div className="text-2xl font-bold text-white tracking-tight">
           <Counter end={value} suffix={suffix} />
         </div>
-        <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+          <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
           {label}
           <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
@@ -104,7 +104,7 @@ const ActivityItem = ({ treino, index }) => (
     </div>
     <div className="flex-1 min-w-0">
       <div className="font-medium text-slate-200 text-sm truncate">{treino.nome || `Treino #${treino.treino_id}`}</div>
-      <div className="text-xs text-slate-500">{treino.exercicios_count || 0} exerc\u00edcios</div>
+      <div className="text-xs text-slate-500">{treino.exercicios_count || 0} exercícios</div>
     </div>
     <div className="text-[11px] text-slate-600">{treino.data || 'Recente'}</div>
   </motion.div>
@@ -132,7 +132,7 @@ const XPProgress = ({ xp = 0, nivel = 1, loading }) => {
               <span className="text-sm font-medium text-slate-300">Progresso XP</span>
             </div>
             <span className="text-xs font-semibold text-indigo-400 bg-indigo-400/10 px-2.5 py-0.5 rounded-full">
-              N\u00edvel {nivel}
+              Nível {nivel}
             </span>
           </div>
           <div className="flex items-baseline gap-2 mb-3">
@@ -147,7 +147,7 @@ const XPProgress = ({ xp = 0, nivel = 1, loading }) => {
               className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
             />
           </div>
-          <div className="text-[11px] text-slate-500 mt-1.5">{xpNeeded} XP para o pr\u00f3ximo n\u00edvel</div>
+          <div className="text-[11px] text-slate-500 mt-1.5">{xpNeeded} XP para o próximo nível</div>
         </>
       )}
     </motion.div>
@@ -166,7 +166,7 @@ export const DashboardPage = ({ onNavigate }) => {
         const res = await dashboardService.getDashboard();
         setData(res.data);
       } catch (err) {
-        console.error('Dashboard error:', err);
+        // Silent fail - dashboard will show default values
       } finally {
         setLoading(false);
       }
@@ -188,7 +188,7 @@ export const DashboardPage = ({ onNavigate }) => {
       >
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Ol\u00e1, {data?.usuario?.nome || user?.nome || 'Atleta'}
+            Olá, {data?.usuario?.nome || user?.nome || 'Atleta'}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -224,10 +224,10 @@ export const DashboardPage = ({ onNavigate }) => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
           >
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-1">Acesso r\u00e1pido</h3>
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-1">Acesso rápido</h3>
             <div className="space-y-2">
               <QuickAction icon={Dumbbell} label="Meus Treinos" description="Gerencie e inicie treinos" onClick={() => onNavigate('treinos')} delay={0.3} />
-              <QuickAction icon={TrendingUp} label="Evolu\u00e7\u00e3o" description="Progresso e conquistas" onClick={() => onNavigate('evolucao')} delay={0.35} />
+              <QuickAction icon={TrendingUp} label="Evolução" description="Progresso e conquistas" onClick={() => onNavigate('evolucao')} delay={0.35} />
               <QuickAction icon={MessageSquare} label="Chat" description="Conversas e mensagens" onClick={() => onNavigate('chat')} delay={0.4} />
               {isCoach && (
                 <QuickAction icon={Activity} label="Painel Coach" description="Gerenciar alunos" onClick={() => onNavigate('coachDashboard')} delay={0.45} />
@@ -295,7 +295,7 @@ export const DashboardPage = ({ onNavigate }) => {
             <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
               {(data?.badges_recentes?.length > 0
                 ? data.badges_recentes
-                : [{ icone: '\u{1F3C6}', nome: 'Primeiro Treino' }, { icone: '\u{1F4AF}', nome: '100 S\u00e9ries' }, { icone: '\u{1F525}', nome: 'Streak 7' }, { icone: '\u{1F4AA}', nome: 'For\u00e7a Total' }]
+                : [{ icone: '🏆', nome: 'Primeiro Treino' }, { icone: '💯', nome: '100 Séries' }, { icone: '🔥', nome: 'Streak 7' }, { icone: '💪', nome: 'Força Total' }]
               ).slice(0, 6).map((badge, i) => (
                 <motion.div
                   key={i}

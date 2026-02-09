@@ -29,14 +29,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Log detalhado para debug
-    console.error('API Error:', {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-      url: error.config?.url
-    });
-
     // Tratamento específico por código de erro
     if (error.response) {
       const { status, data } = error.response;
@@ -64,6 +56,8 @@ api.interceptors.response.use(
           break;
         case 500:
           error.friendlyMessage = 'Erro interno do servidor. Tente novamente.';
+          // Only log server errors
+          console.error('Server Error:', error.config?.url);
           break;
         default:
           error.friendlyMessage = data?.detail || 'Ocorreu um erro. Tente novamente.';

@@ -118,12 +118,12 @@ export const EvolucaoPage = () => {
   // Generate chart data from historico
   const chartData = useMemo(() => {
     if (!historico.length) {
-      // Fallback demo data
+      // Return empty data for new accounts - no fake data
       return Array.from({ length: 7 }, (_, i) => ({
         dia: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'][i],
-        carga: Math.floor(Math.random() * 500 + 200),
-        volume: Math.floor(Math.random() * 30 + 10),
-        frequencia: Math.floor(Math.random() * 3)
+        carga: 0,
+        volume: 0,
+        frequencia: 0
       }));
     }
     return historico.slice(-7).map((h, i) => ({
@@ -227,12 +227,13 @@ export const EvolucaoPage = () => {
             className="space-y-6">
 
             {/* Charts Grid */}
+            {historico.length > 0 ? (
             <div className="grid md:grid-cols-2 gap-4">
               {/* Carga Total Chart */}
               <div className="card-base p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-white">Carga Total</h3>
-                  <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-full">Ultimos 7 dias</span>
+                  <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-full">Últimos 7 dias</span>
                 </div>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -258,7 +259,7 @@ export const EvolucaoPage = () => {
               <div className="card-base p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold text-white">Volume de Treino</h3>
-                  <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-full">Ultimos 7 dias</span>
+                  <span className="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded-full">Últimos 7 dias</span>
                 </div>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
@@ -267,12 +268,19 @@ export const EvolucaoPage = () => {
                       <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                       <Tooltip content={<ChartTooltip />} />
-                      <Bar dataKey="volume" name="Series" fill="#818cf8" radius={[6, 6, 0, 0]} barSize={24} />
+                      <Bar dataKey="volume" name="Séries" fill="#818cf8" radius={[6, 6, 0, 0]} barSize={24} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
+            ) : (
+              <div className="card-base p-8 text-center">
+                <TrendingUp className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+                <h3 className="text-sm font-semibold text-slate-400 mb-1">Sem dados de treino</h3>
+                <p className="text-xs text-slate-500">Comece a treinar para ver sua evolução aqui!</p>
+              </div>
+            )}
 
             {/* Frequency chart */}
             <div className="card-base p-4">

@@ -94,7 +94,6 @@ const AppContent = () => {
       <div className="flex-1 flex flex-col overflow-hidden md:ml-[260px]">
         <Header 
           onProfileClick={() => setCurrentPage('perfil')} 
-          onSettingsClick={() => setCurrentPage('configs')}
         />
         
         <MainLayout>

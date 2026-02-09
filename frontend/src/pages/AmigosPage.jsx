@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Search, UserPlus, Trophy, Medal, Flame, Zap,
-  TrendingUp, ChevronRight, Crown, Star, Target
+  TrendingUp, ChevronRight, Crown, Star, Target, Check, X, RefreshCw
 } from 'lucide-react';
 import { amigosService } from '../services';
 import { useAuth } from '../context/AuthContext';
@@ -72,21 +72,32 @@ export const AmigosPage = ({ onNavigate }) => {
   const { user } = useAuth();
   const [amigos, setAmigos] = useState([]);
   const [ranking, setRanking] = useState([]);
+  const [sugestoes, setSugestoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('ranking');
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [addingFriend, setAddingFriend] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => { fetchData(); }, []);
+  
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [amigosRes, rankingRes] = await Promise.allSettled([
+      const [amigosRes, rankingRes, sugestoesRes] = await Promise.allSettled([
         amigosService.getAmigos(),
-        amigosService.getRanking()
+        amigosService.getRanking(),
+        amigosService.getSugestoes()
       ]);
       
       if (amigosRes.status === 'fulfilled') {
@@ -98,9 +109,14 @@ export const AmigosPage = ({ onNavigate }) => {
         data.sort((a, b) => (b.xp || 0) - (a.xp || 0));
         setRanking(data);
       }
+      
+      if (sugestoesRes.status === 'fulfilled') {
+        setSugestoes(sugestoesRes.value.data || []);
+      }
     } catch {
       setAmigos([]);
       setRanking([]);
+      setSugestoes([]);
     }
     finally { setLoading(false); }
   };
@@ -116,10 +132,24 @@ export const AmigosPage = ({ onNavigate }) => {
     finally { setSearching(false); }
   };
 
-  const handleAddFriend = async (userId) => {
+  const handleAddFriend = async (userId, userName) => {
+    setAddingFriend(userId);
     try {
       await amigosService.enviarSolicitacao(userId);
       setSearchResults(prev => prev.map(u => u.id === userId ? { ...u, amizade_status: 'pendente' } : u));
+      setSugestoes(prev => prev.filter(u => u.id !== userId));
+      setToast({ type: 'success', message: `Solicitação enviada para ${userName}!` });
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || 'Erro ao enviar solicitação';
+      setToast({ type: 'error', message: errorMsg });
+    }
+    setAddingFriend(null);
+  };
+
+  const refreshSugestoes = async () => {
+    try {
+      const res = await amigosService.getSugestoes();
+      setSugestoes(res.data || []);
     } catch {}
   };
 
@@ -180,12 +210,21 @@ export const AmigosPage = ({ onNavigate }) => {
                         <div className="text-[11px] text-slate-500">{u.nickname ? `@${u.nickname}` : u.email}</div>
                       </div>
                       {u.amizade_status === 'aceito' ? (
-                        <span className="text-[11px] text-emerald-400 px-2 py-1 rounded-lg bg-emerald-500/10">Amigo</span>
+                        <span className="text-[11px] text-emerald-400 px-2 py-1 rounded-lg bg-emerald-500/10 flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Amigo
+                        </span>
                       ) : u.amizade_status === 'pendente' ? (
                         <span className="text-[11px] text-amber-400 px-2 py-1 rounded-lg bg-amber-500/10">Pendente</span>
                       ) : (
-                        <button onClick={() => handleAddFriend(u.id)}
-                          className="text-[11px] text-indigo-400 px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+                        <button 
+                          onClick={() => handleAddFriend(u.id, u.nome)}
+                          disabled={addingFriend === u.id}
+                          className="text-[11px] text-indigo-400 px-2 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all disabled:opacity-50 flex items-center gap-1">
+                          {addingFriend === u.id ? (
+                            <RefreshCw className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3 h-3" />
+                          )}
                           Adicionar
                         </button>
                       )}
@@ -194,12 +233,44 @@ export const AmigosPage = ({ onNavigate }) => {
                 </div>
               )}
               {searchTerm.length >= 2 && !searching && searchResults.length === 0 && (
-                <div className="text-xs text-slate-500 text-center py-2">Nenhum usuario encontrado</div>
+                <div className="text-xs text-slate-500 text-center py-2">Nenhum usuário encontrado</div>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Suggestions */}
+      {sugestoes.length > 0 && !showSearch && (
+        <div className="card-base p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-white">Sugestões de amigos</span>
+            <button onClick={refreshSugestoes} className="p-1 text-slate-500 hover:text-white transition-all">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {sugestoes.map(u => (
+              <div key={u.id} className="flex-shrink-0 w-28 text-center p-3 rounded-xl bg-slate-800/30 border border-slate-700/10 hover:border-indigo-500/20 transition-all">
+                <Avatar nome={u.nome} size="md" />
+                <div className="mt-2 text-xs text-white truncate font-medium">{u.nome}</div>
+                <div className="text-[10px] text-slate-500 mb-2">Nv.{u.nivel || 1}</div>
+                <button 
+                  onClick={() => handleAddFriend(u.id, u.nome)}
+                  disabled={addingFriend === u.id}
+                  className="w-full text-[10px] py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-1">
+                  {addingFriend === u.id ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <UserPlus className="w-3 h-3" />
+                  )}
+                  Adicionar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filter within current tab */}
       {!showSearch && filteredList.length > 10 && (
@@ -269,7 +340,7 @@ export const AmigosPage = ({ onNavigate }) => {
           <motion.div key="amigos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredList.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-sm">Voce ainda nao tem amigos. Use o botao Adicionar para buscar usuarios!</div>
+                <div className="col-span-full text-center py-12 text-slate-500 text-sm">Você ainda não tem amigos. Use o botão Adicionar para buscar usuários!</div>
               ) : filteredList.map((amigo, i) => (
                 <motion.div key={amigo.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.03 }}
@@ -299,6 +370,24 @@ export const AmigosPage = ({ onNavigate }) => {
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className={`fixed bottom-6 left-1/2 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 ${
+              toast.type === 'success' 
+                ? 'bg-emerald-500/90 text-white' 
+                : 'bg-red-500/90 text-white'
+            }`}>
+            {toast.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {toast.message}
           </motion.div>
         )}
       </AnimatePresence>

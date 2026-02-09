@@ -48,6 +48,11 @@ export const amigosService = {
   getSolicitacoesPendentes: () => api.get('/amigos/pendentes'),
 
   /**
+   * Obtém sugestões de amigos
+   */
+  getSugestoes: () => api.get('/amigos/sugestoes'),
+
+  /**
    * Obtém perfil público de um amigo
    * @param {number} amigoId - ID do amigo
    */

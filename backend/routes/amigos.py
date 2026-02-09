@@ -228,6 +228,51 @@ def rejeitar_amizade(
     
     return amizade
 
+@router.get("/sugestoes", response_model=List[dict])
+def obter_sugestoes_amigos(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtém sugestões de amigos (usuários que não são amigos ainda)"""
+    # Get existing friendships
+    amizades = db.query(Amizade).filter(
+        or_(
+            Amizade.solicitante_id == current_user["user_id"],
+            Amizade.solicitado_id == current_user["user_id"]
+        )
+    ).all()
+    
+    # IDs de usuários que já tem alguma relação
+    exclude_ids = {current_user["user_id"]}
+    for a in amizades:
+        exclude_ids.add(a.solicitado_id)
+        exclude_ids.add(a.solicitante_id)
+    
+    # Get random users who are not friends
+    sugestoes = db.query(
+        Usuario, UsuarioProgresso
+    ).outerjoin(
+        UsuarioProgresso, UsuarioProgresso.usuario_id == Usuario.id
+    ).filter(
+        Usuario.id.notin_(exclude_ids),
+        Usuario.perfil == "aluno"
+    ).order_by(
+        func.random()
+    ).limit(5).all()
+    
+    return [
+        {
+            "id": u.id,
+            "nome": u.nome,
+            "nickname": u.nickname,
+            "email": u.email,
+            "perfil": u.perfil,
+            "xp": p.xp_total if p else 0,
+            "nivel": p.nivel if p else 1,
+        }
+        for u, p in sugestoes
+    ]
+
 @router.get("/feed", response_model=List[dict])
 def obter_feed_amigos(
     current_user: dict = Depends(get_current_user),
