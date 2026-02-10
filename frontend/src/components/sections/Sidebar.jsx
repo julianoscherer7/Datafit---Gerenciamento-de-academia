@@ -25,7 +25,6 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
       label: 'Coach',
       items: [
         { id: 'coachDashboard', label: 'Painel Coach', icon: LayoutDashboard },
-        { id: 'coachTreinos', label: 'Criar Treino', icon: UserPlus },
       ],
     }] : []),
     {

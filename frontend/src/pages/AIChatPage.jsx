@@ -29,6 +29,66 @@ const TypingIndicator = () => (
   </div>
 );
 
+/* ── Markdown-aware text renderer ── */
+const FormatBotText = ({ text }) => {
+  const lines = text.split('\n');
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} className="h-1" />;
+
+        // Section header  e.g. **Treino de Peito**
+        if (/^\*\*[^*]+\*\*:?$/.test(trimmed)) {
+          const title = trimmed.replace(/\*\*/g, '').replace(/:$/, '');
+          return (
+            <p key={i} className="font-bold text-indigo-300 mt-2 mb-0.5 text-[13px]">
+              {title}
+            </p>
+          );
+        }
+
+        // Numbered list  e.g. 1. Supino reto
+        const numMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
+        if (numMatch) {
+          return (
+            <div key={i} className="flex gap-2 pl-1">
+              <span className="text-indigo-400 font-bold text-xs mt-[2px] min-w-[16px]">{numMatch[1]}.</span>
+              <span className="flex-1" dangerouslySetInnerHTML={{
+                __html: numMatch[2]
+                  .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                  .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>')
+              }} />
+            </div>
+          );
+        }
+
+        // Bullet  e.g. - item  or  • item
+        const bulletMatch = trimmed.match(/^[-•●]\s+(.*)/);
+        if (bulletMatch) {
+          return (
+            <div key={i} className="flex gap-2 pl-1">
+              <span className="text-indigo-400 mt-[3px] text-[8px]">●</span>
+              <span className="flex-1" dangerouslySetInnerHTML={{
+                __html: bulletMatch[1]
+                  .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                  .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>')
+              }} />
+            </div>
+          );
+        }
+
+        // Inline bold / italic
+        const parsed = trimmed
+          .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+          .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>');
+
+        return <p key={i} dangerouslySetInnerHTML={{ __html: parsed }} />;
+      })}
+    </div>
+  );
+};
+
 const MessageBubble = ({ msg, onCopy }) => {
   const [copied, setCopied] = useState(false);
   const isUser = msg.role === 'user';
@@ -53,24 +113,24 @@ const MessageBubble = ({ msg, onCopy }) => {
             ? 'bg-indigo-500 text-white rounded-br-md'
             : 'bg-slate-800/40 border border-slate-700/10 text-slate-200 rounded-bl-md'
         }`}>
-          {msg.content.split('\n').map((line, i) => {
-            // Parse basic markdown: **bold**, _italic_, • bullets
-            const parsed = line
-              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-              .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>');
-            return (
-              <React.Fragment key={i}>
-                <span dangerouslySetInnerHTML={{ __html: parsed }} />
-                {i < msg.content.split('\n').length - 1 && <br />}
-              </React.Fragment>
-            );
-          })}
+          {isUser ? msg.content : <FormatBotText text={msg.content} />}
         </div>
         {!isUser && (
           <button onClick={handleCopy}
             className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-800/40">
             {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-500" />}
           </button>
+        )}
+        {/* Suggestions pills */}
+        {msg.suggestions?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {msg.suggestions.map((s, j) => (
+              <button key={j} onClick={() => msg.onSuggestion?.(s)}
+                className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                {s}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </motion.div>
@@ -99,8 +159,14 @@ export const AIChatPage = ({ onNavigate }) => {
 
     try {
       const res = await aiService.chat(content, JSON.stringify(messages.slice(-10).map(m => `${m.role}: ${m.content}`)));
-      const reply = res.data?.resposta || res.data?.response || res.data?.message || 'Desculpe, nao consegui processar sua pergunta.';
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+      const reply = res.data?.response || res.data?.resposta || res.data?.message || 'Desculpe, nao consegui processar sua pergunta.';
+      const suggestions = res.data?.suggestions || [];
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: reply,
+        suggestions,
+        onSuggestion: (s) => sendMessage(s),
+      }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Ops, ocorreu um erro. Tente novamente em alguns instantes.' }]);
     }

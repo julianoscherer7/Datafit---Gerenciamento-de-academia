@@ -46,6 +46,9 @@ def listar_treinos(
                 "series_sugeridas": ex.TreinoExercicio.series_sugeridas,
                 "reps_sugeridas": ex.TreinoExercicio.reps_sugeridas,
                 "ordem": ex.TreinoExercicio.ordem,
+                "tecnica": ex.TreinoExercicio.tecnica,
+                "observacao": ex.TreinoExercicio.observacao,
+                "descanso": ex.TreinoExercicio.descanso,
                 "instrucoes": ex.Exercicio.instrucoes,
                 "dicas": ex.Exercicio.dicas,
                 "nivel": ex.Exercicio.nivel,
@@ -141,7 +144,10 @@ def criar_treino(
             exercicio_id=ex.exercicio_id,
             ordem=ex.ordem,
             series_sugeridas=ex.series_sugeridas,
-            reps_sugeridas=ex.reps_sugeridas
+            reps_sugeridas=ex.reps_sugeridas,
+            tecnica=ex.tecnica,
+            observacao=ex.observacao,
+            descanso=ex.descanso
         )
         db.add(te)
     
@@ -224,7 +230,10 @@ def atualizar_treino(
             exercicio_id=ex.exercicio_id,
             ordem=ex.ordem,
             series_sugeridas=ex.series_sugeridas,
-            reps_sugeridas=ex.reps_sugeridas
+            reps_sugeridas=ex.reps_sugeridas,
+            tecnica=ex.tecnica,
+            observacao=ex.observacao,
+            descanso=ex.descanso
         )
         db.add(te)
     

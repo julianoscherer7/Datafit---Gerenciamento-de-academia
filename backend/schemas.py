@@ -184,6 +184,9 @@ class TreinoExercicioCreate(BaseModel):
     ordem: int
     series_sugeridas: Optional[str] = None
     reps_sugeridas: Optional[str] = None
+    tecnica: Optional[str] = None
+    observacao: Optional[str] = None
+    descanso: Optional[str] = None
 
 class TreinoCreate(BaseModel):
     nome: str

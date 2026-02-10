@@ -5,7 +5,7 @@ from database import get_db
 from models import Amizade, Usuario, UsuarioProgresso, Streak
 from schemas import AmizadeCreate, AmizadeResponse
 from security import get_current_user
-from sqlalchemy import or_, func
+from sqlalchemy import or_, and_, func
 
 router = APIRouter(prefix="/amigos", tags=["amigos"])
 
@@ -148,15 +148,23 @@ def solicitar_amizade(
             detail="Não pode solicitar amizade a si mesmo"
         )
     
-    # Verifica se já existe relação
+    # Verifica se já existe relação (use and_() not Python 'and')
     ja_existe = db.query(Amizade).filter(
         or_(
-            (Amizade.solicitante_id == current_user["user_id"] and Amizade.solicitado_id == solicitacao.solicitado_id),
-            (Amizade.solicitante_id == solicitacao.solicitado_id and Amizade.solicitado_id == current_user["user_id"])
+            and_(Amizade.solicitante_id == current_user["user_id"], Amizade.solicitado_id == solicitacao.solicitado_id),
+            and_(Amizade.solicitante_id == solicitacao.solicitado_id, Amizade.solicitado_id == current_user["user_id"])
         )
     ).first()
     
     if ja_existe:
+        if ja_existe.status == "rejeitado":
+            # Allow re-sending if previously rejected
+            ja_existe.status = "pendente"
+            ja_existe.solicitante_id = current_user["user_id"]
+            ja_existe.solicitado_id = solicitacao.solicitado_id
+            db.commit()
+            db.refresh(ja_existe)
+            return ja_existe
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Relação de amizade já existe"
@@ -320,3 +328,79 @@ def obter_feed_amigos(
         }
         for at in atividades
     ]
+
+@router.get("/{amigo_id}/perfil", response_model=dict)
+def obter_perfil_amigo(
+    amigo_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Obtém perfil público de um amigo/usuário"""
+    from models import UsuarioBadge, Badge
+    
+    # Busca o usuário
+    usuario = db.query(Usuario).filter(Usuario.id == amigo_id).first()
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado"
+        )
+    
+    # Busca progresso
+    progresso = db.query(UsuarioProgresso).filter(
+        UsuarioProgresso.usuario_id == amigo_id
+    ).first()
+    
+    # Busca streak
+    streak = db.query(Streak).filter(Streak.usuario_id == amigo_id).first()
+    
+    # Busca badges do usuário
+    badges = db.query(Badge, UsuarioBadge).join(
+        UsuarioBadge, UsuarioBadge.badge_id == Badge.id
+    ).filter(UsuarioBadge.usuario_id == amigo_id).all()
+    
+    badges_list = [
+        {
+            "id": b.Badge.id,
+            "codigo": b.Badge.codigo,
+            "nome": b.Badge.nome,
+            "descricao": b.Badge.descricao,
+            "icone_url": b.Badge.icone_url,
+            "obtido_em": b.UsuarioBadge.data_obtencao.isoformat() if b.UsuarioBadge.data_obtencao else None
+        }
+        for b in badges
+    ]
+    
+    # Verifica status de amizade
+    amizade_status = None
+    amizade = db.query(Amizade).filter(
+        or_(
+            (Amizade.solicitante_id == current_user["user_id"]) & (Amizade.solicitado_id == amigo_id),
+            (Amizade.solicitante_id == amigo_id) & (Amizade.solicitado_id == current_user["user_id"])
+        )
+    ).first()
+    if amizade:
+        amizade_status = amizade.status
+    
+    return {
+        "id": usuario.id,
+        "nome": usuario.nome,
+        "nickname": usuario.nickname,
+        "perfil": usuario.perfil,
+        "foto_url": usuario.foto_url,
+        "foto_base64": usuario.foto_base64,
+        "banner_base64": usuario.banner_base64,
+        "bio": usuario.bio,
+        "instagram": usuario.instagram,
+        "tiktok": usuario.tiktok,
+        "twitter": usuario.twitter,
+        "linkedin": usuario.linkedin,
+        "xp": progresso.xp_total if progresso else 0,
+        "nivel": progresso.nivel if progresso else 1,
+        "titulo": progresso.titulo_atual if progresso else None,
+        "streak": streak.atual if streak else 0,
+        "max_streak": streak.maximo if streak else 0,
+        "badges": badges_list,
+        "amizade_status": amizade_status,
+        "criado_em": usuario.criado_em.isoformat() if usuario.criado_em else None
+    }

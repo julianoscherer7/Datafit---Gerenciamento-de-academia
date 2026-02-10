@@ -81,6 +81,8 @@ export const AmigosPage = ({ onNavigate }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [addingFriend, setAddingFriend] = useState(null);
   const [toast, setToast] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
   
@@ -152,6 +154,19 @@ export const AmigosPage = ({ onNavigate }) => {
       setSugestoes(res.data || []);
     } catch {}
   };
+
+  const viewProfile = async (userId) => {
+    setProfileLoading(true);
+    try {
+      const res = await amigosService.getPerfilAmigo(userId);
+      setSelectedProfile(res.data);
+    } catch (err) {
+      setToast({ type: 'error', message: 'Erro ao carregar perfil' });
+    }
+    setProfileLoading(false);
+  };
+
+  const closeProfile = () => setSelectedProfile(null);
 
   const displayList = activeTab === 'ranking' ? ranking : amigos;
   const filteredList = displayList.filter(a =>
@@ -363,13 +378,156 @@ export const AmigosPage = ({ onNavigate }) => {
                       className="flex-1 text-xs py-2 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 transition-all font-medium">
                       Mensagem
                     </button>
-                    <button className="flex-1 text-xs py-2 rounded-lg bg-slate-800/40 text-slate-400 hover:bg-slate-800/60 transition-all font-medium">
+                    <button onClick={() => viewProfile(amigo.id)}
+                      className="flex-1 text-xs py-2 rounded-lg bg-slate-800/40 text-slate-400 hover:bg-slate-800/60 transition-all font-medium">
                       Perfil
                     </button>
                   </div>
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Profile Modal */}
+      <AnimatePresence>
+        {selectedProfile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+            onClick={closeProfile}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl overflow-hidden"
+              style={{ background: '#0c0f1a', border: '1px solid rgba(148,163,184,0.08)' }}
+            >
+              {/* Banner */}
+              <div className="h-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 relative">
+                {selectedProfile.banner_base64 && (
+                  <img src={selectedProfile.banner_base64} alt="" className="w-full h-full object-cover" />
+                )}
+                <button onClick={closeProfile} 
+                  className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/30 text-white hover:bg-black/50 transition-all">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Avatar */}
+              <div className="relative px-6 -mt-10">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white border-4 border-[#0c0f1a]">
+                  {selectedProfile.foto_base64 ? (
+                    <img src={selectedProfile.foto_base64} alt="" className="w-full h-full object-cover rounded-xl" />
+                  ) : (
+                    (selectedProfile.nome || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                  )}
+                </div>
+              </div>
+              
+              {/* Info */}
+              <div className="p-6 pt-3">
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="text-xl font-bold text-white">{selectedProfile.nome}</h2>
+                  {selectedProfile.amizade_status === 'aceito' && (
+                    <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Amigo
+                    </span>
+                  )}
+                </div>
+                {selectedProfile.nickname && (
+                  <p className="text-sm text-slate-500 mb-2">@{selectedProfile.nickname}</p>
+                )}
+                {selectedProfile.bio && (
+                  <p className="text-sm text-slate-400 mb-4">{selectedProfile.bio}</p>
+                )}
+                
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="text-center p-3 rounded-xl bg-slate-800/30">
+                    <div className="flex items-center justify-center gap-1 text-amber-400 mb-1">
+                      <Zap className="w-4 h-4" />
+                      <span className="font-bold">{(selectedProfile.xp || 0).toLocaleString()}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">XP Total</span>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-slate-800/30">
+                    <div className="flex items-center justify-center gap-1 text-indigo-400 mb-1">
+                      <Star className="w-4 h-4" />
+                      <span className="font-bold">{selectedProfile.nivel || 1}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">Nível</span>
+                  </div>
+                  <div className="text-center p-3 rounded-xl bg-slate-800/30">
+                    <div className="flex items-center justify-center gap-1 text-orange-400 mb-1">
+                      <Flame className="w-4 h-4" />
+                      <span className="font-bold">{selectedProfile.streak || 0}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">Streak</span>
+                  </div>
+                </div>
+                
+                {/* Badges */}
+                {selectedProfile.badges && selectedProfile.badges.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-xs font-semibold text-slate-400 mb-2">Conquistas</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProfile.badges.slice(0, 6).map((badge, i) => (
+                        <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/40 border border-slate-700/20">
+                          <span className="text-base">{badge.icone_url || '🏆'}</span>
+                          <span className="text-[11px] text-slate-300">{badge.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Social Links */}
+                {(selectedProfile.instagram || selectedProfile.tiktok || selectedProfile.twitter) && (
+                  <div className="flex gap-2 mb-4">
+                    {selectedProfile.instagram && (
+                      <a href={`https://instagram.com/${selectedProfile.instagram}`} target="_blank" rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-slate-800/40 text-slate-400 hover:text-pink-400 transition-all">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                      </a>
+                    )}
+                    {selectedProfile.tiktok && (
+                      <a href={`https://tiktok.com/@${selectedProfile.tiktok}`} target="_blank" rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-slate-800/40 text-slate-400 hover:text-cyan-400 transition-all">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                      </a>
+                    )}
+                    {selectedProfile.twitter && (
+                      <a href={`https://twitter.com/${selectedProfile.twitter}`} target="_blank" rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-slate-800/40 text-slate-400 hover:text-blue-400 transition-all">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      </a>
+                    )}
+                  </div>
+                )}
+                
+                {/* Actions */}
+                <div className="flex gap-2">
+                  {selectedProfile.amizade_status !== 'aceito' && selectedProfile.amizade_status !== 'pendente' && (
+                    <button 
+                      onClick={() => { handleAddFriend(selectedProfile.id, selectedProfile.nome); closeProfile(); }}
+                      className="flex-1 py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all">
+                      Adicionar Amigo
+                    </button>
+                  )}
+                  <button onClick={() => { closeProfile(); onNavigate('chat'); }}
+                    className="flex-1 py-2.5 text-sm font-medium bg-slate-800/40 text-slate-300 rounded-xl hover:bg-slate-800/60 transition-all">
+                    Enviar Mensagem
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageCircle, Send, Search, MoreVertical, Phone, Video,
   Smile, Paperclip, Pin, Reply, Hash, Users, Plus, ChevronDown,
-  Dumbbell, User, Circle
+  Dumbbell, User, Circle, X, UserPlus
 } from 'lucide-react';
-import { socialService } from '../services';
+import { socialService, amigosService } from '../services';
 import { useAuth } from '../context/AuthContext';
 
 const Skeleton = ({ className = '' }) => (
@@ -243,7 +243,7 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
 };
 
 // ===== MAIN PAGE =====
-export const ChatPage = () => {
+export const ChatPage = ({ onNavigate }) => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -251,12 +251,27 @@ export const ChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [msgLoading, setMsgLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [amigos, setAmigos] = useState([]);
+  const [sugestoes, setSugestoes] = useState([]);
+  const [friendSearchTerm, setFriendSearchTerm] = useState('');
 
-  useEffect(() => { fetchConversations(); }, []);
+  useEffect(() => { fetchConversations(); fetchAmigos(); }, []);
 
   useEffect(() => {
     if (selectedConv) fetchMessages(selectedConv);
   }, [selectedConv?.id]);
+
+  const fetchAmigos = async () => {
+    try {
+      const [amigosRes, sugestoesRes] = await Promise.allSettled([
+        socialService.getAmigos ? socialService.getAmigos() : Promise.resolve({ data: [] }),
+        amigosService.getSugestoes()
+      ]);
+      if (amigosRes.status === 'fulfilled') setAmigos(amigosRes.value.data || []);
+      if (sugestoesRes.status === 'fulfilled') setSugestoes(sugestoesRes.value.data || []);
+    } catch {}
+  };
 
   const fetchConversations = async () => {
     setLoading(true);
@@ -277,6 +292,33 @@ export const ChatPage = () => {
     }
     finally { setLoading(false); }
   };
+
+  const startNewChat = (friend) => {
+    // Check if conversation already exists
+    const existingConv = conversations.find(c => c.participante_id === friend.id || c.id === friend.id);
+    if (existingConv) {
+      setSelectedConv(existingConv);
+    } else {
+      // Create new conversation
+      const newConv = {
+        id: friend.id,
+        participante_id: friend.id,
+        nome: friend.nome,
+        online: false,
+        ultima_mensagem: '',
+        nao_lidas: 0,
+        ultima_mensagem_data: new Date().toISOString()
+      };
+      setConversations(prev => [newConv, ...prev]);
+      setSelectedConv(newConv);
+    }
+    setShowNewChatModal(false);
+    setFriendSearchTerm('');
+  };
+
+  const filteredAmigos = amigos.filter(a => 
+    !friendSearchTerm || (a.nome || '').toLowerCase().includes(friendSearchTerm.toLowerCase())
+  );
 
   const fetchMessages = async (conv) => {
     setMsgLoading(true);
@@ -323,7 +365,7 @@ export const ChatPage = () => {
             conversations={filteredConvs}
             selected={selectedConv}
             onSelect={setSelectedConv}
-            onNewChat={() => {}}
+            onNewChat={() => setShowNewChatModal(true)}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
           />
@@ -338,6 +380,96 @@ export const ChatPage = () => {
           />
         </div>
       </div>
+
+      {/* New Chat Modal */}
+      <AnimatePresence>
+        {showNewChatModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setShowNewChatModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl p-6"
+              style={{ background: '#0c0f1a', border: '1px solid rgba(148,163,184,0.08)' }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Nova Conversa</h3>
+                <button onClick={() => setShowNewChatModal(false)} 
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800/40 transition-all">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input 
+                  value={friendSearchTerm} 
+                  onChange={e => setFriendSearchTerm(e.target.value)}
+                  placeholder="Buscar amigos..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" 
+                />
+              </div>
+
+              {/* Friends List */}
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {filteredAmigos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Nenhum amigo encontrado</p>
+                    <button 
+                      onClick={() => { setShowNewChatModal(false); onNavigate && onNavigate('amigos'); }}
+                      className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 transition-all flex items-center gap-1 mx-auto"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" /> Adicionar amigos
+                    </button>
+                  </div>
+                ) : filteredAmigos.map(amigo => (
+                  <button
+                    key={amigo.id}
+                    onClick={() => startNewChat(amigo)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/40 transition-all text-left"
+                  >
+                    <Avatar nome={amigo.nome} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white truncate">{amigo.nome}</div>
+                      {amigo.nickname && <div className="text-[11px] text-slate-500">@{amigo.nickname}</div>}
+                    </div>
+                    <MessageCircle className="w-4 h-4 text-indigo-400" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Suggestions */}
+              {sugestoes.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-800/50">
+                  <div className="text-xs text-slate-500 mb-2">Sugestões de amigos</div>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {sugestoes.slice(0, 4).map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => { setShowNewChatModal(false); onNavigate && onNavigate('amigos'); }}
+                        className="flex-shrink-0 flex flex-col items-center p-2 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 transition-all"
+                      >
+                        <Avatar nome={s.nome} size="sm" />
+                        <span className="text-[10px] text-slate-400 mt-1 truncate max-w-[60px]">{s.nome}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

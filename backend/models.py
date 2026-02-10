@@ -130,6 +130,9 @@ class TreinoExercicio(Base):
     ordem = Column(Integer, default=1)
     series_sugeridas = Column(String(50))
     reps_sugeridas = Column(String(50))
+    tecnica = Column(String(80), nullable=True)  # dropset, restpause, supersets, etc.
+    observacao = Column(Text, nullable=True)  # Coach notes
+    descanso = Column(String(50), nullable=True)  # Rest time e.g. "60s", "90s"
 
 # Treinos_Atribuidos
 class TreinoAtribuido(Base):

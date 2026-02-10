@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, UserPlus, Copy, Check, RefreshCcw, ChevronRight, Search,
-  Dumbbell, TrendingUp, Zap, Star, MoreHorizontal, X, Eye
+  Dumbbell, TrendingUp, Zap, Star, MoreHorizontal, X, Eye, Link, Edit2, Plus, Trash2
 } from 'lucide-react';
-import { coachService } from '../services';
+import { coachService, treinoService } from '../services';
 import { useAuth } from '../context/AuthContext';
 
 const Skeleton = ({ className = '' }) => (
@@ -27,13 +27,21 @@ export const CoachDashboardPage = ({ onNavigate }) => {
   const [copied, setCopied] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAluno, setSelectedAluno] = useState(null);
+  const [allTreinos, setAllTreinos] = useState([]);
+  const [alunoTreinos, setAlunoTreinos] = useState([]);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [aRes, tRes] = await Promise.all([coachService.getAlunos(), coachService.getToken()]);
+      const [aRes, tRes, treinosRes] = await Promise.all([
+        coachService.getAlunos(), 
+        coachService.getToken(),
+        treinoService.getTreinos().catch(() => ({ data: [] }))
+      ]);
       setAlunos((aRes.data || []).map(s => ({
         id: s.student_id || s.id,
         nome: s.student_name || s.nome,
@@ -45,6 +53,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
       const tokens = tRes.data || [];
       const activeToken = tokens.find(t => t.active);
       setToken(activeToken?.token || '');
+      setAllTreinos(treinosRes.data || []);
     } catch {
       setAlunos([
         { id: 1, nome: 'Joao Silva', email: 'joao@email.com', nivel: 5, xp: 2800, treinos_semana: 4 },
@@ -54,6 +63,33 @@ export const CoachDashboardPage = ({ onNavigate }) => {
       setToken('ABC-123-XYZ');
     }
     finally { setLoading(false); }
+  };
+
+  const fetchAlunoTreinos = async (alunoId) => {
+    try {
+      const res = await coachService.getTreinosAluno(alunoId);
+      setAlunoTreinos(res.data || []);
+    } catch {
+      setAlunoTreinos([]);
+    }
+  };
+
+  const handleSelectAluno = async (aluno) => {
+    setSelectedAluno(aluno);
+    await fetchAlunoTreinos(aluno.id);
+  };
+
+  const handleLinkTreino = async (treinoId) => {
+    if (!selectedAluno) return;
+    setLinking(true);
+    try {
+      await coachService.criarTreinoAluno(selectedAluno.id, { treino_id: treinoId });
+      await fetchAlunoTreinos(selectedAluno.id);
+      setShowLinkModal(false);
+    } catch (err) {
+      console.error('Erro ao vincular treino:', err);
+    }
+    setLinking(false);
   };
 
   const handleCopyToken = () => {
@@ -149,7 +185,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           <motion.div key={aluno.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.03 }}
             className="card-base p-4 hover:border-slate-700/30 transition-all group cursor-pointer"
-            onClick={() => setSelectedAluno(aluno)}>
+            onClick={() => handleSelectAluno(aluno)}>
             <div className="flex items-center gap-3">
               <Avatar nome={aluno.nome} />
               <div className="flex-1 min-w-0">
@@ -178,9 +214,11 @@ export const CoachDashboardPage = ({ onNavigate }) => {
         {selectedAluno && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setSelectedAluno(null)}>
+            onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); }}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
+              onClick={e => e.stopPropagation()} className="w-full max-w-lg card-base p-6 max-h-[85vh] overflow-y-auto">
+              
+              {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Avatar nome={selectedAluno.nome} />
@@ -189,10 +227,12 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                     <p className="text-xs text-slate-500">{selectedAluno.email}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedAluno(null)} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+                <button onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); }} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
                   <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
+              
+              {/* Stats */}
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {[
                   { label: 'Nivel', value: selectedAluno.nivel || 1 },
@@ -205,10 +245,97 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                   </div>
                 ))}
               </div>
-              <button onClick={() => { setSelectedAluno(null); onNavigate('coachTreinos'); }}
-                className="w-full py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all">
-                Gerenciar Treinos
-              </button>
+
+              {/* Treinos Vinculados */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-white">Treinos Vinculados</h4>
+                  <button 
+                    onClick={() => setShowLinkModal(true)}
+                    className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                    <Plus className="w-3.5 h-3.5" /> Vincular Treino
+                  </button>
+                </div>
+                {alunoTreinos.length === 0 ? (
+                  <div className="text-center py-6 bg-slate-800/20 rounded-xl">
+                    <Dumbbell className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">Nenhum treino vinculado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {alunoTreinos.map(treino => (
+                      <div key={treino.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/10">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                          <Dumbbell className="w-4 h-4 text-indigo-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{treino.nome}</div>
+                          <div className="text-[10px] text-slate-500">{(treino.exercicios || []).length} exercícios</div>
+                        </div>
+                        <button 
+                          onClick={() => onNavigate('coachTreinos', { studentId: selectedAluno.id, editTreino: treino })}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button onClick={() => onNavigate('coachTreinos', { studentId: selectedAluno.id, studentName: selectedAluno.nome })}
+                  className="flex-1 py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" /> Criar Novo Treino
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Link Treino Modal */}
+      <AnimatePresence>
+        {showLinkModal && selectedAluno && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowLinkModal(false)}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white">Vincular Treino</h3>
+                <button onClick={() => setShowLinkModal(false)} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">Selecione um treino existente para vincular a {selectedAluno.nome}</p>
+              
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {allTreinos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Dumbbell className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Nenhum treino disponível</p>
+                    <p className="text-xs text-slate-600 mt-1">Crie um treino primeiro</p>
+                  </div>
+                ) : allTreinos.filter(t => !alunoTreinos.find(at => at.id === t.id)).map(treino => (
+                  <button
+                    key={treino.id}
+                    onClick={() => handleLinkTreino(treino.id)}
+                    disabled={linking}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700/10 hover:border-indigo-500/20 transition-all text-left disabled:opacity-50"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                      <Dumbbell className="w-5 h-5 text-indigo-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-white truncate">{treino.nome}</div>
+                      <div className="text-[10px] text-slate-500">{(treino.exercicios || []).length} exercícios • {treino.duracao || 45}min</div>
+                    </div>
+                    <Link className="w-4 h-4 text-indigo-400" />
+                  </button>
+                ))}
+              </div>
             </motion.div>
           </motion.div>
         )}

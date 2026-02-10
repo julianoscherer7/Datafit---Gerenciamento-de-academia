@@ -908,6 +908,76 @@ def seed_database():
         db.commit()
         print("✅ Desafios da Maria configurados")
         
+        # ==================== AMIGOS DA ANA (coach) ====================
+        # Create 3 friend users for Ana
+        amigos_ana_data = [
+            ("Lucas Ferreira", "lucas@fitdata.com", "lucas_fit", "Lucas@123", True),
+            ("Camila Duarte", "camila@fitdata.com", "cami_fit", "Camila@123", False),
+            ("Rafael Souza", "rafael@fitdata.com", "rafa_strong", "Rafael@123", True),
+        ]
+        
+        amigos_ana_ids = []
+        for nome_a, email_a, nick_a, senha_a, upado in amigos_ana_data:
+            amigo_ana = db.query(Usuario).filter(Usuario.email == email_a).first()
+            if not amigo_ana:
+                amigo_ana = Usuario(
+                    nome=nome_a,
+                    nickname=nick_a,
+                    email=email_a,
+                    senha_hash=pwd_context.hash(senha_a),
+                    perfil="aluno",
+                    bio=f"Aluno(a) dedicado(a) da academia",
+                )
+                db.add(amigo_ana)
+                db.flush()
+                db.refresh(amigo_ana)
+                
+                # Create progress
+                xp_val = 8500 if upado else 200
+                nivel_val = 12 if upado else 2
+                moedas_val = 1500 if upado else 50
+                titulo_val = "Guerreiro de Ferro" if upado else "Iniciante"
+                prog = UsuarioProgresso(
+                    usuario_id=amigo_ana.id,
+                    moedas=moedas_val,
+                    xp_total=xp_val,
+                    nivel=nivel_val,
+                    titulo_atual=titulo_val,
+                )
+                db.add(prog)
+                
+                if upado:
+                    streak_a = Streak(
+                        usuario_id=amigo_ana.id,
+                        inicio=date.today() - timedelta(days=30),
+                        atual=30,
+                        ultimo_dia=date.today(),
+                    )
+                    db.add(streak_a)
+                
+                print(f"  ✅ Amigo da Ana criado: {email_a} / {senha_a} {'(upado)' if upado else '(novo)'}")
+            else:
+                print(f"  ⚠️ {nome_a} já existe")
+            amigos_ana_ids.append(amigo_ana.id)
+        
+        # Create friendships: Ana <-> each friend
+        professor_upado = db.query(Usuario).filter(Usuario.email == "ana@fitdata.com").first()
+        if professor_upado:
+            for amigo_id in amigos_ana_ids:
+                existing = db.query(Amizade).filter(
+                    ((Amizade.solicitante_id == professor_upado.id) & (Amizade.solicitado_id == amigo_id)) |
+                    ((Amizade.solicitante_id == amigo_id) & (Amizade.solicitado_id == professor_upado.id))
+                ).first()
+                if not existing:
+                    amizade_ana = Amizade(
+                        solicitante_id=professor_upado.id,
+                        solicitado_id=amigo_id,
+                        status="aceito"
+                    )
+                    db.add(amizade_ana)
+            db.commit()
+            print("✅ 3 amigos adicionados para Ana (Lucas, Camila, Rafael)")
+        
         db.commit()
         
         print("\n" + "="*60)
@@ -957,6 +1027,21 @@ def seed_database():
         print("   Ana Santos → Maria, João, Pedro")
         print("   Bruno Lima → (nenhum aluno ainda)")
         print("   Amizades: João ↔ Maria ↔ Pedro")
+        print("")
+        print("👫 AMIGOS DA ANA (3 amigos aceitos):")
+        print("-" * 40)
+        print("   📧 Lucas Ferreira (UPADO):")
+        print("      Email: lucas@fitdata.com / Lucas@123")
+        print("      Level 12 | 8500 XP | Streak 30 dias")
+        print("")
+        print("   📧 Camila Duarte (NOVA):")
+        print("      Email: camila@fitdata.com / Camila@123")
+        print("      Level 2 | 200 XP | Sem streak")
+        print("")
+        print("   📧 Rafael Souza (UPADO):")
+        print("      Email: rafael@fitdata.com / Rafael@123")
+        print("      Level 12 | 8500 XP | Streak 30 dias")
+        print("-" * 40)
 
     except Exception as e:
         db.rollback()
