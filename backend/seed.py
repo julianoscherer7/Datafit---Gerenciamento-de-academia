@@ -408,57 +408,10 @@ def seed_database():
             )
             db.add(invite_token_ana)
             
-            # Conectar Ana a alunos exclusivos dela (Rodrigo + novos)
-            alunos_ana_data = [
-                ("Lucas Ferreira", "lucas@fitdata.com", "lucas_fit"),
-                ("Camila Oliveira", "camila@fitdata.com", "cami_strong"),
-                ("Rafael Souza", "rafael@fitdata.com", "rafa_gym"),
-            ]
-            
+            # Note: Ana's students will be created later with proper credentials
             alunos_ana = []
-            for a_nome, a_email, a_nick in alunos_ana_data:
-                aluno_existente = db.query(Usuario).filter(Usuario.email == a_email).first()
-                if not aluno_existente:
-                    aluno_existente = Usuario(
-                        nome=a_nome,
-                        email=a_email,
-                        nickname=a_nick,
-                        senha_hash=hash_password("Aluno@123"),
-                        perfil="aluno",
-                        peso_kg=round(random.uniform(55, 90), 1),
-                        altura_cm=random.randint(160, 185),
-                        genero=random.choice(["masculino", "feminino"]),
-                    )
-                    db.add(aluno_existente)
-                    db.commit()
-                    db.refresh(aluno_existente)
-                    
-                    # Create progress record for each student
-                    rand_nivel = random.randint(2, 8)
-                    rand_xp = random.randint(500, 5000)
-                    progresso_aluno = UsuarioProgresso(
-                        usuario_id=aluno_existente.id,
-                        moedas=random.randint(100, 800),
-                        xp_total=rand_xp,
-                        nivel=rand_nivel,
-                        titulo_atual="Iniciante Dedicado"
-                    )
-                    db.add(progresso_aluno)
-                    
-                    rand_streak = random.randint(0, 10)
-                    if rand_streak > 0:
-                        streak_aluno = Streak(
-                            usuario_id=aluno_existente.id,
-                            inicio=date.today() - timedelta(days=rand_streak),
-                            atual=rand_streak,
-                            ultimo_dia=date.today()
-                        )
-                        db.add(streak_aluno)
-                    
-                    db.commit()
-                alunos_ana.append(aluno_existente)
             
-            # Also connect Rodrigo (aluno upado) to Ana
+            # Connect Rodrigo (aluno upado) to Ana
             if aluno_upado:
                 alunos_ana.append(aluno_upado)
             
@@ -924,7 +877,7 @@ def seed_database():
                     nome=nome_a,
                     nickname=nick_a,
                     email=email_a,
-                    senha_hash=pwd_context.hash(senha_a),
+                    senha_hash=hash_password(senha_a),
                     perfil="aluno",
                     bio=f"Aluno(a) dedicado(a) da academia",
                 )
@@ -961,9 +914,11 @@ def seed_database():
             amigos_ana_ids.append(amigo_ana.id)
         
         # Create friendships: Ana <-> each friend
+        # Also connect as coach-student
         professor_upado = db.query(Usuario).filter(Usuario.email == "ana@fitdata.com").first()
         if professor_upado:
             for amigo_id in amigos_ana_ids:
+                # Friendship
                 existing = db.query(Amizade).filter(
                     ((Amizade.solicitante_id == professor_upado.id) & (Amizade.solicitado_id == amigo_id)) |
                     ((Amizade.solicitante_id == amigo_id) & (Amizade.solicitado_id == professor_upado.id))
@@ -975,8 +930,22 @@ def seed_database():
                         status="aceito"
                     )
                     db.add(amizade_ana)
+                
+                # Coach-Student Connection
+                coach_connection_existing = db.query(CoachStudent).filter(
+                    CoachStudent.coach_id == professor_upado.id,
+                    CoachStudent.student_id == amigo_id
+                ).first()
+                if not coach_connection_existing:
+                    coach_conn = CoachStudent(
+                        coach_id=professor_upado.id,
+                        student_id=amigo_id,
+                        status="active",
+                        connected_at=datetime.now() - timedelta(days=random.randint(20, 60))
+                    )
+                    db.add(coach_conn)
             db.commit()
-            print("✅ 3 amigos adicionados para Ana (Lucas, Camila, Rafael)")
+            print("✅ 3 amigos e alunos adicionados para Ana (Lucas, Camila, Rafael)")
         
         db.commit()
         

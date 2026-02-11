@@ -511,3 +511,77 @@ def list_validations(
         }
         for v in validations
     ]
+
+
+# ==================== ASSIGN EXISTING TREINO ====================
+
+@router.post("/assign-treino")
+def assign_treino_to_student(
+    data: dict,
+    current_user: dict = Depends(require_approved_coach),
+    db: Session = Depends(get_db)
+):
+    """Assign an existing treino to a student"""
+    treino_id = data.get("treino_id")
+    aluno_id = data.get("aluno_id")
+    
+    if not treino_id or not aluno_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="treino_id e aluno_id são obrigatórios"
+        )
+    
+    # Verify coach-student connection
+    connection = db.query(CoachStudent).filter(
+        CoachStudent.coach_id == current_user["user_id"],
+        CoachStudent.student_id == aluno_id,
+        CoachStudent.status == "active"
+    ).first()
+    
+    if not connection:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não está conectado a este aluno"
+        )
+    
+    # Verify treino exists and belongs to this coach
+    treino = db.query(Treino).filter(
+        Treino.id == treino_id,
+        Treino.criado_por == current_user["user_id"]
+    ).first()
+    
+    if not treino:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Treino não encontrado ou não pertence a você"
+        )
+    
+    # Check if already assigned
+    existing = db.query(TreinoAtribuido).filter(
+        TreinoAtribuido.treino_id == treino_id,
+        TreinoAtribuido.aluno_id == aluno_id,
+        TreinoAtribuido.ativo == True
+    ).first()
+    
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Treino já atribuído a este aluno"
+        )
+    
+    # Create assignment
+    treino_atribuido = TreinoAtribuido(
+        treino_id=treino_id,
+        aluno_id=aluno_id,
+        ativo=True
+    )
+    db.add(treino_atribuido)
+    db.commit()
+    
+    logger.info(f"[COACH] Treino ID={treino_id} atribuído ao aluno ID={aluno_id} pelo coach ID={current_user['user_id']}")
+    
+    return {
+        "message": "Treino atribuído com sucesso",
+        "treino_id": treino_id,
+        "aluno_id": aluno_id
+    }

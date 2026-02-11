@@ -194,15 +194,6 @@ export const DashboardPage = ({ onNavigate }) => {
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('treinos')}
-          className="btn-primary flex items-center gap-2 text-sm"
-        >
-          <Dumbbell className="w-4 h-4" />
-          Iniciar Treino
-        </motion.button>
       </motion.div>
 
       {/* Stats Grid */}

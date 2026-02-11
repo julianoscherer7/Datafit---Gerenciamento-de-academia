@@ -18,7 +18,7 @@ import { chatService, checkinService, storiesService, lojaService } from './soci
 const socialService = {
   getConversas: chatService.getConversas,
   getMensagens: (convId, limite) => chatService.getHistorico(convId, limite),
-  enviarMensagem: (convId, data) => chatService.enviarMensagem({ ...data, destinatario_id: convId }),
+  enviarMensagem: (destId, data) => chatService.enviarMensagem({ ...data, destinatario_id: destId }),
   marcarLida: chatService.marcarLida,
   contarNaoLidas: chatService.contarNaoLidas,
 };

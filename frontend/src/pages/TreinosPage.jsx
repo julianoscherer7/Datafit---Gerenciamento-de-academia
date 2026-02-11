@@ -250,7 +250,7 @@ const WorkoutEditor = ({ treino, exerciciosDisponiveis, onSave, onDelete, onCrea
         {/* Exercises list */}
         {(editing ? formData.exercicios_detalhados : (treino.exercicios || [])).map((ex, i) => (
           <motion.div
-            key={ex.id || ex.exercicio_id || i}
+            key={`${ex.id || ex.exercicio_id || 'ex'}-${i}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.03 }}

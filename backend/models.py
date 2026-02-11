@@ -372,3 +372,14 @@ class Recompensa(Base):
     xp = Column(Integer, default=0)
     descricao = Column(String(255))
     ativo = Column(Boolean, default=True)
+
+# AI Chat History (FitBot memory)
+class AIChatHistory(Base):
+    __tablename__ = "ai_chat_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(20), nullable=False)  # "user" or "assistant"
+    content = Column(Text, nullable=False)
+    context = Column(String(200), nullable=True)
+    criado_em = Column(DateTime, server_default=func.now())

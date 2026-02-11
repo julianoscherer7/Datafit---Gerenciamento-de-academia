@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, UserPlus, Copy, Check, RefreshCcw, ChevronRight, Search,
-  Dumbbell, TrendingUp, Zap, Star, MoreHorizontal, X, Eye, Link, Edit2, Plus, Trash2
+  Dumbbell, TrendingUp, Zap, Star, MoreHorizontal, X, Eye, Link, Edit2, Plus, Trash2, MessageCircle
 } from 'lucide-react';
 import { coachService, treinoService } from '../services';
 import { useAuth } from '../context/AuthContext';
@@ -65,49 +65,52 @@ export const CoachDashboardPage = ({ onNavigate }) => {
     finally { setLoading(false); }
   };
 
-  const fetchAlunoTreinos = async (alunoId) => {
+  const fetchAlunoTreinos = useCallback(async (alunoId) => {
     try {
       const res = await coachService.getTreinosAluno(alunoId);
       setAlunoTreinos(res.data || []);
     } catch {
       setAlunoTreinos([]);
     }
-  };
+  }, []);
 
-  const handleSelectAluno = async (aluno) => {
+  const handleSelectAluno = useCallback(async (aluno) => {
     setSelectedAluno(aluno);
     await fetchAlunoTreinos(aluno.id);
-  };
+  }, [fetchAlunoTreinos]);
 
-  const handleLinkTreino = async (treinoId) => {
+  const handleLinkTreino = useCallback(async (treinoId) => {
     if (!selectedAluno) return;
     setLinking(true);
     try {
-      await coachService.criarTreinoAluno(selectedAluno.id, { treino_id: treinoId });
+      await coachService.assignTreino(treinoId, selectedAluno.id);
       await fetchAlunoTreinos(selectedAluno.id);
       setShowLinkModal(false);
     } catch (err) {
       console.error('Erro ao vincular treino:', err);
     }
     setLinking(false);
-  };
+  }, [selectedAluno, fetchAlunoTreinos]);
 
-  const handleCopyToken = () => {
+  const handleCopyToken = useCallback(() => {
     navigator.clipboard.writeText(token);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  };
+  }, [token]);
 
-  const handleGenerateToken = async () => {
+  const handleGenerateToken = useCallback(async () => {
     try {
       const res = await coachService.createInviteToken({ max_uses: 10, expires_hours: 168 });
       setToken(res.data?.token || '');
     } catch {}
-  };
+  }, []);
 
-  const filtered = alunos.filter(a =>
-    !searchTerm || (a.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (a.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = useMemo(() => 
+    alunos.filter(a =>
+      !searchTerm || (a.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [alunos, searchTerm]
   );
 
   if (loading) {
@@ -285,9 +288,13 @@ export const CoachDashboardPage = ({ onNavigate }) => {
               
               {/* Actions */}
               <div className="flex gap-2">
-                <button onClick={() => onNavigate('coachTreinos', { studentId: selectedAluno.id, studentName: selectedAluno.nome })}
+                <button onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); onNavigate('chat'); }}
+                  className="flex-1 py-2.5 text-sm font-medium bg-slate-800/50 text-slate-300 rounded-xl hover:bg-slate-800/70 border border-slate-700/20 transition-all flex items-center justify-center gap-2">
+                  <MessageCircle className="w-4 h-4" /> Conversar
+                </button>
+                <button onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); onNavigate('coachTreinos', { studentId: selectedAluno.id, studentName: selectedAluno.nome }); }}
                   className="flex-1 py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" /> Criar Novo Treino
+                  <Dumbbell className="w-4 h-4" /> Gerenciar Treinos
                 </button>
               </div>
             </motion.div>

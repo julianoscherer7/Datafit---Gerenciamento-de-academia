@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, Sparkles, Trash2, RotateCcw, Copy, Check,
@@ -30,7 +30,7 @@ const TypingIndicator = () => (
 );
 
 /* ── Markdown-aware text renderer ── */
-const FormatBotText = ({ text }) => {
+const FormatBotText = React.memo(({ text }) => {
   const lines = text.split('\n');
   return (
     <div className="space-y-1.5">
@@ -38,7 +38,6 @@ const FormatBotText = ({ text }) => {
         const trimmed = line.trim();
         if (!trimmed) return <div key={i} className="h-1" />;
 
-        // Section header  e.g. **Treino de Peito**
         if (/^\*\*[^*]+\*\*:?$/.test(trimmed)) {
           const title = trimmed.replace(/\*\*/g, '').replace(/:$/, '');
           return (
@@ -48,7 +47,6 @@ const FormatBotText = ({ text }) => {
           );
         }
 
-        // Numbered list  e.g. 1. Supino reto
         const numMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
         if (numMatch) {
           return (
@@ -63,7 +61,6 @@ const FormatBotText = ({ text }) => {
           );
         }
 
-        // Bullet  e.g. - item  or  • item
         const bulletMatch = trimmed.match(/^[-•●]\s+(.*)/);
         if (bulletMatch) {
           return (
@@ -78,7 +75,6 @@ const FormatBotText = ({ text }) => {
           );
         }
 
-        // Inline bold / italic
         const parsed = trimmed
           .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
           .replace(/_(.+?)_/g, '<em class="text-slate-400">$1</em>');
@@ -87,9 +83,9 @@ const FormatBotText = ({ text }) => {
       })}
     </div>
   );
-};
+});
 
-const MessageBubble = ({ msg, onCopy }) => {
+const MessageBubble = React.memo(({ msg, onSuggestionClick }) => {
   const [copied, setCopied] = useState(false);
   const isUser = msg.role === 'user';
 
@@ -121,21 +117,23 @@ const MessageBubble = ({ msg, onCopy }) => {
             {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-500" />}
           </button>
         )}
-        {/* Suggestions pills */}
         {msg.suggestions?.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {msg.suggestions.map((s, j) => (
-              <button key={j} onClick={() => msg.onSuggestion?.(s)}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
-                {s}
-              </button>
-            ))}
+            {msg.suggestions.map((s, j) => {
+              const label = typeof s === 'object' ? (s.label || s.text) : s;
+              return (
+                <button key={j} onClick={() => onSuggestionClick(label)}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                  {label}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
     </motion.div>
   );
-};
+});
 
 export const AIChatPage = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -144,40 +142,73 @@ export const AIChatPage = ({ onNavigate }) => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { inputRef.current?.focus(); loadHistory(); }, []);
 
-  const sendMessage = async (text) => {
-    const content = text || input.trim();
-    if (!content || loading) return;
+  const loadHistory = async () => {
+    try {
+      const res = await aiService.getChatHistory();
+      const history = res.data || [];
+      if (history.length > 0) {
+        const mapped = history.map(h => ({
+          role: h.role === 'user' ? 'user' : 'assistant',
+          content: h.content,
+        }));
+        setMessages(mapped);
+      }
+    } catch (err) {
+      // No history available, start fresh
+    }
+  };
+
+  const sendMessage = useCallback(async (text) => {
+    const content = (typeof text === 'string' ? text : '').trim() || input.trim();
+    if (!content) return;
+    
+    // Prevent duplicate sends using ref (survives re-renders)
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    
     setInput('');
+    setLoading(true);
 
     const userMsg = { role: 'user', content };
     setMessages(prev => [...prev, userMsg]);
-    setLoading(true);
 
     try {
-      const res = await aiService.chat(content, JSON.stringify(messages.slice(-10).map(m => `${m.role}: ${m.content}`)));
+      const res = await aiService.chat(content, '');
       const reply = res.data?.response || res.data?.resposta || res.data?.message || 'Desculpe, nao consegui processar sua pergunta.';
-      const suggestions = res.data?.suggestions || [];
+      const suggestions = (res.data?.suggestions || []).map(s =>
+        typeof s === 'object' ? (s.label || s.text || String(s)) : String(s)
+      );
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: reply,
         suggestions,
-        onSuggestion: (s) => sendMessage(s),
       }]);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Ops, ocorreu um erro. Tente novamente em alguns instantes.' }]);
+    } finally {
+      setLoading(false);
+      sendingRef.current = false;
     }
-    finally { setLoading(false); }
-  };
+  }, [input]);
 
-  const clearChat = () => setMessages([]);
+  const handleSuggestionClick = useCallback((text) => {
+    if (sendingRef.current) return;
+    sendMessage(text);
+  }, [sendMessage]);
 
-  const handleKeyDown = (e) => {
+  const clearChat = useCallback(async () => {
+    setMessages([]);
+    try { await aiService.clearChatHistory(); } catch {}
+  }, []);
+
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  };
+  }, [sendMessage]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
@@ -233,7 +264,9 @@ export const AIChatPage = ({ onNavigate }) => {
           </div>
         ) : (
           <>
-            {messages.map((msg, i) => <MessageBubble key={i} msg={msg} />)}
+            {messages.map((msg, i) => (
+              <MessageBubble key={i} msg={msg} onSuggestionClick={handleSuggestionClick} />
+            ))}
             {loading && <TypingIndicator />}
           </>
         )}

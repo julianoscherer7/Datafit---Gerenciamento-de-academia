@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from database import get_db
 from models import Treino, TreinoAtribuido, TreinoExercicio, Exercicio, CoachStudent
 from schemas import TreinoResponse, TreinoDetalheResponse, TreinoCreate, TreinoAtribuidoResponse
@@ -10,24 +10,49 @@ router = APIRouter(prefix="/treinos", tags=["treinos"])
 
 @router.get("")
 def listar_treinos(
+    aluno_id: Optional[int] = Query(None, description="Filter treinos assigned to a specific student (coach only)"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Lista treinos do usuário com detalhes de exercícios"""
-    # Busca treinos criados pelo usuário OU atribuídos a ele
-    treinos_criados = db.query(Treino).filter(
-        Treino.criado_por == current_user["user_id"]
-    ).all()
+    """Lista treinos do usuário com detalhes de exercícios.
+       Coaches can pass aluno_id to list treinos assigned to a specific student."""
     
-    treinos_atribuidos = db.query(Treino).join(
-        TreinoAtribuido, TreinoAtribuido.treino_id == Treino.id
-    ).filter(
-        TreinoAtribuido.aluno_id == current_user["user_id"],
-        TreinoAtribuido.ativo == True,
-        Treino.criado_por != current_user["user_id"]  # Evita duplicados
-    ).all()
+    is_coach = current_user["perfil"] == "instrutor"
     
-    todos_treinos = list(set(treinos_criados + treinos_atribuidos))
+    # If coach is requesting a specific student's treinos
+    if aluno_id and is_coach:
+        # Verify coach-student connection
+        connection = db.query(CoachStudent).filter(
+            CoachStudent.coach_id == current_user["user_id"],
+            CoachStudent.student_id == aluno_id,
+            CoachStudent.status == "active"
+        ).first()
+        if not connection:
+            raise HTTPException(status_code=403, detail="Você não está conectado a este aluno")
+        
+        # Get treinos assigned to this student that were created by this coach
+        todos_treinos = db.query(Treino).join(
+            TreinoAtribuido, TreinoAtribuido.treino_id == Treino.id
+        ).filter(
+            TreinoAtribuido.aluno_id == aluno_id,
+            TreinoAtribuido.ativo == True,
+            Treino.criado_por == current_user["user_id"]
+        ).all()
+    else:
+        # Normal: treinos criados pelo usuário OU atribuídos a ele
+        treinos_criados = db.query(Treino).filter(
+            Treino.criado_por == current_user["user_id"]
+        ).all()
+        
+        treinos_atribuidos = db.query(Treino).join(
+            TreinoAtribuido, TreinoAtribuido.treino_id == Treino.id
+        ).filter(
+            TreinoAtribuido.aluno_id == current_user["user_id"],
+            TreinoAtribuido.ativo == True,
+            Treino.criado_por != current_user["user_id"]  # Evita duplicados
+        ).all()
+        
+        todos_treinos = list(set(treinos_criados + treinos_atribuidos))
     
     resultado = []
     for treino in todos_treinos:
@@ -173,8 +198,8 @@ def criar_treino(
             observacao=f"Criado pelo coach"
         )
         db.add(treino_atribuido)
-    else:
-        # Auto-atribui o treino ao próprio usuário
+    elif not is_coach:
+        # Auto-atribui o treino ao próprio usuário (apenas para alunos, não coaches)
         treino_atribuido = TreinoAtribuido(
             treino_id=db_treino.id,
             aluno_id=current_user["user_id"],

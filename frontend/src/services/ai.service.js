@@ -11,6 +11,12 @@ export const aiService = {
     return api.post('/ai/chat', { message, context: contextStr, student_id: studentId });
   },
   
+  // Get conversation history
+  getChatHistory: () => api.get('/ai/chat/history'),
+  
+  // Clear conversation history
+  clearChatHistory: () => api.delete('/ai/chat/history'),
+  
   // Exercise suggestions by muscle group
   getExerciseSuggestions: (grupoMuscular, nivel = 'intermediario') => 
     api.get(`/ai/exercise-suggestions/${grupoMuscular}?nivel=${nivel}`),

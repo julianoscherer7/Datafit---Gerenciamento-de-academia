@@ -141,7 +141,7 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
           <div>
             <h3 className="text-sm font-semibold text-white">{convName}</h3>
             <p className="text-[11px] text-slate-500">
-              {conversation.online ? 'Online' : conversation.tipo === 'instrutor' ? 'Instrutor' : 'Offline'}
+              {conversation.online ? 'Online' : conversation.tipo === 'coach' ? 'Coach' : conversation.tipo === 'aluno' ? 'Aluno' : 'Offline'}
             </p>
           </div>
         </div>
@@ -260,7 +260,7 @@ export const ChatPage = ({ onNavigate }) => {
 
   useEffect(() => {
     if (selectedConv) fetchMessages(selectedConv);
-  }, [selectedConv?.id]);
+  }, [selectedConv?.participante_id || selectedConv?.id]);
 
   const fetchAmigos = async () => {
     try {
@@ -277,15 +277,26 @@ export const ChatPage = ({ onNavigate }) => {
     setLoading(true);
     try {
       const res = await socialService.getConversas();
-      const data = res.data || [];
+      const raw = res.data || [];
+      // Map backend ConversaResponse fields to what the UI expects
+      const data = raw.map(c => ({
+        id: c.amigo_id || c.id,
+        participante_id: c.amigo_id || c.id,
+        nome: c.amigo_nome || c.nome || 'Conversa',
+        tipo: c.tipo || 'amigo',
+        online: false,
+        ultima_mensagem: c.ultima_mensagem || '',
+        nao_lidas: c.nao_lidas || 0,
+        ultima_mensagem_data: c.ultima_data || c.ultima_mensagem_data || null,
+      }));
       setConversations(data);
       if (!selectedConv && data.length > 0) setSelectedConv(data[0]);
     } catch (err) {
       // Demo conversations fallback
       const demo = [
-        { id: 1, nome: 'Coach Ricardo', tipo: 'instrutor', online: true, ultima_mensagem: 'Seu treino de pernas esta otimo!', nao_lidas: 2, ultima_mensagem_data: new Date().toISOString() },
-        { id: 2, nome: 'Ana Fitness', online: true, ultima_mensagem: 'Vamos treinar amanha?', nao_lidas: 0, ultima_mensagem_data: new Date(Date.now() - 3600000).toISOString() },
-        { id: 3, nome: 'Pedro Strong', online: false, ultima_mensagem: 'Obrigado pela dica!', nao_lidas: 0, ultima_mensagem_data: new Date(Date.now() - 86400000).toISOString() }
+        { id: 1, nome: 'Coach Ricardo', tipo: 'coach', online: true, ultima_mensagem: 'Seu treino de pernas esta otimo!', nao_lidas: 2, ultima_mensagem_data: new Date().toISOString() },
+        { id: 2, nome: 'Ana Fitness', tipo: 'amigo', online: true, ultima_mensagem: 'Vamos treinar amanha?', nao_lidas: 0, ultima_mensagem_data: new Date(Date.now() - 3600000).toISOString() },
+        { id: 3, nome: 'Pedro Strong', tipo: 'amigo', online: false, ultima_mensagem: 'Obrigado pela dica!', nao_lidas: 0, ultima_mensagem_data: new Date(Date.now() - 86400000).toISOString() }
       ];
       setConversations(demo);
       setSelectedConv(demo[0]);
@@ -323,8 +334,18 @@ export const ChatPage = ({ onNavigate }) => {
   const fetchMessages = async (conv) => {
     setMsgLoading(true);
     try {
-      const res = await socialService.getMensagens(conv.id);
-      setMessages(res.data || []);
+      const convId = conv.participante_id || conv.id;
+      const res = await socialService.getMensagens(convId);
+      const raw = res.data || [];
+      // Map backend MensagemResponse to what the UI expects
+      const mapped = raw.map(m => ({
+        id: m.id,
+        conteudo: m.conteudo || m.content || '',
+        remetente_id: m.remetente_id || m.sender_id,
+        remetente_nome: m.remetente_id === user?.id ? (user?.nome || 'Eu') : (conv.nome || 'Contato'),
+        data_envio: m.criado_em || m.data_envio || m.created_at,
+      }));
+      setMessages(mapped);
     } catch (err) {
       // Demo messages
       setMessages([
@@ -347,7 +368,8 @@ export const ChatPage = ({ onNavigate }) => {
     setMessages(prev => [...prev, newMsg]);
 
     try {
-      await socialService.enviarMensagem(selectedConv.id, { conteudo: content });
+      const destId = selectedConv.participante_id || selectedConv.id;
+      await socialService.enviarMensagem(destId, { conteudo: content });
     } catch (err) { /* keep optimistic */ }
   };
 

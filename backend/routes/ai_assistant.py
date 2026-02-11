@@ -12,7 +12,7 @@ import logging
 import random
 
 from database import get_db
-from models import Usuario, Exercicio, SerieExecutada, Treino, TreinoExercicio, CoachStudent, MedidaCorporal
+from models import Usuario, Exercicio, SerieExecutada, Treino, TreinoExercicio, CoachStudent, MedidaCorporal, AIChatHistory
 from schemas import AIAssistantRequest, AIAssistantResponse
 from security import get_current_user
 
@@ -529,7 +529,9 @@ def ai_chat(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """AI-powered chat assistant for coaches and users"""
+    """AI-powered chat assistant for coaches and users with conversation memory"""
+    user_id = current_user["user_id"]
+    
     # Get student data if coach is asking about a specific student
     student_data = None
     if data.student_id and current_user["perfil"] == "instrutor":
@@ -541,13 +543,92 @@ def ai_chat(
                 "altura_cm": float(student.altura_cm) if student.altura_cm else None,
             }
     
-    result = generate_ai_response(data.message, data.context, student_data)
+    # Retrieve recent conversation history for context (last 10 messages)
+    recent_history = db.query(AIChatHistory).filter(
+        AIChatHistory.usuario_id == user_id
+    ).order_by(AIChatHistory.criado_em.desc()).limit(10).all()
+    recent_history.reverse()  # chronological order
+    
+    # Build context string with history
+    context_with_history = data.context or ""
+    if recent_history:
+        history_str = "\n".join([f"{'Usuário' if h.role == 'user' else 'FitBot'}: {h.content[:200]}" for h in recent_history[-6:]])
+        context_with_history = f"Histórico recente:\n{history_str}\n\n{context_with_history}"
+    
+    result = generate_ai_response(data.message, context_with_history, student_data)
+    
+    # Store user message and response in history
+    try:
+        user_msg = AIChatHistory(
+            usuario_id=user_id,
+            role="user",
+            content=data.message[:500],
+            context=data.context[:200] if data.context else None
+        )
+        db.add(user_msg)
+        
+        bot_response = result.get("response", "")
+        bot_msg = AIChatHistory(
+            usuario_id=user_id,
+            role="assistant",
+            content=bot_response[:500]
+        )
+        db.add(bot_msg)
+        
+        # Keep only the last 50 messages per user
+        total = db.query(AIChatHistory).filter(AIChatHistory.usuario_id == user_id).count()
+        if total > 50:
+            oldest = db.query(AIChatHistory).filter(
+                AIChatHistory.usuario_id == user_id
+            ).order_by(AIChatHistory.criado_em.asc()).limit(total - 50).all()
+            for old in oldest:
+                db.delete(old)
+        
+        db.commit()
+    except Exception as e:
+        logger.warning(f"Failed to store AI chat history: {e}")
+        db.rollback()
     
     return {
         "response": result.get("response", ""),
         "suggestions": result.get("suggestions"),
         "exercises": result.get("exercises"),
     }
+
+
+@router.get("/chat/history")
+def get_ai_chat_history(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get FitBot conversation history for the current user"""
+    user_id = current_user["user_id"]
+    
+    history = db.query(AIChatHistory).filter(
+        AIChatHistory.usuario_id == user_id
+    ).order_by(AIChatHistory.criado_em.asc()).limit(50).all()
+    
+    return [
+        {
+            "id": h.id,
+            "role": h.role,
+            "content": h.content,
+            "criado_em": h.criado_em
+        }
+        for h in history
+    ]
+
+
+@router.delete("/chat/history")
+def clear_ai_chat_history(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Clear FitBot conversation history"""
+    user_id = current_user["user_id"]
+    db.query(AIChatHistory).filter(AIChatHistory.usuario_id == user_id).delete()
+    db.commit()
+    return {"message": "Histórico limpo com sucesso"}
 
 
 @router.get("/exercise-suggestions/{grupo_muscular}")
