@@ -141,6 +141,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, logout]);
 
+  // Update user state locally (for profile edits without re-fetch)
+  const updateUser = useCallback((updatedData) => {
+    setUser(prev => prev ? { ...prev, ...updatedData } : updatedData);
+  }, []);
+
   const value = {
     user,
     token,
@@ -149,6 +154,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     refreshUser,
+    updateUser,
     isAuthenticated: !!token && !!user,
     // Role helpers
     isCoach: user?.perfil === 'instrutor',

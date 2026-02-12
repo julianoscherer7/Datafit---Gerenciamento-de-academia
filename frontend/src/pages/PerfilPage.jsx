@@ -105,13 +105,16 @@ export const PerfilPage = ({ onNavigate }) => {
           {/* Name and badges */}
           <div className="mb-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold text-white">{user?.nome || 'Usuário'}</h2>
+              <h2 className="text-xl font-bold text-white">{user?.nickname || user?.nome || 'Usuário'}</h2>
               {user?.perfil === 'instrutor' && (
                 <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-400/10 text-amber-400 rounded-full border border-amber-400/20">COACH</span>
               )}
             </div>
-            {user?.nickname && (
-              <p className="text-sm text-slate-500">@{user.nickname}</p>
+            {user?.nickname && user?.nome && (
+              <p className="text-sm text-slate-500">{user.nome}</p>
+            )}
+            {!user?.nickname && user?.email && (
+              <p className="text-sm text-slate-500">{user.email}</p>
             )}
           </div>
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageCircle, Send, Search, MoreVertical, Phone, Video,
   Smile, Paperclip, Pin, Reply, Hash, Users, Plus, ChevronDown,
-  Dumbbell, User, Circle, X, UserPlus
+  Dumbbell, User, Circle, X, UserPlus, Trash2
 } from 'lucide-react';
 import { socialService, amigosService } from '../services';
 import { useAuth } from '../context/AuthContext';
@@ -103,9 +103,11 @@ const ConversationList = ({ conversations, selected, onSelect, onNewChat, search
 );
 
 // ===== Chat Panel (right) =====
-const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
+const ChatPanel = ({ conversation, messages, onSendMessage, onDeleteMessage, onDeleteConversation, loading }) => {
   const { user } = useAuth();
   const [input, setInput] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
+  const [hoverMsg, setHoverMsg] = useState(null);
   const messagesEnd = useRef(null);
 
   useEffect(() => {
@@ -149,9 +151,22 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
           <button className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800/40 transition-colors">
             <Pin className="w-4 h-4" />
           </button>
-          <button className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800/40 transition-colors">
-            <MoreVertical className="w-4 h-4" />
-          </button>
+          <div className="relative">
+            <button onClick={() => setShowMenu(p => !p)} className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800/40 transition-colors">
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            <AnimatePresence>
+              {showMenu && (
+                <motion.div initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
+                  className="absolute right-0 top-10 w-48 rounded-xl p-1 z-50 shadow-xl" style={{ background: '#151929', border: '1px solid rgba(148,163,184,0.1)' }}>
+                  <button onClick={() => { setShowMenu(false); onDeleteConversation && onDeleteConversation(conversation); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-all text-sm text-left">
+                    <Trash2 className="w-4 h-4" /> Apagar Conversa
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
@@ -180,11 +195,13 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}
+                  onMouseEnter={() => setHoverMsg(msg.id)}
+                  onMouseLeave={() => setHoverMsg(null)}
                 >
                   {showAvatar && !isMe ? (
                     <Avatar nome={msg.remetente_nome || convName} size="sm" />
                   ) : <div className="w-7" />}
-                  <div className={`max-w-[70%] group`}>
+                  <div className={`max-w-[70%] group relative`}>
                     {showAvatar && !isMe && (
                       <div className="text-[10px] text-slate-500 mb-1 ml-1">
                         {msg.remetente_nome || convName}
@@ -205,6 +222,15 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
                         </div>
                       )}
                     </div>
+                    {/* Delete button on hover */}
+                    {isMe && hoverMsg === msg.id && (
+                      <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => onDeleteMessage && onDeleteMessage(msg)}
+                        className={`absolute top-1/2 -translate-y-1/2 ${isMe ? '-left-8' : '-right-8'} p-1 rounded-lg hover:bg-red-500/15 text-slate-600 hover:text-red-400 transition-all`}
+                        title="Apagar mensagem">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </motion.button>
+                    )}
                     <div className={`text-[9px] text-slate-600 mt-0.5 ${isMe ? 'text-right mr-1' : 'ml-1'}`}>
                       {msg.data_envio || msg.created_at
                         ? new Date(msg.data_envio || msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -395,6 +421,22 @@ export const ChatPage = ({ onNavigate, participanteId, participanteNome }) => {
     } catch (err) { /* keep optimistic */ }
   };
 
+  const handleDeleteMessage = async (msg) => {
+    if (!msg?.id) return;
+    setMessages(prev => prev.filter(m => m.id !== msg.id));
+    try { await socialService.deletarMensagem(msg.id); } catch { /* optimistic */ }
+  };
+
+  const handleDeleteConversation = async (conv) => {
+    if (!conv) return;
+    const convId = conv.participante_id || conv.id;
+    setConversations(prev => prev.filter(c => (c.participante_id || c.id) !== convId));
+    if (selectedConv && (selectedConv.participante_id || selectedConv.id) === convId) {
+      setSelectedConv(null); setMessages([]);
+    }
+    try { await socialService.deletarConversa(convId); } catch { /* optimistic */ }
+  };
+
   const filteredConvs = conversations.filter(c => 
     !searchTerm || (c.nome || c.participante_nome || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -420,6 +462,8 @@ export const ChatPage = ({ onNavigate, participanteId, participanteNome }) => {
             conversation={selectedConv}
             messages={messages}
             onSendMessage={handleSendMessage}
+            onDeleteMessage={handleDeleteMessage}
+            onDeleteConversation={handleDeleteConversation}
             loading={msgLoading}
           />
         </div>

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Camera, User, Mail, Loader2, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { configsService } from '../services';
 
 export const EditPerfilPage = ({ onNavigate }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const [form, setForm] = useState({
     nome: '', email: '', nickname: '', bio: '', telefone: '', idade: '', peso: '', altura: ''
   });
@@ -20,27 +20,34 @@ export const EditPerfilPage = ({ onNavigate }) => {
         peso: user.peso || '', altura: user.altura || ''
       });
     }
-  }, [user]);
+  }, [user?.id]);
+
+  const handleChange = useCallback((field, value) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await configsService.updatePerfil(form);
-      if (updateUser) updateUser({ ...user, ...form });
+      const res = await configsService.updatePerfil(form);
+      if (updateUser) updateUser(res.data || form);
+      else if (refreshUser) await refreshUser();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao salvar perfil:', err);
+    }
     finally { setSaving(false); }
   };
 
-  const Field = ({ label, field, type = 'text', ...props }) => (
+  const Field = useCallback(({ label, field, type = 'text', ...props }) => (
     <div>
       <label className="text-[11px] text-slate-500 font-medium mb-1 block">{label}</label>
-      <input type={type} value={form[field]} onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
+      <input type={type} value={form[field]} onChange={e => handleChange(field, e.target.value)}
         className="w-full px-3.5 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors"
         {...props} />
     </div>
-  );
+  ), [form, handleChange]);
 
   return (
     <div className="max-w-2xl mx-auto">

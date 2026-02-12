@@ -21,6 +21,8 @@ const socialService = {
   enviarMensagem: (destId, data) => chatService.enviarMensagem({ ...data, destinatario_id: destId }),
   marcarLida: chatService.marcarLida,
   contarNaoLidas: chatService.contarNaoLidas,
+  deletarMensagem: chatService.deletarMensagem,
+  deletarConversa: chatService.deletarConversa,
 };
 
 export {

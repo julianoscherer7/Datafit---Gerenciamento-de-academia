@@ -2,16 +2,9 @@
 import api from './api';
 
 export const configsService = {
-  /**
-   * Obtém configurações do usuário
-   */
   getConfigs: () => api.get('/configs'),
-
-  /**
-   * Atualiza configurações do usuário
-   * @param {object} data - Configurações a atualizar
-   */
   atualizarConfigs: (data) => api.put('/configs', data),
+  updatePerfil: (data) => api.put('/auth/me', data),
 
   /**
    * Atualiza preferências de notificação

@@ -36,21 +36,15 @@ def create_invite_token(
     current_user: dict = Depends(require_approved_coach),
     db: Session = Depends(get_db)
 ):
-    """Coach creates an invite code for students to connect — short 6-char code, never expires"""
+    """Coach creates an invite code for students to connect — short 6-char code, single-use"""
     # Generate a short, easy-to-share 6-char alphanumeric code
     import random, string
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     
-    # Deactivate any previous tokens from this coach
-    db.query(CoachInviteToken).filter(
-        CoachInviteToken.coach_id == current_user["user_id"],
-        CoachInviteToken.active == True
-    ).update({"active": False})
-    
     invite = CoachInviteToken(
         coach_id=current_user["user_id"],
         token=code,
-        max_uses=data.max_uses or 999,
+        max_uses=1,  # Single-use: one student per token
         expires_at=None  # Never expires
     )
     db.add(invite)
@@ -161,6 +155,9 @@ def connect_by_token(
     )
     db.add(connection)
     invite.uses += 1
+    # Single-use: deactivate token after use
+    if invite.uses >= invite.max_uses:
+        invite.active = False
     db.commit()
     
     coach = db.query(Usuario).filter(Usuario.id == invite.coach_id).first()
@@ -178,11 +175,12 @@ def list_my_students(
     current_user: dict = Depends(require_approved_coach),
     db: Session = Depends(get_db)
 ):
-    """Coach lists their connected students"""
+    """Coach lists their connected students (only active connections)"""
     connections = db.query(CoachStudent, Usuario).join(
         Usuario, Usuario.id == CoachStudent.student_id
     ).filter(
-        CoachStudent.coach_id == current_user["user_id"]
+        CoachStudent.coach_id == current_user["user_id"],
+        CoachStudent.status == "active"
     ).all()
     
     result = []
@@ -268,6 +266,23 @@ def disconnect_student(
         raise HTTPException(status_code=404, detail="Conexão não encontrada")
     
     conn.status = "removed"
+    
+    # Deactivate all treinos assigned to this student by this coach
+    if is_coach:
+        coach_id = current_user["user_id"]
+        student_id_val = student_id
+    else:
+        coach_id = student_id
+        student_id_val = current_user["user_id"]
+    
+    # Find treinos created by the coach and assigned to the student
+    coach_treinos = db.query(Treino.id).filter(Treino.criado_por == coach_id).subquery()
+    db.query(TreinoAtribuido).filter(
+        TreinoAtribuido.treino_id.in_(db.query(coach_treinos.c.id)),
+        TreinoAtribuido.aluno_id == student_id_val,
+        TreinoAtribuido.ativo == True
+    ).update({"ativo": False}, synchronize_session=False)
+    
     db.commit()
     return {"message": "Conexão removida com sucesso"}
 

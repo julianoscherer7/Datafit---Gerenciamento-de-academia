@@ -53,6 +53,12 @@ export const chatService = {
   
   // Contar mensagens não lidas
   contarNaoLidas: () => api.get('/chat/nao-lidas'),
+  
+  // Deletar mensagem
+  deletarMensagem: (mensagemId) => api.delete(`/chat/mensagem/${mensagemId}`),
+  
+  // Deletar conversa inteira
+  deletarConversa: (outroId) => api.delete(`/chat/conversa/${outroId}`),
 };
 
 export const lojaService = {

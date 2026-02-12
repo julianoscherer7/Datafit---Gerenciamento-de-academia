@@ -27,9 +27,10 @@ def seed_database():
         # ==================== EXERCÍCIOS ====================
         
         exercicios_data = [
+            # ===== PEITO (6 exercícios) =====
             ("Supino Reto", "peito", "Exercício básico para desenvolvimento peitoral",
              "1. Deite no banco com os pés apoiados no chão\n2. Segure a barra na largura dos ombros\n3. Desça a barra até tocar levemente o peito\n4. Empurre para cima até estender os braços",
-             "Mantenha as escápulas retraídas e deprimidas. Não arqueie excessivamente a lombar. Desça controladamente.",
+             "Mantenha as escápulas retraídas e deprimidas. Não arqueie excessivamente a lombar.",
              "Peitoral maior, deltóide anterior, tríceps", "intermediario", "Barra, banco reto"),
             ("Supino Inclinado", "peito", "Foco na porção superior do peitoral",
              "1. Ajuste o banco a 30-45°\n2. Segure os halteres na altura do peito\n3. Empurre para cima até estender\n4. Desça controladamente",
@@ -39,74 +40,208 @@ def seed_database():
              "1. Deite no banco com halteres acima do peito\n2. Abra os braços em arco lateral\n3. Desça até sentir alongamento no peito\n4. Feche os braços retornando à posição inicial",
              "Mantenha uma leve flexão nos cotovelos. Foque na contração do peitoral ao fechar.",
              "Peitoral maior", "iniciante", "Halteres, banco reto"),
+            ("Supino Declinado", "peito", "Foco na porção inferior do peitoral",
+             "1. Ajuste o banco em declínio (15-30°)\n2. Segure a barra com pegada média\n3. Desça a barra até o peito inferior\n4. Empurre para cima",
+             "Ótimo para definição da parte inferior do peitoral. Use menos carga que supino reto.",
+             "Peitoral inferior, tríceps, deltóide anterior", "intermediario", "Barra, banco declinado"),
+            ("Crossover", "peito", "Isolamento com cabos para peitoral",
+             "1. Posicione-se entre as polias altas\n2. Segure as manoplas e dê um passo à frente\n3. Traga as mãos à frente do corpo em arco\n4. Retorne controladamente",
+             "Incline o tronco levemente. Varie a altura dos cabos para diferentes partes do peitoral.",
+             "Peitoral maior, deltóide anterior", "intermediario", "Crossover / Cabos"),
+            ("Flexão de Braços", "peito", "Exercício funcional com peso corporal",
+             "1. Apoie as mãos no chão na largura dos ombros\n2. Corpo reto dos pés à cabeça\n3. Desça até o peito quase tocar o chão\n4. Empurre para cima",
+             "Mantenha o core ativado. Variações: joelhos, diamante, declinada.",
+             "Peitoral, tríceps, deltóide anterior, core", "iniciante", "Peso corporal"),
+
+            # ===== PERNAS (7 exercícios) =====
             ("Agachamento Livre", "pernas", "Exercício composto para quadríceps e glúteos",
              "1. Posicione a barra nos trapézios\n2. Pés na largura dos ombros\n3. Desça até as coxas ficarem paralelas ao chão\n4. Suba empurrando o chão com os pés",
              "Joelhos devem seguir a direção dos pés. Mantenha o core ativado e a coluna neutra.",
              "Quadríceps, glúteos, isquiotibiais, eretores", "intermediario", "Barra, rack"),
             ("Leg Press", "pernas", "Exercício em máquina para pernas",
-             "1. Sente-se na máquina com as costas apoiadas\n2. Posicione os pés na plataforma (largura dos ombros)\n3. Solte a trava e desça até 90°\n4. Empurre a plataforma para cima",
-             "Não trave os joelhos na extensão completa. Ajuste os pés para enfatizar quadríceps (mais baixo) ou glúteos (mais alto).",
+             "1. Sente-se na máquina com as costas apoiadas\n2. Posicione os pés na plataforma\n3. Solte a trava e desça até 90°\n4. Empurre a plataforma para cima",
+             "Não trave os joelhos na extensão completa.",
              "Quadríceps, glúteos, isquiotibiais", "iniciante", "Máquina Leg Press"),
             ("Extensora", "pernas", "Isolamento de quadríceps",
-             "1. Sente na máquina e ajuste o apoio nas canelas\n2. Estenda as pernas até a completa extensão\n3. Segure por 1 segundo no topo\n4. Retorne controladamente",
-             "Não use impulso. Foque na contração do quadríceps no topo do movimento.",
+             "1. Sente na máquina e ajuste o apoio nas canelas\n2. Estenda as pernas até extensão completa\n3. Segure por 1 segundo no topo\n4. Retorne controladamente",
+             "Não use impulso. Foque na contração do quadríceps no topo.",
              "Quadríceps", "iniciante", "Máquina Extensora"),
             ("Flexora", "pernas", "Isolamento de posteriores",
              "1. Deite na máquina com os calcanhares sob o apoio\n2. Flexione os joelhos trazendo o apoio em direção aos glúteos\n3. Segure por 1 segundo\n4. Retorne controladamente",
-             "Mantenha o quadril pressionado contra o apoio. Não levante a pelve.",
+             "Mantenha o quadril pressionado contra o apoio.",
              "Isquiotibiais", "iniciante", "Máquina Flexora"),
+            ("Agachamento Búlgaro", "pernas", "Unilateral para pernas e glúteos",
+             "1. Apoie um pé no banco atrás de você\n2. Segure halteres ao lado do corpo\n3. Desça até o joelho da frente formar 90°\n4. Empurre para cima com a perna da frente",
+             "Ótimo para corrigir assimetrias. Mantenha o tronco ereto.",
+             "Quadríceps, glúteos, isquiotibiais", "intermediario", "Halteres, banco"),
+            ("Passada (Lunge)", "pernas", "Exercício funcional para pernas",
+             "1. Em pé, dê um passo largo à frente\n2. Desça até ambos os joelhos formarem 90°\n3. Empurre com a perna da frente para voltar\n4. Alterne as pernas",
+             "Não deixe o joelho ultrapassar a ponta do pé. Variações: andando, reversa, lateral.",
+             "Quadríceps, glúteos, isquiotibiais", "iniciante", "Halteres ou peso corporal"),
+            ("Stiff (Levantamento Terra Romeno)", "pernas", "Foco em posterior de coxa e glúteos",
+             "1. Segure a barra com pegada pronada\n2. Joelhos levemente flexionados\n3. Incline o tronco empurrando o quadril para trás\n4. Desça a barra até sentir alongamento nos posteriores",
+             "Coluna neutra sempre. O movimento vem do quadril, não da lombar.",
+             "Isquiotibiais, glúteos, eretores da espinha", "intermediario", "Barra ou halteres"),
+
+            # ===== COSTAS (6 exercícios) =====
             ("Puxada Frontal", "costas", "Desenvolvimento da largura das costas",
-             "1. Segure a barra na pegada aberta (1.5x largura dos ombros)\n2. Sente com os joelhos travados sob o apoio\n3. Puxe a barra até a parte superior do peito\n4. Retorne controladamente",
-             "Inicie o movimento retraindo as escápulas. Mantenha o tronco levemente inclinado para trás.",
+             "1. Segure a barra na pegada aberta\n2. Sente com os joelhos travados sob o apoio\n3. Puxe a barra até a parte superior do peito\n4. Retorne controladamente",
+             "Inicie o movimento retraindo as escápulas.",
              "Dorsal, redondo maior, bíceps, rombóides", "iniciante", "Máquina Puxada"),
             ("Remada Curvada", "costas", "Espessura das costas",
              "1. Segure a barra com pegada pronada\n2. Incline o tronco a 45° com joelhos semiflexionados\n3. Puxe a barra em direção ao abdômen\n4. Retorne controladamente",
-             "Mantenha a coluna neutra durante todo o movimento. Não use impulso do tronco.",
+             "Mantenha a coluna neutra durante todo o movimento.",
              "Dorsal, rombóides, trapézio, bíceps", "intermediario", "Barra"),
             ("Remada Baixa", "costas", "Costas médias e inferiores",
              "1. Sente na máquina com os pés apoiados\n2. Segure o triângulo ou barra reta\n3. Puxe em direção ao abdômen\n4. Estenda controladamente",
-             "Não incline o tronco para trás excessivamente. Foque na retração das escápulas.",
+             "Não incline o tronco para trás excessivamente.",
              "Dorsal, rombóides, trapézio inferior", "iniciante", "Máquina Remada Baixa"),
+            ("Pulldown Pegada Neutra", "costas", "Largura das costas com pegada neutra",
+             "1. Segure o triângulo na polia alta\n2. Sente e trave os joelhos\n3. Puxe até o peito\n4. Retorne controladamente",
+             "A pegada neutra reduz o estresse nos ombros.",
+             "Dorsal, bíceps, rombóides", "iniciante", "Cabo, pegada neutra"),
+            ("Remada Cavaleiro", "costas", "Remada com apoio no peito",
+             "1. Deite de bruços no banco inclinado\n2. Segure halteres abaixo do banco\n3. Puxe os halteres retraindo as escápulas\n4. Desça controladamente",
+             "Elimina o uso de impulso do tronco. Excelente isolamento.",
+             "Dorsal, rombóides, trapézio", "iniciante", "Halteres, banco inclinado"),
+            ("Barra Fixa (Pull-up)", "costas", "Exercício avançado com peso corporal",
+             "1. Segure a barra com pegada aberta (pronada)\n2. Puxe o corpo até o queixo ultrapassar a barra\n3. Desça controladamente\n4. Repita",
+             "Use elástico para assistência se necessário. Variações: supinada (chin-up), neutra.",
+             "Dorsal, bíceps, rombóides, core", "avancado", "Barra fixa"),
+
+            # ===== OMBROS (5 exercícios) =====
             ("Desenvolvimento", "ombros", "Desenvolvimento de deltoides",
              "1. Sente com as costas apoiadas\n2. Segure os halteres na altura dos ombros\n3. Empurre para cima até estender os braços\n4. Retorne à posição inicial",
-             "Não arqueie a lombar. Mantenha o core ativado. Os halteres devem se encontrar no topo.",
+             "Não arqueie a lombar. Mantenha o core ativado.",
              "Deltóide anterior, deltóide lateral, tríceps", "intermediario", "Halteres, banco com encosto"),
             ("Elevação Lateral", "ombros", "Isolamento de deltoides laterais",
              "1. Em pé, halteres ao lado do corpo\n2. Eleve os braços lateralmente até a altura dos ombros\n3. Mantenha os cotovelos levemente flexionados\n4. Desça controladamente",
-             "Não use impulso. Imagine derramar água de um copo (rotação interna leve). Carga leve para iniciantes.",
+             "Não use impulso. Carga leve para iniciantes.",
              "Deltóide lateral", "iniciante", "Halteres"),
+            ("Elevação Frontal", "ombros", "Isolamento de deltóides anteriores",
+             "1. Em pé, segure halteres à frente das coxas\n2. Eleve um braço de cada vez à frente até a linha dos ombros\n3. Mantenha cotovelo levemente flexionado\n4. Desça controladamente",
+             "Alterne braços ou faça simultaneamente. Não balance o tronco.",
+             "Deltóide anterior", "iniciante", "Halteres"),
+            ("Face Pull", "ombros", "Saúde do ombro e postura",
+             "1. Ajuste o cabo na altura do rosto\n2. Segure a corda com pegada pronada\n3. Puxe em direção ao rosto abrindo os braços\n4. Retorne controladamente",
+             "Essencial para equilíbrio muscular e prevenção de lesões no ombro.",
+             "Deltóide posterior, trapézio, rotadores externos", "iniciante", "Cabo, corda"),
+            ("Desenvolvimento Arnold", "ombros", "Desenvolvimento com rotação completa",
+             "1. Sente segurando halteres à frente (pegada supinada)\n2. Abra e gire os braços enquanto empurra para cima\n3. No topo, halteres ficam com pegada pronada\n4. Retorne invertendo o movimento",
+             "Trabalha todas as cabeças do deltóide em um único movimento.",
+             "Deltóide anterior, lateral e posterior, tríceps", "avancado", "Halteres"),
+
+            # ===== BÍCEPS (4 exercícios) =====
             ("Rosca Direta", "bíceps", "Exercício básico para bíceps",
              "1. Em pé, segure a barra com pegada supinada\n2. Mantenha os cotovelos junto ao corpo\n3. Flexione os braços subindo a barra\n4. Desça controladamente",
-             "Não balance o tronco. Mantenha os cotovelos fixos. Contraia no topo do movimento.",
+             "Não balance o tronco. Mantenha os cotovelos fixos.",
              "Bíceps braquial, braquial", "iniciante", "Barra reta ou W"),
             ("Rosca Martelo", "bíceps", "Bíceps e antebraços",
              "1. Em pé, halteres ao lado com pegada neutra\n2. Flexione alternadamente ou simultaneamente\n3. Mantenha os cotovelos junto ao corpo\n4. Desça controladamente",
-             "A pegada neutra enfatiza o braquial e braquiorradial. Ótimo para largura do braço.",
+             "A pegada neutra enfatiza o braquial e braquiorradial.",
              "Braquial, bíceps braquial, braquiorradial", "iniciante", "Halteres"),
+            ("Rosca Concentrada", "bíceps", "Isolamento máximo do bíceps",
+             "1. Sente no banco com as pernas abertas\n2. Apoie o cotovelo na parte interna da coxa\n3. Flexione o braço subindo o halter\n4. Desça controladamente",
+             "Foque na contração do pico do bíceps. Sem impulso.",
+             "Bíceps braquial (pico)", "iniciante", "Halter"),
+            ("Rosca Scott", "bíceps", "Foco na porção inferior do bíceps",
+             "1. Apoie os braços no suporte do banco Scott\n2. Segure a barra W com pegada supinada\n3. Flexione subindo a barra\n4. Desça controladamente, sem estender totalmente",
+             "Não estenda completamente para proteger os cotovelos.",
+             "Bíceps braquial (porção curta)", "intermediario", "Barra W, banco Scott"),
+
+            # ===== TRÍCEPS (4 exercícios) =====
             ("Tríceps Pulley", "tríceps", "Isolamento de tríceps",
-             "1. Em pé frente ao cabo, segure a barra ou corda\n2. Mantenha os cotovelos junto ao corpo\n3. Estenda os braços para baixo\n4. Retorne controladamente sem mover os cotovelos",
-             "Os cotovelos devem permanecer fixos. Com corda, abra as mãos na parte inferior para maior contração.",
+             "1. Em pé frente ao cabo, segure a barra ou corda\n2. Mantenha os cotovelos junto ao corpo\n3. Estenda os braços para baixo\n4. Retorne controladamente",
+             "Com corda, abra as mãos na parte inferior para maior contração.",
              "Tríceps (cabeça lateral e medial)", "iniciante", "Cabo, barra ou corda"),
             ("Tríceps Testa", "tríceps", "Desenvolvimento completo do tríceps",
              "1. Deite no banco segurando a barra W\n2. Braços estendidos acima do peito\n3. Flexione os cotovelos descendo a barra em direção à testa\n4. Estenda os braços retornando",
-             "Mantenha os cotovelos apontando para o teto. Desça a barra atrás da cabeça para maior ativação da cabeça longa.",
+             "Mantenha os cotovelos apontando para o teto.",
              "Tríceps (cabeça longa, lateral e medial)", "intermediario", "Barra W, banco reto"),
+            ("Mergulho (Dips)", "tríceps", "Exercício composto com peso corporal",
+             "1. Apoie-se nas barras paralelas\n2. Braços estendidos, corpo ligeiramente inclinado\n3. Desça flexionando os cotovelos até 90°\n4. Empurre para cima",
+             "Inclinação do tronco muda o foco: vertical = tríceps, inclinado = peito.",
+             "Tríceps, peitoral inferior, deltóide anterior", "intermediario", "Barras paralelas"),
+            ("Tríceps Francês", "tríceps", "Foco na cabeça longa do tríceps",
+             "1. Sente ou em pé, segure halter atrás da cabeça com ambas as mãos\n2. Cotovelos apontados para cima\n3. Estenda os braços levantando o halter\n4. Desça controladamente",
+             "Mantenha os cotovelos próximos à cabeça durante todo o movimento.",
+             "Tríceps (cabeça longa)", "intermediario", "Halter"),
+
+            # ===== ABDÔMEN (4 exercícios) =====
             ("Abdominal Supra", "abdômen", "Exercício para reto abdominal",
              "1. Deite com os joelhos flexionados e pés no chão\n2. Mãos atrás da cabeça ou cruzadas no peito\n3. Eleve os ombros do chão contraindo o abdômen\n4. Desça controladamente",
-             "Não puxe a cabeça com as mãos. O movimento deve ser curto e controlado. Expire ao subir.",
+             "Não puxe a cabeça com as mãos. Expire ao subir.",
              "Reto abdominal (porção superior)", "iniciante", "Colchonete"),
             ("Prancha", "abdômen", "Core estabilização",
              "1. Apoie os antebraços no chão, cotovelos sob os ombros\n2. Estenda as pernas apoiando nos dedos dos pés\n3. Mantenha o corpo reto como uma prancha\n4. Segure a posição pelo tempo determinado",
-             "Não deixe o quadril cair ou subir demais. Ative o core puxando o umbigo para dentro. Respire normalmente.",
+             "Não deixe o quadril cair ou subir demais. Respire normalmente.",
              "Core (reto abdominal, oblíquos, transverso, eretores)", "iniciante", "Colchonete"),
+            ("Abdominal Infra", "abdômen", "Foco na porção inferior do abdômen",
+             "1. Deite com as mãos sob os glúteos\n2. Pernas estendidas levemente acima do chão\n3. Eleve as pernas até 90° contraindo o abdômen inferior\n4. Desça controladamente sem tocar o chão",
+             "Mantenha a lombar pressionada no chão. Reduza a amplitude se sentir dor.",
+             "Reto abdominal (porção inferior)", "iniciante", "Colchonete"),
+            ("Oblíquo no Cabo (Wood Chop)", "abdômen", "Rotação e oblíquos",
+             "1. Ajuste o cabo na posição alta\n2. Segure a manopla com ambas as mãos\n3. Puxe diagonalmente até o quadril oposto, girando o tronco\n4. Retorne controladamente",
+             "O movimento vem da rotação do tronco, não dos braços.",
+             "Oblíquos, reto abdominal, serrátil", "intermediario", "Cabo"),
+
+            # ===== CARDIO (3 exercícios) =====
             ("Corrida Esteira", "cardio", "Cardio para queima calórica",
              "1. Inicie caminhando por 2-3 min para aquecimento\n2. Aumente gradualmente a velocidade\n3. Mantenha o ritmo na zona cardíaca alvo\n4. Reduza a velocidade nos últimos 2-3 min",
-             "Use tênis adequado. Mantenha 60-80% da FCmax para queima de gordura. Hidrate-se durante.",
+             "Use tênis adequado. 60-80% da FCmax para queima de gordura.",
              "Quadríceps, isquiotibiais, panturrilhas, cardiovascular", "iniciante", "Esteira"),
             ("Bicicleta Ergométrica", "cardio", "Cardio de baixo impacto",
              "1. Ajuste o banco na altura correta\n2. Inicie com aquecimento leve de 3 min\n3. Aumente a resistência gradualmente\n4. Mantenha a cadência de 60-90 RPM",
-             "Ótimo para quem tem problemas nos joelhos. Alterne entre baixa e alta intensidade (HIIT).",
+             "Ótimo para quem tem problemas nos joelhos.",
              "Quadríceps, isquiotibiais, panturrilhas, cardiovascular", "iniciante", "Bicicleta ergométrica"),
+            ("Elíptico", "cardio", "Cardio de corpo inteiro sem impacto",
+             "1. Suba no aparelho e segure as barras móveis\n2. Comece com resistência baixa\n3. Alterne entre pedalar para frente e para trás\n4. Aumente a resistência progressivamente",
+             "Zero impacto nas articulações. Trabalha membros superiores e inferiores.",
+             "Quadríceps, glúteos, peitorais, dorsais, cardiovascular", "iniciante", "Elíptico"),
+
+            # ===== PANTURRILHA (2 exercícios) =====
+            ("Panturrilha em Pé", "panturrilha", "Desenvolvimento da panturrilha (gastrocnêmio)",
+             "1. Posicione-se na máquina com os ombros sob os apoios\n2. Pontas dos pés na borda da plataforma\n3. Suba na ponta dos pés o máximo possível\n4. Desça alongando bem a panturrilha",
+             "Amplitude completa é essencial. Segure 2s no topo.",
+             "Gastrocnêmio, sóleo", "iniciante", "Máquina ou Smith"),
+            ("Panturrilha Sentado", "panturrilha", "Foco no sóleo (panturrilha profunda)",
+             "1. Sente na máquina com os joelhos sob o apoio\n2. Pontas dos pés na borda da plataforma\n3. Suba contraindo a panturrilha\n4. Desça controladamente",
+             "O sóleo é mais ativado com o joelho flexionado.",
+             "Sóleo", "iniciante", "Máquina panturrilha sentado"),
+
+            # ===== GLÚTEOS (3 exercícios) =====
+            ("Hip Thrust", "glúteos", "Melhor exercício para ativação glútea",
+             "1. Apoie as costas em um banco\n2. Posicione a barra sobre o quadril\n3. Empurre o quadril para cima contraindo os glúteos\n4. Desça controladamente",
+             "Olhe para frente (não para cima) no topo. Contraia os glúteos por 2 segundos.",
+             "Glúteo máximo, isquiotibiais", "intermediario", "Barra, banco, apoio para barra"),
+            ("Abdução de Quadril", "glúteos", "Isolamento do glúteo médio",
+             "1. Sente na máquina com as pernas juntas\n2. Abra as pernas contra a resistência\n3. Segure por 1 segundo na posição aberta\n4. Retorne controladamente",
+             "Ótimo para estabilidade do quadril e prevenção de lesões no joelho.",
+             "Glúteo médio, glúteo mínimo", "iniciante", "Máquina abdutora"),
+            ("Kickback no Cabo", "glúteos", "Isolamento glúteo com cabo",
+             "1. Prenda a caneleira no cabo baixo\n2. Apoie-se na máquina com as mãos\n3. Estenda a perna para trás contraindo o glúteo\n4. Retorne controladamente",
+             "Não arqueie a lombar. Movimento controlado, sem impulso.",
+             "Glúteo máximo", "iniciante", "Cabo, caneleira"),
+
+            # ===== TRAPÉZIO (2 exercícios) =====
+            ("Encolhimento (Shrug)", "trapézio", "Desenvolvimento do trapézio superior",
+             "1. Em pé, segure halteres ao lado do corpo\n2. Eleve os ombros em direção às orelhas\n3. Segure por 2 segundos no topo\n4. Desça controladamente",
+             "Não gire os ombros. Movimento vertical puro.",
+             "Trapézio superior", "iniciante", "Halteres ou barra"),
+            ("Remada Alta", "trapézio", "Desenvolvimento do trapézio e deltóides",
+             "1. Em pé, segure a barra com pegada fechada\n2. Puxe a barra até a altura do queixo\n3. Cotovelos ficam acima dos ombros\n4. Desça controladamente",
+             "Pegada larga reduz risco de impacto no ombro. Cuidado com carga excessiva.",
+             "Trapézio, deltóide lateral", "intermediario", "Barra ou halteres"),
+
+            # ===== ANTEBRAÇO (2 exercícios) =====
+            ("Rosca de Punho", "antebraço", "Fortalecimento dos flexores do antebraço",
+             "1. Sente com antebraços apoiados nas coxas\n2. Segure a barra com pegada supinada\n3. Flexione os punhos subindo a barra\n4. Desça controladamente",
+             "Mantenha os antebraços sempre apoiados.",
+             "Flexores do antebraço", "iniciante", "Barra ou halteres"),
+            ("Rosca Inversa", "antebraço", "Fortalecimento dos extensores do antebraço",
+             "1. Em pé, segure a barra com pegada pronada\n2. Cotovelos junto ao corpo\n3. Flexione os braços subindo a barra\n4. Desça controladamente",
+             "Carga menor que rosca direta. Fortalece o braquiorradial.",
+             "Extensores do antebraço, braquiorradial", "iniciante", "Barra reta"),
         ]
         
         exercicios = {}
@@ -308,14 +443,14 @@ def seed_database():
         if not existing_token:
             invite_token = CoachInviteToken(
                 coach_id=coach.id,
-                token="DEMO-COACH-TOKEN-2025",
-                max_uses=100,
-                uses=2,
+                token="D3M0C1",
+                max_uses=1,
+                uses=0,
                 expires_at=datetime.now() + timedelta(days=365),
                 active=True
             )
             db.add(invite_token)
-            print("✅ Token de convite do coach criado: DEMO-COACH-TOKEN-2025")
+            print("✅ Token de convite do coach criado: D3M0C1")
         
         db.commit()
         
@@ -400,9 +535,9 @@ def seed_database():
             # Criar token de convite para Ana
             invite_token_ana = CoachInviteToken(
                 coach_id=professor_upado.id,
-                token="ANA-COACH-2026",
-                max_uses=50,
-                uses=8,
+                token="AN4C0H",
+                max_uses=1,
+                uses=0,
                 expires_at=datetime.now() + timedelta(days=365),
                 active=True
             )
@@ -483,8 +618,8 @@ def seed_database():
             # Criar token de convite (mas sem usos ainda)
             invite_token_bruno = CoachInviteToken(
                 coach_id=professor_novo.id,
-                token="BRUNO-COACH-START",
-                max_uses=100,
+                token="BR1N0S",
+                max_uses=1,
                 uses=0,
                 expires_at=datetime.now() + timedelta(days=365),
                 active=True
@@ -962,17 +1097,17 @@ def seed_database():
         print("-" * 40)
         print("   📧 Coach Carlos (upado):")
         print("      Email: coach@fitdata.com / Coach@123")
-        print("      CREF: 012345-G/SP | Token: DEMO-COACH-TOKEN-2025")
+        print("      CREF: 012345-G/SP | Token: D3M0C1")
         print("      Alunos: 2 (Maria, João)")
         print("")
         print("   📧 Ana Santos (upada):")
         print("      Email: ana@fitdata.com / Ana@123")
-        print("      CREF: 078945-G/RJ | Token: ANA-COACH-2026")
+        print("      CREF: 078945-G/RJ | Token: AN4C0H")
         print("      Alunos: 3 (Maria, João, Pedro) | Treinos: 3")
         print("")
         print("   📧 Bruno Lima (ZERADO - novo):")
         print("      Email: bruno@fitdata.com / Bruno@123")
-        print("      CREF: 123456-G/MG | Token: BRUNO-COACH-START")
+        print("      CREF: 123456-G/MG | Token: BR1N0S")
         print("      Alunos: 0 | Treinos: 0 | Status: Pronto para começar")
         print("-" * 40)
         print("\n🌟 CONTAS DE ALUNO:")
