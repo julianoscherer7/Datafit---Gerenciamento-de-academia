@@ -2,10 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, UserPlus, Copy, Check, RefreshCcw, ChevronRight, Search,
-  Dumbbell, TrendingUp, Zap, Star, MoreHorizontal, X, Eye, Link, Edit2, Plus, Trash2, MessageCircle
+  Dumbbell, TrendingUp, Zap, Star, X, Eye, Link, Edit2, Plus, MessageCircle, Unlink, MessageSquareText, Save
 } from 'lucide-react';
 import { coachService, treinoService } from '../services';
 import { useAuth } from '../context/AuthContext';
+
+const spring = { type: 'spring', damping: 22, stiffness: 260 };
 
 const Skeleton = ({ className = '' }) => (
   <div className={`animate-pulse rounded-lg ${className}`} style={{ background: 'rgba(148,163,184,0.08)' }} />
@@ -17,6 +19,67 @@ const Avatar = ({ nome, size = 'md' }) => {
   const colors = ['from-indigo-500 to-purple-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500', 'from-rose-500 to-pink-500'];
   const ci = (nome || '').charCodeAt(0) % colors.length;
   return <div className={`${sizes[size]} rounded-full bg-gradient-to-br ${colors[ci]} flex items-center justify-center text-white font-bold`}>{initials}</div>;
+};
+
+/* ===== Workout Detail Popup ===== */
+const WorkoutDetailPopup = ({ treino, onClose }) => {
+  if (!treino) return null;
+  const exercicios = treino.exercicios || [];
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <motion.div initial={{ scale: 0.92, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 16 }}
+        transition={spring} onClick={e => e.stopPropagation()}
+        className="w-full max-w-md card-base p-6 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">{treino.nome}</h3>
+              <p className="text-[11px] text-slate-500">{exercicios.length} exercícios • {treino.duracao || 45}min</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+        {treino.descricao && (
+          <p className="text-sm text-slate-400 mb-4 p-3 rounded-xl bg-slate-800/20 border border-slate-700/10">{treino.descricao}</p>
+        )}
+        {treino.coach_comentario && (
+          <div className="mb-4 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
+            <div className="text-[10px] text-purple-400 uppercase tracking-wider mb-1 font-medium">Comentário do Coach</div>
+            <p className="text-sm text-slate-300">{treino.coach_comentario}</p>
+          </div>
+        )}
+        <div className="space-y-2">
+          {exercicios.length === 0 ? (
+            <p className="text-center text-sm text-slate-500 py-4">Nenhum exercício adicionado</p>
+          ) : exercicios.map((ex, i) => (
+            <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+              className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/10">
+              <span className="text-xs font-bold text-indigo-400 w-5 text-center">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-white truncate">{ex.nome || ex.exercicio_nome || 'Exercício'}</div>
+                <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                  <span>{ex.series_sugeridas || ex.series || 3} séries</span>
+                  <span className="text-slate-700">·</span>
+                  <span>{ex.reps_sugeridas || ex.reps || 12} reps</span>
+                  {ex.grupo_muscular && <><span className="text-slate-700">·</span><span>{ex.grupo_muscular}</span></>}
+                </div>
+              </div>
+              {ex.tecnica && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/10">{ex.tecnica}</span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 export const CoachDashboardPage = ({ onNavigate }) => {
@@ -31,7 +94,13 @@ export const CoachDashboardPage = ({ onNavigate }) => {
   const [alunoTreinos, setAlunoTreinos] = useState([]);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linking, setLinking] = useState(false);
+  const [detailTreino, setDetailTreino] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [commentTreino, setCommentTreino] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
 
+  useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); } }, [toast]);
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
@@ -86,11 +155,38 @@ export const CoachDashboardPage = ({ onNavigate }) => {
       await coachService.assignTreino(treinoId, selectedAluno.id);
       await fetchAlunoTreinos(selectedAluno.id);
       setShowLinkModal(false);
+      setToast({ type: 'success', msg: 'Treino vinculado com sucesso!' });
     } catch (err) {
-      console.error('Erro ao vincular treino:', err);
+      setToast({ type: 'error', msg: 'Erro ao vincular treino' });
     }
     setLinking(false);
   }, [selectedAluno, fetchAlunoTreinos]);
+
+  const handleUnlinkTreino = useCallback(async (treinoId) => {
+    if (!selectedAluno) return;
+    try {
+      await coachService.unassignTreino(treinoId, selectedAluno.id);
+      await fetchAlunoTreinos(selectedAluno.id);
+      setToast({ type: 'success', msg: 'Treino desvinculado!' });
+    } catch (err) {
+      setToast({ type: 'error', msg: 'Erro ao desvincular treino' });
+    }
+  }, [selectedAluno, fetchAlunoTreinos]);
+
+  const handleSaveComment = useCallback(async () => {
+    if (!commentTreino) return;
+    setSavingComment(true);
+    try {
+      await coachService.addTreinoComment(commentTreino.id, commentText);
+      if (selectedAluno) await fetchAlunoTreinos(selectedAluno.id);
+      setCommentTreino(null);
+      setCommentText('');
+      setToast({ type: 'success', msg: 'Comentário salvo!' });
+    } catch {
+      setToast({ type: 'error', msg: 'Erro ao salvar comentário' });
+    }
+    setSavingComment(false);
+  }, [commentTreino, commentText, selectedAluno, fetchAlunoTreinos]);
 
   const handleCopyToken = useCallback(() => {
     navigator.clipboard.writeText(token);
@@ -100,7 +196,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
 
   const handleGenerateToken = useCallback(async () => {
     try {
-      const res = await coachService.createInviteToken({ max_uses: 10, expires_hours: 168 });
+      const res = await coachService.createInviteToken({ max_uses: 999 });
       setToken(res.data?.token || '');
     } catch {}
   }, []);
@@ -138,7 +234,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           { label: 'Media XP', value: alunos.length ? Math.round(alunos.reduce((s, a) => s + (a.xp || 0), 0) / alunos.length) : 0, icon: Zap, color: 'amber' },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }} className="card-base p-4">
+            transition={{ delay: i * 0.05, ...spring }} className="card-base p-4">
             <div className="flex items-center gap-2 mb-1.5">
               <s.icon className={`w-4 h-4 text-${s.color}-400`} />
               <span className="text-[11px] text-slate-500">{s.label}</span>
@@ -149,11 +245,11 @@ export const CoachDashboardPage = ({ onNavigate }) => {
       </div>
 
       {/* Connection Token */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, ...spring }}
         className="card-base p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-indigo-400" /> Token de Conexao
+            <UserPlus className="w-4 h-4 text-indigo-400" /> Código de Convite
           </h3>
           <button onClick={handleGenerateToken}
             className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-400 transition-colors">
@@ -161,8 +257,8 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex-1 px-3.5 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm font-mono text-indigo-300 tracking-wider">
-            {token || 'Nenhum token gerado'}
+          <div className="flex-1 px-3.5 py-3 bg-slate-800/40 border border-slate-700/20 rounded-xl text-center text-xl font-mono text-indigo-300 tracking-[0.4em] font-bold">
+            {token || '------'}
           </div>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
             onClick={handleCopyToken} disabled={!token}
@@ -170,7 +266,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </motion.button>
         </div>
-        <p className="text-[11px] text-slate-600 mt-2">Compartilhe este token com seus alunos para que eles se conectem a voce.</p>
+        <p className="text-[11px] text-slate-600 mt-2">Compartilhe este código com seus alunos. Eles inserem na aba "Meu Coach" para se conectar.</p>
       </motion.div>
 
       {/* Search */}
@@ -186,7 +282,7 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           <div className="text-center py-12 text-slate-500 text-sm">Nenhum aluno encontrado</div>
         ) : filtered.map((aluno, i) => (
           <motion.div key={aluno.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.03 }}
+            transition={{ delay: i * 0.03, ...spring }}
             className="card-base p-4 hover:border-slate-700/30 transition-all group cursor-pointer"
             onClick={() => handleSelectAluno(aluno)}>
             <div className="flex items-center gap-3">
@@ -218,8 +314,8 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
             onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); }}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              onClick={e => e.stopPropagation()} className="w-full max-w-lg card-base p-6 max-h-[85vh] overflow-y-auto">
+            <motion.div initial={{ scale: 0.93, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.93, opacity: 0, y: 16 }}
+              transition={spring} onClick={e => e.stopPropagation()} className="w-full max-w-lg card-base p-6 max-h-[85vh] overflow-y-auto">
               
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -266,8 +362,10 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {alunoTreinos.map(treino => (
-                      <div key={treino.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/10">
+                    {alunoTreinos.map((treino, i) => (
+                      <motion.div key={treino.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04, ...spring }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/10 group/item">
                         <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
                           <Dumbbell className="w-4 h-4 text-indigo-400" />
                         </div>
@@ -275,12 +373,29 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                           <div className="text-sm font-medium text-white truncate">{treino.nome}</div>
                           <div className="text-[10px] text-slate-500">{(treino.exercicios || []).length} exercícios</div>
                         </div>
-                        <button 
-                          onClick={() => onNavigate('coachTreinos', { studentId: selectedAluno.id, editTreino: treino })}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all">
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                        <div className="flex items-center gap-1">
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); setDetailTreino(treino); }}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all" title="Ver detalhes">
+                            <Eye className="w-3.5 h-3.5" />
+                          </motion.button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); setCommentTreino(treino); setCommentText(treino.coach_comentario || ''); }}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-purple-400 hover:bg-purple-500/10 transition-all" title="Comentar">
+                            <MessageSquareText className="w-3.5 h-3.5" />
+                          </motion.button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); onNavigate('coachTreinos', { studentId: selectedAluno.id, editTreino: treino }); }}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all" title="Editar">
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </motion.button>
+                          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                            onClick={(e) => { e.stopPropagation(); handleUnlinkTreino(treino.id); }}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Desvincular">
+                            <Unlink className="w-3.5 h-3.5" />
+                          </motion.button>
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
@@ -288,14 +403,16 @@ export const CoachDashboardPage = ({ onNavigate }) => {
               
               {/* Actions */}
               <div className="flex gap-2">
-                <button onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); onNavigate('chat'); }}
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => { const a = selectedAluno; setSelectedAluno(null); setAlunoTreinos([]); onNavigate('chat', { participanteId: a.id, participanteNome: a.nome }); }}
                   className="flex-1 py-2.5 text-sm font-medium bg-slate-800/50 text-slate-300 rounded-xl hover:bg-slate-800/70 border border-slate-700/20 transition-all flex items-center justify-center gap-2">
                   <MessageCircle className="w-4 h-4" /> Conversar
-                </button>
-                <button onClick={() => { setSelectedAluno(null); setAlunoTreinos([]); onNavigate('coachTreinos', { studentId: selectedAluno.id, studentName: selectedAluno.nome }); }}
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => { const a = selectedAluno; setSelectedAluno(null); setAlunoTreinos([]); onNavigate('coachTreinos', { studentId: a.id, studentName: a.nome }); }}
                   className="flex-1 py-2.5 text-sm font-medium bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-all flex items-center justify-center gap-2">
                   <Dumbbell className="w-4 h-4" /> Gerenciar Treinos
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
@@ -308,15 +425,15 @@ export const CoachDashboardPage = ({ onNavigate }) => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
             onClick={() => setShowLinkModal(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
+            <motion.div initial={{ scale: 0.93, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.93, opacity: 0, y: 16 }}
+              transition={spring} onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white">Vincular Treino</h3>
                 <button onClick={() => setShowLinkModal(false)} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
                   <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
-              <p className="text-sm text-slate-500 mb-4">Selecione um treino existente para vincular a {selectedAluno.nome}</p>
+              <p className="text-sm text-slate-500 mb-4">Selecione um treino para vincular a {selectedAluno.nome}</p>
               
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {allTreinos.length === 0 ? (
@@ -325,13 +442,10 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                     <p className="text-sm text-slate-500">Nenhum treino disponível</p>
                     <p className="text-xs text-slate-600 mt-1">Crie um treino primeiro</p>
                   </div>
-                ) : allTreinos.filter(t => !alunoTreinos.find(at => at.id === t.id)).map(treino => (
-                  <button
-                    key={treino.id}
-                    onClick={() => handleLinkTreino(treino.id)}
-                    disabled={linking}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700/10 hover:border-indigo-500/20 transition-all text-left disabled:opacity-50"
-                  >
+                ) : allTreinos.filter(t => !alunoTreinos.find(at => at.id === t.id)).map((treino, i) => (
+                  <motion.div key={treino.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700/10 hover:border-indigo-500/20 transition-all">
                     <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
                       <Dumbbell className="w-5 h-5 text-indigo-400" />
                     </div>
@@ -339,11 +453,76 @@ export const CoachDashboardPage = ({ onNavigate }) => {
                       <div className="text-sm font-medium text-white truncate">{treino.nome}</div>
                       <div className="text-[10px] text-slate-500">{(treino.exercicios || []).length} exercícios • {treino.duracao || 45}min</div>
                     </div>
-                    <Link className="w-4 h-4 text-indigo-400" />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                        onClick={() => setDetailTreino(treino)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all" title="Ver detalhes">
+                        <Eye className="w-3.5 h-3.5" />
+                      </motion.button>
+                      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                        onClick={() => handleLinkTreino(treino.id)} disabled={linking}
+                        className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-all disabled:opacity-40" title="Vincular">
+                        <Link className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Workout Detail Popup */}
+      <AnimatePresence>
+        {detailTreino && <WorkoutDetailPopup treino={detailTreino} onClose={() => setDetailTreino(null)} />}
+      </AnimatePresence>
+
+      {/* Comment Modal */}
+      <AnimatePresence>
+        {commentTreino && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+            onClick={() => { setCommentTreino(null); setCommentText(''); }}>
+            <motion.div initial={{ scale: 0.92, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              transition={spring} onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <MessageSquareText className="w-4 h-4 text-purple-400" /> Comentário do Treino
+                </h3>
+                <button onClick={() => { setCommentTreino(null); setCommentText(''); }} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mb-3">Adicione um comentário ao treino <strong className="text-white">{commentTreino.nome}</strong></p>
+              <textarea value={commentText} onChange={e => setCommentText(e.target.value)} rows={4}
+                placeholder="Digite seu comentário sobre o treino..."
+                className="w-full px-4 py-3 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/30 transition-colors resize-none mb-4" />
+              <div className="flex gap-2">
+                <button onClick={() => { setCommentTreino(null); setCommentText(''); }}
+                  className="flex-1 py-2.5 text-sm text-slate-400 rounded-xl hover:bg-slate-800/40 transition-all">Cancelar</button>
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                  onClick={handleSaveComment} disabled={savingComment}
+                  className="flex-1 py-2.5 text-sm font-medium bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
+                  {savingComment ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                  Salvar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: 50, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: 50, x: '-50%' }}
+            transition={spring}
+            className={`fixed bottom-6 left-1/2 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 z-[80] shadow-xl ${
+              toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
+            }`}>
+            {toast.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            {toast.msg}
           </motion.div>
         )}
       </AnimatePresence>

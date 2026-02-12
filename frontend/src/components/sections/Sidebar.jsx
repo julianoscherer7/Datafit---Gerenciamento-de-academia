@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, Dumbbell, Users, TrendingUp, User,
-  LogOut, Menu, X, MessageSquare, Bot, LayoutDashboard, 
+  LogOut, Menu, X, MessageSquare, LayoutDashboard, 
   UserPlus, Link, Shield, Settings, Trophy
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -17,7 +17,10 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
       label: 'Principal',
       items: [
         { id: 'dashboard', label: 'Home', icon: Home },
-        { id: 'treinos', label: 'Treinos', icon: Dumbbell },
+        ...(isApprovedCoach
+          ? [{ id: 'coachTreinos', label: 'Treinos', icon: Dumbbell }]
+          : [{ id: 'treinos', label: 'Treinos', icon: Dumbbell }]
+        ),
         { id: 'evolucao', label: 'Evolução', icon: TrendingUp },
       ],
     },
@@ -33,7 +36,6 @@ export const Sidebar = ({ isOpen, setIsOpen, currentPage, setCurrentPage }) => {
         { id: 'amigos', label: 'Ranking', icon: Trophy },
         { id: 'chat', label: 'Chat', icon: MessageSquare },
         ...(isStudent ? [{ id: 'connection', label: 'Meu Coach', icon: Link }] : []),
-        { id: 'fitbot', label: 'FitBot AI', icon: Bot },
       ],
     },
     ...(isAdmin ? [{

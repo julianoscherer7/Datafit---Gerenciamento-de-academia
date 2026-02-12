@@ -117,6 +117,7 @@ class Treino(Base):
     criado_por = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL", onupdate="CASCADE"))
     origem = Column(Enum("user", "coach", "ai"), default="user")  # Who created: user, coach, or AI
     locked = Column(Boolean, default=False)  # Coach-locked training (student can't edit)
+    coach_comentario = Column(Text, nullable=True)  # Coach comments on the workout
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
 

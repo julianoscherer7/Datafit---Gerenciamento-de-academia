@@ -22,6 +22,8 @@ export const coachService = {
   getTreinosAluno: (studentId) => api.get(`/treinos?aluno_id=${studentId}`),
   criarTreinoAluno: (studentId, treino) => api.post('/treinos', { ...treino, aluno_id: studentId }),
   assignTreino: (treinoId, alunoId) => api.post('/coach/assign-treino', { treino_id: treinoId, aluno_id: alunoId }),
+  unassignTreino: (treinoId, alunoId) => api.post('/coach/unassign-treino', { treino_id: treinoId, aluno_id: alunoId }),
+  addTreinoComment: (treinoId, comentario) => api.put(`/treinos/${treinoId}`, { coach_comentario: comentario }),
   
   // === PRESENCE VALIDATION ===
   validatePresence: (data) => api.post('/coach/validate-presence', data),

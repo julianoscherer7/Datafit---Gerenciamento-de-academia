@@ -1,12 +1,77 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dumbbell, Plus, Search, Users, X, Save, Trash2,
-  Edit2, Check, ArrowLeft, Send, Bot,
-  ChevronRight, Timer
+  Edit2, Check, ArrowLeft,
+  ChevronRight, Timer, Eye, Unlink, MessageSquare, MessageSquareText,
+  ChevronDown, Info, Target
 } from 'lucide-react';
-import { coachService, exerciciosService, aiService } from '../services';
+import { coachService, exerciciosService } from '../services';
 import { useAuth } from '../context/AuthContext';
+import { MuscleMap } from '../components/MuscleMap';
+
+const spring = { type: 'spring', damping: 22, stiffness: 260 };
+
+/* ===== Workout Detail Popup ===== */
+const WorkoutDetailPopup = ({ treino, onClose }) => {
+  if (!treino) return null;
+  const exercicios = treino.exercicios || [];
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}>
+      <motion.div initial={{ scale: 0.92, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 16 }}
+        transition={spring} onClick={e => e.stopPropagation()}
+        className="w-full max-w-md card-base p-6 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white">{treino.nome}</h3>
+              <p className="text-[11px] text-slate-500">{exercicios.length} exercícios • {treino.duracao || 45}min</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+            <X className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+        {treino.descricao && (
+          <p className="text-sm text-slate-400 mb-4 p-3 rounded-xl bg-slate-800/20 border border-slate-700/10">{treino.descricao}</p>
+        )}
+        {treino.coach_comentario && (
+          <div className="mb-4 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
+            <div className="text-[10px] text-purple-400 uppercase tracking-wider mb-1 font-medium">Comentário do Coach</div>
+            <p className="text-sm text-slate-300">{treino.coach_comentario}</p>
+          </div>
+        )}
+        <div className="space-y-2">
+          {exercicios.length === 0 ? (
+            <p className="text-center text-sm text-slate-500 py-4">Nenhum exercício adicionado</p>
+          ) : exercicios.map((ex, i) => (
+            <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+              className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/30 border border-slate-700/10">
+              <span className="text-xs font-bold text-indigo-400 w-5 text-center">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-white truncate">{ex.nome || ex.exercicio_nome || 'Exercício'}</div>
+                <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                  <span>{ex.series_sugeridas || ex.series || 3} séries</span>
+                  <span className="text-slate-700">·</span>
+                  <span>{ex.reps_sugeridas || ex.reps || 12} reps</span>
+                  {ex.grupo_muscular && <><span className="text-slate-700">·</span><span>{ex.grupo_muscular}</span></>}
+                </div>
+              </div>
+              {ex.tecnica && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/10">{ex.tecnica}</span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 const Avatar = ({ nome }) => {
   const initials = (nome || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -27,33 +92,6 @@ const tecnicasAvancadas = [
 
 const descansoOptions = ['30s', '45s', '60s', '90s', '120s', '180s'];
 
-// Markdown-like formatting for bot messages
-const FormatBotText = ({ text }) => {
-  const lines = (text || '').split('\n');
-  return (
-    <div className="space-y-0.5">
-      {lines.map((line, i) => {
-        if (!line.trim()) return <div key={i} className="h-1.5" />;
-        let html = line
-          .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-          .replace(/_(.+?)_/g, '<em class="text-slate-400 italic">$1</em>')
-          .replace(/^• /, '<span class="text-indigo-400 mr-1">•</span> ')
-          .replace(/^(\d+)\. /, '<span class="text-indigo-400 font-semibold mr-1">$1.</span> ');
-        return <div key={i} dangerouslySetInnerHTML={{ __html: html }} className="leading-relaxed" />;
-      })}
-    </div>
-  );
-};
-
-const QUICK_PROMPTS = [
-  { text: 'Treino de peito', icon: '🫁' },
-  { text: 'Treino de costas', icon: '🔙' },
-  { text: 'Treino de pernas', icon: '🦵' },
-  { text: 'Treino de ombros', icon: '💪' },
-  { text: 'Dicas de hipertrofia', icon: '🎯' },
-  { text: 'Exercícios para iniciante', icon: '🌱' },
-];
-
 export const CoachTreinosPage = ({ onNavigate }) => {
   const [alunos, setAlunos] = useState([]);
   const [selectedAluno, setSelectedAluno] = useState(null);
@@ -67,18 +105,15 @@ export const CoachTreinosPage = ({ onNavigate }) => {
   const [searchEx, setSearchEx] = useState('');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
-  
-  // FitBot state
-  const [chatMessages, setChatMessages] = useState([
-    { from: 'bot', text: 'Olá! 👋 Sou o **FitBot**, seu assistente de treinos.\n\nPosso ajudar com:\n• Sugerir exercícios por grupo muscular\n• Montar planos de treino completos\n• Dicas de séries, repetições e técnicas\n• Analisar equilíbrio do treino\n\nClique em uma sugestão ou digite sua pergunta!' }
-  ]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatEndRef = useRef(null);
+  const [detailTreino, setDetailTreino] = useState(null);
+  const [commentTreino, setCommentTreino] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
+  const [activeGroup, setActiveGroup] = useState(null);
+  const [expandedExercise, setExpandedExercise] = useState(null);
 
   useEffect(() => { fetchAlunos(); fetchExercicios(); }, []);
   useEffect(() => { if (selectedAluno) fetchTreinos(); }, [selectedAluno]);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMessages]);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); } }, [toast]);
 
   const fetchAlunos = async () => {
@@ -102,6 +137,12 @@ export const CoachTreinosPage = ({ onNavigate }) => {
         id: e.id,
         nome: e.nome,
         grupo: e.grupo_muscular || e.grupo,
+        descricao: e.descricao || '',
+        instrucoes: e.instrucoes || '',
+        dicas: e.dicas || '',
+        musculos_trabalhados: e.musculos_trabalhados || '',
+        nivel: e.nivel || 'iniciante',
+        equipamento: e.equipamento || '',
       })));
     } catch {
       setExercicios([]);
@@ -128,6 +169,7 @@ export const CoachTreinosPage = ({ onNavigate }) => {
       origem: 'coach',
       locked: false,
       aluno_id: selectedAluno?.id || null,
+      coach_comentario: novoTreino.coach_comentario || null,
       exercicios: novoTreino.exercicios.map((ex, idx) => ({
         exercicio_id: ex.id,
         ordem: idx + 1,
@@ -159,7 +201,7 @@ export const CoachTreinosPage = ({ onNavigate }) => {
 
   const openNewTreino = () => {
     setEditingTreino(null);
-    setNovoTreino({ nome: '', descricao: '', exercicios: [] });
+    setNovoTreino({ nome: '', descricao: '', coach_comentario: '', exercicios: [] });
     setShowEditorModal(true);
   };
 
@@ -178,6 +220,7 @@ export const CoachTreinosPage = ({ onNavigate }) => {
     setNovoTreino({
       nome: treino.nome,
       descricao: treino.descricao || '',
+      coach_comentario: treino.coach_comentario || '',
       exercicios: exerciciosFormatados
     });
     setShowEditorModal(true);
@@ -186,7 +229,7 @@ export const CoachTreinosPage = ({ onNavigate }) => {
   const closeEditor = () => {
     setShowEditorModal(false);
     setEditingTreino(null);
-    setNovoTreino({ nome: '', descricao: '', exercicios: [] });
+    setNovoTreino({ nome: '', descricao: '', coach_comentario: '', exercicios: [] });
     setSearchEx('');
   };
 
@@ -212,30 +255,61 @@ export const CoachTreinosPage = ({ onNavigate }) => {
     }));
   };
 
-  const handleSendChat = async (text) => {
-    const userMsg = (text || chatInput).trim();
-    if (!userMsg) return;
-    setChatInput('');
-    setChatMessages(prev => [...prev, { from: 'user', text: userMsg }]);
-    setChatLoading(true);
-    
+  const handleUnlinkTreino = async (treinoId) => {
+    if (!selectedAluno) return;
     try {
-      const workoutContext = novoTreino.exercicios.length > 0 
-        ? `coach_training - Treino: ${novoTreino.nome || 'Novo'}, Exercícios: ${novoTreino.exercicios.map(e => e.nome).join(', ')}`
-        : 'coach_training';
-      
-      const res = await aiService.chat(userMsg, workoutContext, selectedAluno?.id);
-      const botResponse = res.data?.response || res.data?.message || 'Desculpe, tive um problema. Tente novamente.';
-      setChatMessages(prev => [...prev, { from: 'bot', text: botResponse }]);
-    } catch (err) {
-      console.error('FitBot error:', err);
-      setChatMessages(prev => [...prev, { from: 'bot', text: '⚠️ Erro ao conectar com o FitBot. Tente novamente.' }]);
+      await coachService.unassignTreino(treinoId, selectedAluno.id);
+      await fetchTreinos();
+      setToast({ type: 'success', msg: 'Treino desvinculado!' });
+    } catch {
+      setToast({ type: 'error', msg: 'Erro ao desvincular treino' });
     }
-    setChatLoading(false);
+  };
+
+  const handleSaveComment = async () => {
+    if (!commentTreino) return;
+    setSavingComment(true);
+    try {
+      await coachService.addTreinoComment(commentTreino.id, commentText);
+      await fetchTreinos();
+      setCommentTreino(null);
+      setCommentText('');
+      setToast({ type: 'success', msg: 'Comentário salvo!' });
+    } catch {
+      setToast({ type: 'error', msg: 'Erro ao salvar comentário' });
+    }
+    setSavingComment(false);
   };
 
   const filteredAlunos = alunos.filter(a => !searchTerm || (a.nome || '').toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredEx = exercicios.filter(e => !searchEx || (e.nome || '').toLowerCase().includes(searchEx.toLowerCase()) || (e.grupo || '').toLowerCase().includes(searchEx.toLowerCase()));
+  
+  // Group exercises by muscle group
+  const groupedExercicios = useMemo(() => {
+    const groups = {};
+    exercicios.forEach(ex => {
+      const g = ex.grupo || 'Outros';
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(ex);
+    });
+    return groups;
+  }, [exercicios]);
+
+  const muscleGroups = useMemo(() => Object.keys(groupedExercicios).sort(), [groupedExercicios]);
+  
+  const filteredGroupedEx = useMemo(() => {
+    if (!searchEx) return groupedExercicios;
+    const result = {};
+    const term = searchEx.toLowerCase();
+    Object.entries(groupedExercicios).forEach(([group, exs]) => {
+      const filtered = exs.filter(e => 
+        (e.nome || '').toLowerCase().includes(term) || 
+        (e.grupo || '').toLowerCase().includes(term) ||
+        (e.musculos_trabalhados || '').toLowerCase().includes(term)
+      );
+      if (filtered.length > 0) result[group] = filtered;
+    });
+    return result;
+  }, [groupedExercicios, searchEx]);
 
   // ==================== STUDENT SELECTION SCREEN ====================
   if (!selectedAluno) {
@@ -302,6 +376,11 @@ export const CoachTreinosPage = ({ onNavigate }) => {
           <p className="text-sm text-slate-500">{treinos.length} treinos criados</p>
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          onClick={() => onNavigate('chat', { participanteId: selectedAluno.id, participanteNome: selectedAluno.nome })}
+          className="flex items-center gap-2 px-3 py-2.5 bg-slate-800/50 text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-800/70 border border-slate-700/20 transition-all">
+          <MessageSquare className="w-4 h-4" />
+        </motion.button>
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
           onClick={openNewTreino}
           className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl text-sm font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-lg shadow-indigo-500/20">
           <Plus className="w-4 h-4" /> Novo Treino
@@ -311,22 +390,45 @@ export const CoachTreinosPage = ({ onNavigate }) => {
       <div className="space-y-2">
         {treinos.map((t, i) => (
           <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.05, ...spring }}
             className="card-base p-4 hover:border-slate-700/30 transition-all">
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-white">{t.nome}</h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">{t.descricao || `${(t.exercicios || []).length} exercícios`}</p>
+                {t.coach_comentario && (
+                  <p className="text-[10px] text-purple-400 mt-1 flex items-center gap-1">
+                    <MessageSquareText className="w-3 h-3" /> {t.coach_comentario.length > 40 ? t.coach_comentario.slice(0, 40) + '...' : t.coach_comentario}
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 bg-slate-800/30 px-2 py-1 rounded-lg">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-slate-500 bg-slate-800/30 px-2 py-1 rounded-lg mr-1">
                   {(t.exercicios || []).length} ex.
                 </span>
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => setDetailTreino(t)}
+                  className="p-2 rounded-lg hover:bg-indigo-500/10 text-slate-500 hover:text-indigo-400 transition-all"
+                  title="Ver detalhes">
+                  <Eye className="w-4 h-4" />
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => { setCommentTreino(t); setCommentText(t.coach_comentario || ''); }}
+                  className="p-2 rounded-lg hover:bg-purple-500/10 text-slate-500 hover:text-purple-400 transition-all"
+                  title="Comentar">
+                  <MessageSquareText className="w-4 h-4" />
+                </motion.button>
                 <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                   onClick={() => openEditTreino(t)}
                   className="p-2 rounded-lg hover:bg-indigo-500/10 text-indigo-400 transition-all"
                   title="Editar treino">
                   <Edit2 className="w-4 h-4" />
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                  onClick={() => handleUnlinkTreino(t.id)}
+                  className="p-2 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-all"
+                  title="Desvincular treino">
+                  <Unlink className="w-4 h-4" />
                 </motion.button>
               </div>
             </div>
@@ -386,9 +488,9 @@ export const CoachTreinosPage = ({ onNavigate }) => {
                 </button>
               </div>
 
-              {/* Content - Two columns */}
+              {/* Content */}
               <div className="flex-1 flex overflow-hidden">
-                {/* Left: Workout Editor */}
+                {/* Workout Editor */}
                 <div className="flex-1 p-5 overflow-y-auto scrollbar-thin">
                   <div className="space-y-5">
                     {/* Nome e Descrição */}
@@ -503,132 +605,178 @@ export const CoachTreinosPage = ({ onNavigate }) => {
                       )}
                     </div>
 
-                    {/* Add Exercise Search */}
-                    <div className="space-y-2">
-                      <span className="text-xs font-medium text-slate-400">Adicionar Exercício</span>
+                    {/* Exercise Catalog — grouped by muscle */}
+                    <div className="space-y-3">
+                      <span className="text-xs font-medium text-slate-400">Catálogo de Exercícios</span>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
                         <input 
                           value={searchEx} 
-                          onChange={e => setSearchEx(e.target.value)} 
-                          placeholder="Buscar por nome ou grupo muscular..."
+                          onChange={e => { setSearchEx(e.target.value); setActiveGroup(null); }}
+                          placeholder="Buscar exercício, grupo muscular..."
                           className="w-full pl-9 pr-4 py-2.5 bg-slate-800/40 border border-slate-700/20 rounded-xl text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
                       </div>
-                      <div className="max-h-36 overflow-y-auto scrollbar-thin space-y-0.5 rounded-xl border border-slate-700/10 bg-slate-800/20 p-1.5">
-                        {filteredEx.length === 0 ? (
-                          <div className="text-center py-4 text-xs text-slate-600">Nenhum exercício encontrado</div>
-                        ) : filteredEx.slice(0, 20).map(ex => {
-                          const added = novoTreino.exercicios.some(e => e.id === ex.id);
-                          return (
-                            <button key={ex.id} onClick={() => !added && addExToTreino(ex)} disabled={added}
-                              className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all ${
-                                added ? 'opacity-40 cursor-not-allowed' : 'hover:bg-indigo-500/10 cursor-pointer'
-                              }`}>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-xs text-white truncate block">{ex.nome}</span>
-                                {ex.grupo && <span className="text-[10px] text-slate-500">{ex.grupo}</span>}
-                              </div>
-                              {added ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-                              ) : (
-                                <Plus className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Right: FitBot */}
-                <div className="w-80 flex flex-col border-l border-slate-800/50" style={{ background: 'rgba(8,10,24,0.6)' }}>
-                  {/* Chat Header */}
-                  <div className="p-3 border-b border-slate-800/50">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                        <Bot className="w-4 h-4 text-white" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-white">FitBot</span>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="text-[10px] text-slate-500">Online</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Prompts */}
-                  {chatMessages.length <= 1 && (
-                    <div className="p-2.5 border-b border-slate-800/30">
+                      {/* Muscle Group Tabs */}
                       <div className="flex flex-wrap gap-1.5">
-                        {QUICK_PROMPTS.map((p, i) => (
-                          <button key={i} onClick={() => handleSendChat(p.text)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800/30 border border-slate-700/10 text-[10px] text-slate-300 hover:border-indigo-500/20 hover:bg-indigo-500/5 hover:text-white transition-all">
-                            <span>{p.icon}</span> {p.text}
+                        <button 
+                          onClick={() => setActiveGroup(null)}
+                          className={`text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all ${
+                            !activeGroup ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-slate-800/30 text-slate-500 hover:text-slate-300 border border-transparent'
+                          }`}>
+                          Todos
+                        </button>
+                        {muscleGroups.map(g => (
+                          <button 
+                            key={g}
+                            onClick={() => setActiveGroup(activeGroup === g ? null : g)}
+                            className={`text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all ${
+                              activeGroup === g ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/20' : 'bg-slate-800/30 text-slate-500 hover:text-slate-300 border border-transparent'
+                            }`}>
+                            {g} ({groupedExercicios[g]?.length})
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
 
-                  {/* Chat Messages */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
-                    {chatMessages.map((msg, i) => (
-                      <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        {msg.from === 'bot' && (
-                          <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
-                            <Bot className="w-3 h-3 text-indigo-400" />
+                      {/* Exercise List by Group */}
+                      <div className="max-h-[400px] overflow-y-auto scrollbar-thin space-y-3 pr-1">
+                        {Object.entries(activeGroup ? { [activeGroup]: filteredGroupedEx[activeGroup] || [] } : filteredGroupedEx).map(([group, exs]) => (
+                          <div key={group}>
+                            <div className="flex items-center gap-2 mb-1.5 sticky top-0 py-1" style={{ background: '#0c0f1a' }}>
+                              <MuscleMap grupo={group} size={28} />
+                              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{group}</span>
+                              <span className="text-[10px] text-slate-600">({exs.length})</span>
+                              <div className="flex-1 border-t border-slate-800/40" />
+                            </div>
+                            <div className="space-y-1">
+                              {exs.map(ex => {
+                                const added = novoTreino.exercicios.some(e => e.id === ex.id);
+                                const isExpanded = expandedExercise === ex.id;
+                                return (
+                                  <div key={ex.id} className="rounded-xl border border-slate-700/10 overflow-hidden transition-all hover:border-slate-700/20"
+                                    style={{ background: added ? 'rgba(99,102,241,0.04)' : 'rgba(30,34,56,0.3)' }}>
+                                    {/* Exercise Header Row */}
+                                    <div className="flex items-center gap-2 p-2.5">
+                                      <MuscleMap grupo={ex.grupo} size={36} className="flex-shrink-0" />
+                                      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedExercise(isExpanded ? null : ex.id)}>
+                                        <div className="text-xs font-medium text-white truncate">{ex.nome}</div>
+                                        <div className="text-[10px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                          <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                                            ex.nivel === 'avancado' ? 'bg-red-500/10 text-red-400' :
+                                            ex.nivel === 'intermediario' ? 'bg-amber-500/10 text-amber-400' :
+                                            'bg-emerald-500/10 text-emerald-400'
+                                          }`}>
+                                            {ex.nivel === 'avancado' ? 'Avançado' : ex.nivel === 'intermediario' ? 'Intermed.' : 'Iniciante'}
+                                          </span>
+                                          {ex.equipamento && <span className="truncate max-w-[100px]">{ex.equipamento}</span>}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                        <button onClick={() => setExpandedExercise(isExpanded ? null : ex.id)}
+                                          className="p-1 rounded-lg hover:bg-slate-800/40 text-slate-500 hover:text-indigo-400 transition-all">
+                                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        <button onClick={() => !added && addExToTreino(ex)} disabled={added}
+                                          className={`p-1.5 rounded-lg transition-all ${
+                                            added ? 'text-emerald-400 cursor-default' : 'text-indigo-400 hover:bg-indigo-500/10 cursor-pointer'
+                                          }`}>
+                                          {added ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Expanded Details */}
+                                    <AnimatePresence>
+                                      {isExpanded && (
+                                        <motion.div 
+                                          initial={{ height: 0, opacity: 0 }} 
+                                          animate={{ height: 'auto', opacity: 1 }} 
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2 }}
+                                          className="overflow-hidden">
+                                          <div className="px-3 pb-3 space-y-2 border-t border-slate-700/10 pt-2">
+                                            <div className="flex gap-3">
+                                              <MuscleMap grupo={ex.grupo} size={80} className="flex-shrink-0" />
+                                              <div className="flex-1 space-y-2 min-w-0">
+                                                {ex.descricao && (
+                                                  <p className="text-[11px] text-slate-400 leading-relaxed">{ex.descricao}</p>
+                                                )}
+                                                {ex.musculos_trabalhados && (
+                                                  <div>
+                                                    <div className="text-[9px] text-emerald-400 uppercase font-medium mb-0.5 flex items-center gap-1">
+                                                      <Target className="w-2.5 h-2.5" /> Músculos
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1">
+                                                      {ex.musculos_trabalhados.split(',').map((m, i) => (
+                                                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">
+                                                          {m.trim()}
+                                                        </span>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                            {ex.instrucoes && (
+                                              <div className="p-2 rounded-lg bg-slate-800/20 border border-slate-700/10">
+                                                <div className="text-[9px] text-blue-400 uppercase font-medium mb-1 flex items-center gap-1">
+                                                  <Info className="w-2.5 h-2.5" /> Como executar
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                  {ex.instrucoes.split('\n').filter(l => l.trim()).map((line, i) => (
+                                                    <div key={i} className="text-[10px] text-slate-400 flex gap-1.5">
+                                                      <span className="text-blue-400 font-bold">{i + 1}.</span>
+                                                      <span>{line.replace(/^\d+\.\s*/, '')}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+                                            {ex.dicas && (
+                                              <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                                                <p className="text-[10px] text-amber-400">{ex.dicas}</p>
+                                              </div>
+                                            )}
+                                            {!added && (
+                                              <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                                                onClick={() => addExToTreino(ex)}
+                                                className="w-full py-2 text-[11px] font-medium bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20 hover:bg-indigo-500/15 transition-all flex items-center justify-center gap-1.5">
+                                                <Plus className="w-3 h-3" /> Adicionar ao Treino
+                                              </motion.button>
+                                            )}
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                        {Object.keys(activeGroup ? { [activeGroup]: filteredGroupedEx[activeGroup] || [] } : filteredGroupedEx).length === 0 && (
+                          <div className="text-center py-6 text-xs text-slate-600">
+                            Nenhum exercício encontrado
                           </div>
                         )}
-                        <div className={`max-w-[85%] rounded-xl px-3 py-2.5 text-xs leading-relaxed ${
-                          msg.from === 'user' 
-                            ? 'bg-indigo-500 text-white rounded-br-sm' 
-                            : 'bg-slate-800/50 text-slate-300 border border-slate-700/10 rounded-bl-sm'
-                        }`}>
-                          {msg.from === 'bot' ? <FormatBotText text={msg.text} /> : msg.text}
-                        </div>
-                      </motion.div>
-                    ))}
-                    {chatLoading && (
-                      <div className="flex justify-start">
-                        <div className="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0 mr-2">
-                          <Bot className="w-3 h-3 text-indigo-400" />
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700/10 rounded-xl px-3 py-2.5">
-                          <div className="flex gap-1">
-                            {[0, 1, 2].map(j => (
-                              <motion.div key={j} className="w-1.5 h-1.5 bg-indigo-400 rounded-full"
-                                animate={{ opacity: [0.3, 1, 0.3] }}
-                                transition={{ duration: 1.2, repeat: Infinity, delay: j * 0.2 }} />
-                            ))}
-                          </div>
-                        </div>
                       </div>
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
+                    </div>
 
-                  {/* Chat Input */}
-                  <div className="p-3 border-t border-slate-800/50">
-                    <div className="flex gap-2">
-                      <input 
-                        value={chatInput} 
-                        onChange={e => setChatInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSendChat()}
-                        placeholder="Pergunte ao FitBot..."
-                        className="flex-1 px-3 py-2 bg-slate-800/40 border border-slate-700/20 rounded-xl text-xs text-white placeholder-slate-500 outline-none focus:border-indigo-500/30 transition-colors" />
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                        onClick={() => handleSendChat()}
-                        disabled={!chatInput.trim() || chatLoading}
-                        className="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 disabled:opacity-30 transition-all">
-                        <Send className="w-3.5 h-3.5" />
-                      </motion.button>
+                    {/* Coach Comment */}
+                    <div className="space-y-2">
+                      <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                        <MessageSquareText className="w-3 h-3 text-purple-400" /> Comentário do Coach
+                      </span>
+                      <textarea 
+                        value={novoTreino.coach_comentario || ''} 
+                        onChange={e => setNovoTreino(p => ({ ...p, coach_comentario: e.target.value }))} 
+                        placeholder="Adicione observações, dicas ou instruções para o aluno..."
+                        rows={2}
+                        className="w-full px-4 py-2.5 bg-purple-500/5 border border-purple-500/10 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/30 transition-colors resize-none" />
                     </div>
                   </div>
                 </div>
+
               </div>
 
               {/* Footer Actions */}
@@ -657,11 +805,52 @@ export const CoachTreinosPage = ({ onNavigate }) => {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: 50, x: '-50%' }} animate={{ opacity: 1, y: 0, x: '-50%' }} exit={{ opacity: 0, y: 50, x: '-50%' }}
-            className={`fixed bottom-6 left-1/2 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 z-[60] ${
+            transition={spring}
+            className={`fixed bottom-6 left-1/2 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2 z-[80] shadow-xl ${
               toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
             }`}>
             {toast.type === 'success' ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
             {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Workout Detail Popup */}
+      <AnimatePresence>
+        {detailTreino && <WorkoutDetailPopup treino={detailTreino} onClose={() => setDetailTreino(null)} />}
+      </AnimatePresence>
+
+      {/* Comment Modal */}
+      <AnimatePresence>
+        {commentTreino && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+            onClick={() => { setCommentTreino(null); setCommentText(''); }}>
+            <motion.div initial={{ scale: 0.92, opacity: 0, y: 16 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+              transition={spring} onClick={e => e.stopPropagation()} className="w-full max-w-md card-base p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <MessageSquareText className="w-4 h-4 text-purple-400" /> Comentário do Treino
+                </h3>
+                <button onClick={() => { setCommentTreino(null); setCommentText(''); }} className="p-1.5 rounded-lg hover:bg-slate-800/40 transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mb-3">Adicione um comentário ao treino <strong className="text-white">{commentTreino.nome}</strong></p>
+              <textarea value={commentText} onChange={e => setCommentText(e.target.value)} rows={4}
+                placeholder="Digite seu comentário sobre o treino..."
+                className="w-full px-4 py-3 bg-slate-800/40 border border-slate-700/20 rounded-xl text-sm text-white placeholder-slate-500 outline-none focus:border-purple-500/30 transition-colors resize-none mb-4" />
+              <div className="flex gap-2">
+                <button onClick={() => { setCommentTreino(null); setCommentText(''); }}
+                  className="flex-1 py-2.5 text-sm text-slate-400 rounded-xl hover:bg-slate-800/40 transition-all">Cancelar</button>
+                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+                  onClick={handleSaveComment} disabled={savingComment}
+                  className="flex-1 py-2.5 text-sm font-medium bg-purple-500 text-white rounded-xl hover:bg-purple-600 disabled:opacity-40 transition-all flex items-center justify-center gap-2">
+                  {savingComment ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                  Salvar
+                </motion.button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -36,23 +36,28 @@ def create_invite_token(
     current_user: dict = Depends(require_approved_coach),
     db: Session = Depends(get_db)
 ):
-    """Coach creates an invite token for students to connect"""
-    token_str = secrets.token_urlsafe(32)
-    expires_at = None
-    if data.expires_hours:
-        expires_at = datetime.utcnow() + timedelta(hours=data.expires_hours)
+    """Coach creates an invite code for students to connect — short 6-char code, never expires"""
+    # Generate a short, easy-to-share 6-char alphanumeric code
+    import random, string
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    
+    # Deactivate any previous tokens from this coach
+    db.query(CoachInviteToken).filter(
+        CoachInviteToken.coach_id == current_user["user_id"],
+        CoachInviteToken.active == True
+    ).update({"active": False})
     
     invite = CoachInviteToken(
         coach_id=current_user["user_id"],
-        token=token_str,
-        max_uses=data.max_uses or 1,
-        expires_at=expires_at
+        token=code,
+        max_uses=data.max_uses or 999,
+        expires_at=None  # Never expires
     )
     db.add(invite)
     db.commit()
     db.refresh(invite)
     
-    logger.info(f"[COACH] Token de convite criado pelo coach ID={current_user['user_id']}")
+    logger.info(f"[COACH] Código de convite '{code}' criado pelo coach ID={current_user['user_id']}")
     return invite
 
 
@@ -108,24 +113,25 @@ def connect_by_token(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Student connects to a coach using an invite token"""
+    """Student connects to a coach using an invite code"""
     if current_user["perfil"] != "aluno":
-        raise HTTPException(status_code=400, detail="Apenas alunos podem se conectar a um coach via token")
+        raise HTTPException(status_code=400, detail="Apenas alunos podem se conectar a um coach via código")
     
-    # Find and validate token
+    # Find and validate code (case-insensitive)
     invite = db.query(CoachInviteToken).filter(
-        CoachInviteToken.token == data.token,
+        CoachInviteToken.token == data.token.strip().upper(),
         CoachInviteToken.active == True
     ).first()
     
     if not invite:
-        raise HTTPException(status_code=404, detail="Token inválido ou expirado")
+        raise HTTPException(status_code=404, detail="Código inválido. Verifique com seu instrutor.")
     
+    # Only check expiry if set (new codes don't expire)
     if invite.expires_at and invite.expires_at < datetime.utcnow():
-        raise HTTPException(status_code=400, detail="Token expirado")
+        raise HTTPException(status_code=400, detail="Código expirado. Peça um novo ao seu instrutor.")
     
-    if invite.uses >= invite.max_uses:
-        raise HTTPException(status_code=400, detail="Token já atingiu o limite de usos")
+    if invite.max_uses and invite.uses >= invite.max_uses:
+        raise HTTPException(status_code=400, detail="Código já atingiu o limite de usos")
     
     # Check if already connected
     existing = db.query(CoachStudent).filter(
@@ -582,6 +588,62 @@ def assign_treino_to_student(
     
     return {
         "message": "Treino atribuído com sucesso",
+        "treino_id": treino_id,
+        "aluno_id": aluno_id
+    }
+
+
+# ==================== UNASSIGN TREINO FROM STUDENT ====================
+
+@router.post("/unassign-treino")
+def unassign_treino_from_student(
+    data: dict,
+    current_user: dict = Depends(require_approved_coach),
+    db: Session = Depends(get_db)
+):
+    """Unassign (unlink) a treino from a student"""
+    treino_id = data.get("treino_id")
+    aluno_id = data.get("aluno_id")
+    
+    if not treino_id or not aluno_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="treino_id e aluno_id são obrigatórios"
+        )
+    
+    # Verify coach-student connection
+    connection = db.query(CoachStudent).filter(
+        CoachStudent.coach_id == current_user["user_id"],
+        CoachStudent.student_id == aluno_id,
+        CoachStudent.status == "active"
+    ).first()
+    
+    if not connection:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não está conectado a este aluno"
+        )
+    
+    # Find and deactivate the assignment
+    assignment = db.query(TreinoAtribuido).filter(
+        TreinoAtribuido.treino_id == treino_id,
+        TreinoAtribuido.aluno_id == aluno_id,
+        TreinoAtribuido.ativo == True
+    ).first()
+    
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Atribuição não encontrada"
+        )
+    
+    assignment.ativo = False
+    db.commit()
+    
+    logger.info(f"[COACH] Treino ID={treino_id} desvinculado do aluno ID={aluno_id}")
+    
+    return {
+        "message": "Treino desvinculado com sucesso",
         "treino_id": treino_id,
         "aluno_id": aluno_id
     }

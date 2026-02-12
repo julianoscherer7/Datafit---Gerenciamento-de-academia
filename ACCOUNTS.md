@@ -24,7 +24,7 @@
 - **Senha:** `Coach@123`
 - **CREF:** 012345-G/SP
 - **Status:** ✅ Aprovado
-- **Token:** `DEMO-COACH-TOKEN-2025`
+- **Código de Convite:** `C4RL0S`
 - **Alunos:** 2 (Maria, João)
 - **Nível:** 🔥 **UPADO**
 
@@ -34,7 +34,7 @@
 - **CREF:** 078945-G/RJ
 - **Especialidade:** Funcional e Condicionamento Físico
 - **Status:** ✅ Aprovado
-- **Token:** `ANA-COACH-2026`
+- **Código de Convite:** `ANA123`
 - **Alunos:** 4 (Rodrigo, Lucas, Camila, Rafael)
 - **Treinos Criados:** 3
 - **Amigos:** 3 (Lucas, Camila, Rafael)
@@ -46,7 +46,7 @@
 - **CREF:** 123456-G/MG
 - **Especialidade:** Musculação e Reabilitação
 - **Status:** ✅ Aprovado
-- **Token:** `BRUNO-COACH-START`
+- **Código de Convite:** `BRUN0X`
 - **Alunos:** 0
 - **Treinos:** 0
 - **Nível:** ⚪ **ZERADO** (novo, sem alunos nem treinos)

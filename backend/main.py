@@ -19,7 +19,7 @@ from models import (
 # Importa os routers
 from routes import auth, dashboard, treinos, execucao, desafios, amigos, badges, historico, analytics, configs, exercicios
 from routes import checkin, stories, chat, loja
-from routes import coach, ai_assistant
+from routes import coach
 
 # Cria a aplicação
 app = FastAPI(
@@ -72,7 +72,7 @@ app.include_router(stories.router)
 app.include_router(chat.router)
 app.include_router(loja.router)
 app.include_router(coach.router)
-app.include_router(ai_assistant.router)
+
 
 @app.get("/", tags=["root"])
 def read_root():

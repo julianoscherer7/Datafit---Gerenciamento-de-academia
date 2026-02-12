@@ -11,7 +11,7 @@ import { historicoService } from './historico.service';
 import { exerciciosService } from './exercicios.service';
 import { configsService } from './configs.service';
 import { coachService } from './coach.service';
-import { aiService } from './ai.service';
+
 import { chatService, checkinService, storiesService, lojaService } from './social.service';
 
 // Create socialService alias for ChatPage compatibility
@@ -37,7 +37,6 @@ export {
   exerciciosService,
   configsService,
   coachService,
-  aiService,
   chatService,
   checkinService,
   storiesService,

@@ -90,6 +90,7 @@ def listar_treinos(
             "criado_por": treino.criado_por,
             "origem": treino.origem or "user",
             "locked": treino.locked or False,
+            "coach_comentario": treino.coach_comentario,
             "criado_em": treino.criado_em,
             "exercicios": exercicios
         })
@@ -157,7 +158,8 @@ def criar_treino(
         duracao=treino.duracao or 45,
         criado_por=current_user["user_id"],
         origem=origem,
-        locked=treino.locked if is_coach else False  # Only coaches can lock
+        locked=treino.locked if is_coach else False,  # Only coaches can lock
+        coach_comentario=treino.coach_comentario
     )
     db.add(db_treino)
     db.flush()
@@ -245,6 +247,8 @@ def atualizar_treino(
     db_treino.nome = treino.nome
     db_treino.descricao = treino.descricao
     db_treino.duracao = treino.duracao or 45
+    if treino.coach_comentario is not None:
+        db_treino.coach_comentario = treino.coach_comentario
     
     # Remove exercícios antigos e adiciona novos
     db.query(TreinoExercicio).filter(TreinoExercicio.treino_id == treino_id).delete()

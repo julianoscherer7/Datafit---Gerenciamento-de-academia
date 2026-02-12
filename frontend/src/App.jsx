@@ -19,7 +19,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ExecucaoPage } from './pages/ExecucaoPage';
 import { HistoricoPage } from './pages/HistoricoPage';
-import { AIChatPage } from './pages/AIChatPage';
+
 import { ChatPage } from './pages/ChatPage';
 import { CoachDashboardPage } from './pages/CoachDashboardPage';
 import { CoachTreinosPage } from './pages/CoachTreinosPage';
@@ -69,14 +69,13 @@ const AppContent = () => {
     dashboard: <DashboardPage onNavigate={handleNavigate} />,
     treinos: <TreinosPage onNavigate={handleNavigate} />,
     evolucao: <EvolucaoPage onNavigate={handleNavigate} />,
-    execucao: <ExecucaoPage treinoId={pageParams.treinoId} validationData={pageParams.validationData} onNavigate={handleNavigate} />,
+    execucao: <ExecucaoPage treino={pageParams.treino} treinoId={pageParams.treinoId} validationData={pageParams.validationData} onNavigate={handleNavigate} />,
     historico: <HistoricoPage onNavigate={handleNavigate} />,
     amigos: <AmigosPage onNavigate={handleNavigate} />,
     perfil: <PerfilPage onNavigate={handleNavigate} />,
     editPerfil: <EditPerfilPage onNavigate={handleNavigate} />,
     configs: <ConfigsPage onNavigate={handleNavigate} />,
-    fitbot: <AIChatPage onNavigate={handleNavigate} />,
-    chat: <ChatPage onNavigate={handleNavigate} />,
+    chat: <ChatPage onNavigate={handleNavigate} participanteId={pageParams.participanteId} participanteNome={pageParams.participanteNome} />,
     coachDashboard: <CoachDashboardPage onNavigate={handleNavigate} />,
     coachTreinos: <CoachTreinosPage onNavigate={handleNavigate} studentId={pageParams.studentId} studentName={pageParams.studentName} />,
     connection: <ConnectionPage onNavigate={handleNavigate} />,

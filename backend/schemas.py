@@ -196,6 +196,7 @@ class TreinoCreate(BaseModel):
     origem: Optional[str] = "user"  # user, coach, ai
     locked: Optional[bool] = False
     aluno_id: Optional[int] = None  # If coach creates for a student
+    coach_comentario: Optional[str] = None
 
 class TreinoResponse(BaseModel):
     id: int
@@ -205,6 +206,7 @@ class TreinoResponse(BaseModel):
     criado_por: Optional[int]
     origem: Optional[str] = "user"
     locked: Optional[bool] = False
+    coach_comentario: Optional[str] = None
     criado_em: datetime
     
     class Config:

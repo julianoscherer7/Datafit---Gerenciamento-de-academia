@@ -243,7 +243,7 @@ const ChatPanel = ({ conversation, messages, onSendMessage, loading }) => {
 };
 
 // ===== MAIN PAGE =====
-export const ChatPage = ({ onNavigate }) => {
+export const ChatPage = ({ onNavigate, participanteId, participanteNome }) => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -257,6 +257,28 @@ export const ChatPage = ({ onNavigate }) => {
   const [friendSearchTerm, setFriendSearchTerm] = useState('');
 
   useEffect(() => { fetchConversations(); fetchAmigos(); }, []);
+
+  // Auto-select conversation when navigated from coach panel
+  useEffect(() => {
+    if (participanteId && !loading) {
+      const existing = conversations.find(c => c.participante_id === participanteId || c.id === participanteId);
+      if (existing) {
+        setSelectedConv(existing);
+      } else if (participanteNome) {
+        const newConv = {
+          id: participanteId,
+          participante_id: participanteId,
+          nome: participanteNome,
+          online: false,
+          ultima_mensagem: '',
+          nao_lidas: 0,
+          ultima_mensagem_data: new Date().toISOString()
+        };
+        setConversations(prev => [newConv, ...prev]);
+        setSelectedConv(newConv);
+      }
+    }
+  }, [participanteId, participanteNome, loading, conversations.length]);
 
   useEffect(() => {
     if (selectedConv) fetchMessages(selectedConv);
