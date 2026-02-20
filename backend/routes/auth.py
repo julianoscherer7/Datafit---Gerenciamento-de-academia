@@ -183,6 +183,13 @@ def get_current_user_info(
             detail="Usuário não encontrado"
         )
     
+    # Update last activity timestamp
+    try:
+        user.ultimo_acesso = datetime.utcnow()
+        db.commit()
+    except Exception:
+        db.rollback()
+    
     # Buscar dados de progresso/gamificação
     progresso = db.query(UsuarioProgresso).filter(UsuarioProgresso.usuario_id == user.id).first()
     

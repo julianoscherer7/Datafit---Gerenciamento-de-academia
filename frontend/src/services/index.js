@@ -23,6 +23,7 @@ const socialService = {
   contarNaoLidas: chatService.contarNaoLidas,
   deletarMensagem: chatService.deletarMensagem,
   deletarConversa: chatService.deletarConversa,
+  editarMensagem: chatService.editarMensagem,
 };
 
 export {

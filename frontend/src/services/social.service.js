@@ -59,6 +59,9 @@ export const chatService = {
   
   // Deletar conversa inteira
   deletarConversa: (outroId) => api.delete(`/chat/conversa/${outroId}`),
+
+  // Editar mensagem
+  editarMensagem: (mensagemId, conteudo) => api.put(`/chat/editar/${mensagemId}`, { conteudo }),
 };
 
 export const lojaService = {

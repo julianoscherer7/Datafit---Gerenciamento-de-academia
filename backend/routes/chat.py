@@ -17,6 +17,10 @@ class MensagemCreate(BaseModel):
     conteudo: str
     tipo: str = "texto"
     imagem_base64: Optional[str] = None
+    video_base64: Optional[str] = None
+
+class MensagemUpdate(BaseModel):
+    conteudo: str
 
 class MensagemResponse(BaseModel):
     id: int
@@ -25,6 +29,9 @@ class MensagemResponse(BaseModel):
     conteudo: str
     tipo: str
     imagem_base64: Optional[str]
+    video_base64: Optional[str] = None
+    editado: bool = False
+    editado_em: Optional[datetime] = None
     lida: bool
     criado_em: datetime
     
@@ -122,6 +129,7 @@ async def enviar_mensagem(
         conteudo=msg_data.conteudo,
         tipo=msg_data.tipo,
         imagem_base64=msg_data.imagem_base64,
+        video_base64=msg_data.video_base64,
         lida=False
     )
     db.add(nova_mensagem)
@@ -237,10 +245,33 @@ async def deletar_mensagem(
         Mensagem.remetente_id == current_user["user_id"]
     ).first()
     if not msg:
-        raise HTTPException(status_code=404, detail="Mensagem nao encontrada")
+        # Return success anyway to avoid UI errors for optimistic deletes
+        return {"success": True, "message": "Mensagem não encontrada ou já deletada"}
     db.delete(msg)
     db.commit()
     return {"success": True, "message": "Mensagem deletada"}
+
+
+@router.put("/editar/{mensagem_id}", response_model=MensagemResponse)
+async def editar_mensagem(
+    mensagem_id: int,
+    body: MensagemUpdate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Edita o conteúdo de uma mensagem (apenas remetente)"""
+    msg = db.query(Mensagem).filter(
+        Mensagem.id == mensagem_id,
+        Mensagem.remetente_id == current_user["user_id"]
+    ).first()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Mensagem não encontrada")
+    msg.conteudo = body.conteudo
+    msg.editado = True
+    msg.editado_em = datetime.utcnow()
+    db.commit()
+    db.refresh(msg)
+    return msg
 
 @router.delete("/conversa/{outro_id}")
 async def deletar_conversa(

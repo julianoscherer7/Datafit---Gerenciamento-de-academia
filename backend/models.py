@@ -39,6 +39,7 @@ class Usuario(Base):
     twitter = Column(String(100))
     linkedin = Column(String(100))
     
+    ultimo_acesso = Column(DateTime, nullable=True)  # Last activity timestamp for online status
     criado_em = Column(DateTime, server_default=func.now())
     atualizado_em = Column(DateTime, onupdate=func.now())
     
@@ -315,9 +316,12 @@ class Mensagem(Base):
     remetente_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
     destinatario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
     conteudo = Column(Text, nullable=False)
-    tipo = Column(Enum("texto", "imagem", "treino", "badge"), default="texto")
+    tipo = Column(Enum("texto", "imagem", "video", "treino", "badge"), default="texto")
     imagem_url = Column(String(500))
     imagem_base64 = Column(Text)
+    video_base64 = Column(Text, nullable=True)  # Video content as base64
+    editado = Column(Boolean, default=False)  # Whether message was edited
+    editado_em = Column(DateTime, nullable=True)  # When was last edit
     lida = Column(Boolean, default=False)
     criado_em = Column(DateTime, server_default=func.now())
 

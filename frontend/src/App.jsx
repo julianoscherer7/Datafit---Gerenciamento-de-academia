@@ -24,6 +24,7 @@ import { ChatPage } from './pages/ChatPage';
 import { CoachDashboardPage } from './pages/CoachDashboardPage';
 import { CoachTreinosPage } from './pages/CoachTreinosPage';
 import { ConnectionPage } from './pages/ConnectionPage';
+import { PerfilPublicoPage } from './pages/PerfilPublicoPage';
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
@@ -79,6 +80,7 @@ const AppContent = () => {
     coachDashboard: <CoachDashboardPage onNavigate={handleNavigate} />,
     coachTreinos: <CoachTreinosPage onNavigate={handleNavigate} studentId={pageParams.studentId} studentName={pageParams.studentName} />,
     connection: <ConnectionPage onNavigate={handleNavigate} />,
+    perfilPublico: <PerfilPublicoPage onNavigate={handleNavigate} userId={pageParams.userId} />,
   };
 
   return (

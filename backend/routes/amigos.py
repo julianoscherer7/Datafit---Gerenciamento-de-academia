@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from database import get_db
 from models import Amizade, Usuario, UsuarioProgresso, Streak
 from schemas import AmizadeCreate, AmizadeResponse
@@ -47,8 +48,8 @@ def buscar_usuarios(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Busca usuários para adicionar como amigo"""
-    if not q or len(q) < 2:
+    """Busca usuários para adicionar como amigo - mínimo 1 char para sugestões ao vivo"""
+    if not q or len(q) < 1:
         return []
     
     usuarios = db.query(Usuario).filter(
@@ -90,7 +91,9 @@ def listar_amigos(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Lista amigos aceitos do usuário"""
+    """Lista amigos aceitos do usuário com status online/offline"""
+    from datetime import timedelta as td
+    
     amigos = db.query(Amizade).filter(
         Amizade.status == "aceito",
         or_(
@@ -100,15 +103,39 @@ def listar_amigos(
     ).all()
     
     resultado = []
+    now = datetime.utcnow() if 'datetime' in dir() else __import__('datetime').datetime.utcnow()
+    
     for amizade in amigos:
         amigo_id = amizade.solicitado_id if amizade.solicitante_id == current_user["user_id"] else amizade.solicitante_id
         usuario = db.query(Usuario).filter(Usuario.id == amigo_id).first()
         if usuario:
+            # Get progress info
+            progresso = db.query(UsuarioProgresso).filter(UsuarioProgresso.usuario_id == amigo_id).first()
+            streak = db.query(Streak).filter(Streak.usuario_id == amigo_id).first()
+            
+            # Online = last active within 5 minutes
+            online = False
+            if usuario.ultimo_acesso:
+                try:
+                    online = (now - usuario.ultimo_acesso).total_seconds() < 300
+                except:
+                    online = False
+            
             resultado.append({
                 "id": usuario.id,
                 "nome": usuario.nome,
+                "nickname": usuario.nickname,
                 "email": usuario.email,
-                "perfil": usuario.perfil
+                "perfil": usuario.perfil,
+                "foto_base64": usuario.foto_base64,
+                "foto_url": usuario.foto_url,
+                "bio": usuario.bio,
+                "online": online,
+                "ultimo_acesso": usuario.ultimo_acesso.isoformat() if usuario.ultimo_acesso else None,
+                "xp": progresso.xp_total if progresso else 0,
+                "nivel": progresso.nivel if progresso else 1,
+                "streak": streak.atual if streak else 0,
+                "amizade_id": amizade.id,
             })
     
     return resultado

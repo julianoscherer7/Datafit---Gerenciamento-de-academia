@@ -303,3 +303,38 @@ def deletar_treino(
     db.commit()
     
     return {"message": "Treino deletado com sucesso"}
+
+
+@router.patch("/{treino_id}/comentario")
+def atualizar_comentario(
+    treino_id: int,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Atualiza apenas o comentário do coach em um treino"""
+    db_treino = db.query(Treino).filter(Treino.id == treino_id).first()
+
+    if not db_treino:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Treino não encontrado"
+        )
+
+    # Only the creator or an admin can add comments
+    if db_treino.criado_por != current_user["user_id"] and current_user["perfil"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para comentar neste treino"
+        )
+
+    db_treino.coach_comentario = body.get("coach_comentario", "")
+    db.commit()
+    db.refresh(db_treino)
+
+    return {
+        "id": db_treino.id,
+        "nome": db_treino.nome,
+        "coach_comentario": db_treino.coach_comentario,
+        "message": "Comentário atualizado com sucesso"
+    }
