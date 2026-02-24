@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "DATAFIT",
+    "slug": "datafit-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0c0f1a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.datafit.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "DATAFIT precisa da câmera para check-in na academia e stories",
+        "NSLocationWhenInUseUsageDescription": "DATAFIT usa sua localização para verificar presença na academia",
+        "NSPhotoLibraryUsageDescription": "DATAFIT precisa acessar suas fotos para stories e perfil"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0c0f1a"
+      },
+      "package": "com.datafit.mobile",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "DATAFIT precisa da câmera para check-in e stories"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "DATAFIT usa sua localização para verificar presença na academia"
+        }
+      ]
+    ]
+  }
+}
