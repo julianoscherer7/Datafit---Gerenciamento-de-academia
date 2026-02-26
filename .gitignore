@@ -16,6 +16,10 @@ __pycache__/
 frontend/dist/
 frontend/node_modules/
 
+# Mobile
+mobile/node_modules/
+mobile/.expo/
+
 # IDEs
 .vscode/
 .idea/

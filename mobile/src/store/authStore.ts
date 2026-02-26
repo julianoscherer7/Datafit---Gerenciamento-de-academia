@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
 import { authService, User } from '../services/auth.service';
+import { saveToken, getToken, removeToken } from '../services/authStorage';
 
 interface AuthState {
   user: User | null;
@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: async () => {
     try {
-      const token = await SecureStore.getItemAsync('token');
+      const token = await getToken();
       if (token) {
         set({ token, loading: true });
         try {
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isApprovedCoach: user.perfil === 'instrutor' && user.coach_status === 'approved',
           });
         } catch {
-          await SecureStore.deleteItemAsync('token');
+          await removeToken();
           set({ token: null, loading: false, initialized: true, isAuthenticated: false });
         }
       } else {
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const response = await authService.login({ username: email, password });
       const token = response.access_token;
-      await SecureStore.setItemAsync('token', token);
+      await saveToken(token);
       set({ token });
 
       const userData = await authService.me();
@@ -98,7 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await authService.register(data);
       const token = response.access_token;
       if (token) {
-        await SecureStore.setItemAsync('token', token);
+        await saveToken(token);
         set({ token });
 
         const userData = await authService.me();
@@ -122,7 +122,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('token');
+    await removeToken();
     set({
       user: null,
       token: null,
